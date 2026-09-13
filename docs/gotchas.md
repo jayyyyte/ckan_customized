@@ -15,8 +15,24 @@ Thêm mục mới khi gặp bẫy mới. Ghi rõ **triệu chứng → nguyên n
    Restart `ckan run`. Nếu vẫn khó chịu, chuyển repo vào `~/` và mở bằng VS Code Remote-WSL.
 6. **Windows không mở được `localhost:5000`.**
    Chạy `ckan ... run -H 0.0.0.0` và dùng IP của WSL (`hostname -I`).
+6a. **`apt install` báo `Package 'git-core' has no installation candidate`** trên Ubuntu 24.04, script `set -e` dừng giữa chừng.
+   `git-core` đã bị bỏ, dùng `git`. Tương tự `libmagic1` giờ là gói ảo, gói thật là `libmagic1t64`. Kiểm tra bằng `apt-cache policy <gói>` trước khi thêm gói vào script.
+6b. **Docker Desktop đang chạy nhưng trong WSL `docker ps` báo `dial unix /var/run/docker.sock: no such file`.**
+   Chưa bật WSL Integration cho distro. Docker Desktop → Settings → Resources → WSL Integration → bật Ubuntu → Apply & restart, rồi mở lại terminal WSL.
 
 ## CKAN
+6c. **`pip install -e 'git+...#egg=ckan[requirements]'` báo `error: invalid-egg-fragment`.** Pip ≥ 25 không còn cho đặt extras trong egg fragment, mà docs CKAN vẫn hướng dẫn cú pháp này.
+   `git clone --depth 1 --branch ckan-2.12.0 ... ~/ckan/default/src/ckan`, rồi `pip install -e "$HOME/ckan/default/src/ckan[requirements]"`. Muốn lên bản vá thì `git fetch --depth 1 origin tag ckan-2.12.x` và checkout tag đó.
+6d. **`ckan config-tool ckan.ini "debug = true"` mà vẫn thấy `debug = false`.** Lệnh này mặc định ghi vào `[app:main]`, còn `debug` nằm ở `[DEFAULT]`, nên file có hai dòng trái nhau.
+   Dùng `ckan config-tool ckan.ini -s DEFAULT "debug = true"`, rồi xóa dòng trùng trong `[app:main]`.
+6e. **Mọi lệnh `ckan -c ...`, kể cả `--help`, đều crash `password authentication failed`.** CLI nạp app và kết nối DB trước khi chạy lệnh con, còn `ckan generate config` đặt sẵn mật khẩu mẫu trong `sqlalchemy.url`.
+   Điền mật khẩu thật trước khi gọi bất kỳ lệnh `-c` nào. Nếu mật khẩu có ký tự `@ : / # % ?` thì phải **URL-encode**, ví dụ `@` thành `%40`.
+6f. **`ckan.plugins` trống sau `ckan generate config` ở 2.12**; bản 2.11 mặc định có `activity`. Không có activity stream nếu quên bật.
+   Đặt tường minh, ví dụ `ckan.plugins = <theme> activity text_view image_view`.
+6g. **`ModuleNotFoundError: No module named 'flask_debugtoolbar'`** ở mọi lệnh `ckan -c` sau khi bật `debug = true`. `make_flask_stack` import toolbar khi debug bật, mà gói này chỉ có trong `dev-requirements.txt`.
+   `pip install -r ~/ckan/default/src/ckan/dev-requirements.txt` (có cả `cookiecutter` cho `ckan generate extension` và `pytest`). Image production không bật debug nên không cần.
+6h. **`db init` in `2 unapplied migrations for activity` nhưng `db check` vẫn báo `up to date`.** `db init` và `db check` chỉ xử lý schema lõi; mỗi plugin có migration riêng. Quên chạy thì trang dataset hoặc dashboard lỗi thiếu bảng `activity`.
+   `ckan db upgrade -p activity`, rồi kiểm tra bằng `ckan db pending-migrations`. Bật thêm plugin có bảng riêng thì làm lại. Trên K8s, `prerun.py` của ckan-base cũng phải xử lý việc này (kiểm tra ở GĐ2).
 7. **Thêm file template mới mà không thấy tác dụng.**
    Reloader chỉ theo dõi file đã biết. **Restart** `ckan run`.
 8. **Đổi `ckan.ini` (site title, logo…) mà giao diện không đổi.**

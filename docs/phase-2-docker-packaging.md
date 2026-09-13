@@ -145,14 +145,15 @@ Ghi kết quả vào gotchas.
 | Key `ckan.ini` | Local (GĐ1) | Env (GĐ2/3) | Giá trị K8s | Secret? |
 |---|---|---|---|---|
 | `sqlalchemy.url` | `postgresql://ckan_default:***@localhost/ckan_default` | `CKAN_SQLALCHEMY_URL` | `postgresql://ckan_default:***@postgres-service.lakehouse:5432/ckan_default` | ✔ |
-| `solr_url` | `http://localhost:8983/solr/ckan` | `CKAN_SOLR_URL` | `http://ckan-solr:8983/solr/ckan` | |
+| `solr_url` | `http://127.0.0.1:8983/solr/ckan` (mặc định của `generate config` 2.12) | `CKAN_SOLR_URL` | `http://ckan-solr:8983/solr/ckan` | |
 | `ckan.redis.url` | `redis://localhost:6379/0` | `CKAN_REDIS_URL` | `redis://ckan-redis:6379/0` | |
 | `ckan.site_url` | `http://localhost:5000` | `CKAN_SITE_URL` | `http://10.1.117.91:30500` | |
 | `ckan.storage_path` | `/home/tlinh/ckan/storage` | `CKAN_STORAGE_PATH` | `/var/lib/ckan` | |
-| `ckan.plugins` | `<theme> activity ...` | `CKAN__PLUGINS` | giống local, `envvars` ở cuối | |
+| `ckan.plugins` | `activity text_view image_view` (sẽ thêm `<theme>` ở đầu) | `CKAN__PLUGINS` | giống local, `envvars` ở cuối | |
 | `ckan.base_templates_folder` / `ckan.base_public_folder` | theo Q9 | `CKAN__BASE_TEMPLATES_FOLDER` / `CKAN__BASE_PUBLIC_FOLDER` | theo Q9 | |
 | `ckan.locale_default` | `vi` | `CKAN__LOCALE_DEFAULT` | `vi` | |
-| `debug` | `true` | *(không đặt)* | `false` | |
+| `ckan.locales_offered` | `vi en` | `CKAN__LOCALES_OFFERED` | `vi en` | |
+| `debug` | `true` (trong `[DEFAULT]`) | *(không đặt)* | `false` | |
 | *(thêm khi phát sinh)* | | | | |
 
 ## Kiểm thử trước khi sang GĐ3

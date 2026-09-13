@@ -31,12 +31,16 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 ## Trạng thái
 
 ### Giai đoạn 1 — Local source install + theme · [chi tiết](phase-1-local-source.md)
+
+> **Audit 2026-09-14:** GĐ1 mới xong 2/12 mục. Chưa có Postgres/Redis/libmagic, chưa có `~/ckan/etc`, `~/ckan/storage`, CKAN hay `ckanext-*`. WSL Integration của Docker Desktop đã bật (xác nhận `docker ps` chạy được trong Ubuntu). Đã sửa `setup_step1_system.sh`: bỏ `git-core` vì không còn trên 24.04 và làm script fail, cho phép chạy lại nhiều lần. `ckan-2.12.0` vẫn là tag mới nhất. Sau đó (cùng ngày): script đã chạy xong, CKAN 2.12.0 đã cài, Solr chạy, `ckan.ini` đã sinh và chỉnh các key không bí mật. **Đang chờ user điền mật khẩu vào `sqlalchemy.url`, rồi `db init` + `sysadmin add`.**
+
 - [x] WSL2 Ubuntu 24.04 sẵn sàng (Python 3.12.3, systemd bật, docker CLI trong WSL)
 - [x] Tạo venv `~/ckan/default` (còn trống, chưa cài CKAN)
-- [ ] **User tự chạy** `setup_step1_system.sh`: cài Postgres/Redis/libmagic, tạo DB `ckan_default`, tạo `~/ckan/etc` và `~/ckan/storage`
-- [ ] `pip install` CKAN **2.12.0** từ source vào venv
-- [ ] Container Solr `ckan/ckan-solr:2.12-solr9`
-- [ ] Sinh và chỉnh `~/ckan/etc/ckan.ini`
+- [x] **User tự chạy** `setup_step1_system.sh`: cài Postgres/Redis/libmagic, tạo DB `ckan_default`, tạo `~/ckan/etc` và `~/ckan/storage` (2026-09-14)
+- [x] `pip install` CKAN **2.12.0** từ source vào venv: clone tag rồi `pip install -e "…/src/ckan[requirements]"`, `pip check` sạch (2026-09-14)
+- [x] Container Solr `ckan/ckan-solr:2.12-solr9`: `ckan-solr` chạy ở cổng 8983, ping core `ckan` trả OK (2026-09-14)
+- [x] Sinh và chỉnh `~/ckan/etc/ckan.ini`; cài thêm `dev-requirements.txt` (bắt buộc khi `debug = true`) (2026-09-14)
+- [x] `db init` + `db upgrade -p activity`: schema lõi và activity đều đã lên head (2026-09-14)
 - [ ] `db init` → sysadmin → `ckan run` → truy cập được http://localhost:5000
 - [ ] Smoke test: tạo organization, dataset, upload resource, tìm kiếm ra dataset
 - [ ] So sánh theme gốc classic và **Midnight Blue**, chốt Q9

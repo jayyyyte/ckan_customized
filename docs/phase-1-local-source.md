@@ -33,10 +33,10 @@ bash /mnt/c/Users/Tlinh/ckan_customized/setup_step1_system.sh
 ```
 
 Script sẽ:
-- cài `python3-dev libpq-dev python3-venv git-core redis-server libmagic1 postgresql`;
+- cài `python3-dev libpq-dev python3-venv git redis-server libmagic1t64 postgresql` (tên gói theo Ubuntu 24.04);
 - bật Postgres và Redis;
 - tạo `~/ckan/etc` và `~/ckan/storage`;
-- tạo role và DB `ckan_default` (hỏi mật khẩu DB, user tự đặt và tự nhớ).
+- tạo role và DB `ckan_default` (hỏi mật khẩu DB, user tự đặt và tự nhớ). Chạy lại script thì role/DB đã có sẽ được bỏ qua.
 
 Kiểm tra:
 
@@ -50,12 +50,16 @@ redis-cli ping    # PONG
 ```bash
 source ~/ckan/default/bin/activate
 pip install --upgrade pip setuptools wheel
-pip install -e 'git+https://github.com/ckan/ckan.git@ckan-2.12.0#egg=ckan[requirements]'
-# (dev/test, tùy chọn) pip install -r ~/ckan/default/src/ckan/dev-requirements.txt
+git clone --depth 1 --branch ckan-2.12.0 https://github.com/ckan/ckan.git ~/ckan/default/src/ckan
+pip install -e "$HOME/ckan/default/src/ckan[requirements]"
+pip install -r ~/ckan/default/src/ckan/dev-requirements.txt   # BẮT BUỘC ở local: debug=true cần flask-debugtoolbar, generate extension cần cookiecutter
 ```
 
+- Docs gốc của CKAN dùng `pip install -e 'git+https://...@ckan-2.12.0#egg=ckan[requirements]'`. Pip ≥ 25 (máy này dùng 26.2.1) báo lỗi `invalid-egg-fragment` với lệnh đó, nên ở đây clone tay rồi cài từ đường dẫn local. Xem [gotchas](gotchas.md).
+- `requirements` là extra khai báo trong `setup.py` của CKAN, trỏ tới `requirements.txt` với các phiên bản đã ghim. Trong đó chỉ `psycopg2` phải build từ source, cần `gcc`, `pg_config` và `python3-dev`.
+
 - Kiểm tra bản patch mới hơn trước khi cài: `git ls-remote --tags https://github.com/ckan/ckan 'ckan-2.12.*'` (ngày 2026-09-11 mới có `ckan-2.12.0`). Có bản mới thì cập nhật tag ở mọi nơi: phase-1, Dockerfile và roadmap.
-- Kiểm tra sau khi cài: `ckan --version` và `ckan -c ~/ckan/etc/ckan.ini db check` (lệnh mới ở 2.12, chạy sau bước 1.5).
+- Kiểm tra sau khi cài: `pip show ckan` (2.12 không có `ckan --version`) và `ckan -c ~/ckan/etc/ckan.ini db check` (lệnh mới ở 2.12, chạy sau bước 1.5).
 - Python tối thiểu là 3.10. Máy này có 3.12.3.
 
 ## Bước 1.3 — Solr (Docker Desktop)
@@ -90,12 +94,20 @@ ckan.locale_default = vi           # Q6 trong roadmap
 ckan.locales_offered = vi en
 ```
 
-`ckan.ini` chứa mật khẩu nên để ngoài repo (đã nằm ở `~/ckan/etc`).
+`ckan.ini` chứa mật khẩu nên để ngoài repo (đã nằm ở `~/ckan/etc`) và đặt quyền `chmod 600`.
+
+Ghi chú theo file thật mà 2.12.0 sinh ra (2026-09-14):
+- Đã đúng sẵn, không cần sửa: `ckan.site_id`, `ckan.site_url`, `ckan.redis.url`, `solr_url = http://127.0.0.1:8983/solr/ckan`.
+- Sửa key không bí mật bằng `ckan config-tool ~/ckan/etc/ckan.ini "key = value"`. Riêng `debug` phải thêm `-s DEFAULT` (xem gotchas).
+- `ckan.plugins` để trống → đặt `activity text_view image_view`.
+- `sqlalchemy.url` **user tự sửa** bằng `nano`, không dùng `config-tool` để mật khẩu khỏi nằm trong shell history. Chưa sửa thì mọi lệnh `ckan -c` đều lỗi kết nối DB.
 
 ## Bước 1.5 — Khởi tạo và chạy
 
 ```bash
 ckan -c ~/ckan/etc/ckan.ini db init
+ckan -c ~/ckan/etc/ckan.ini db upgrade -p activity      # db init KHÔNG migrate bảng của plugin
+ckan -c ~/ckan/etc/ckan.ini db pending-migrations       # phải không còn gì
 ckan -c ~/ckan/etc/ckan.ini sysadmin add admin email=admin@localhost name=admin   # hỏi mật khẩu
 ckan -c ~/ckan/etc/ckan.ini run            # http://localhost:5000
 ```
