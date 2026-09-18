@@ -1,0 +1,11 @@
+{% ckan_extends %}
+
+{% block styles %}
+  {{ super() }}
+  {% asset 'lakehouse_theme/lakehouse_theme-css' %}
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  {% asset 'lakehouse_theme/lakehouse_theme-js' %}
+{% endblock %}

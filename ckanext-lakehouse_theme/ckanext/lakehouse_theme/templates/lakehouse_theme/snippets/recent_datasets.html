@@ -1,0 +1,20 @@
+{#- Home page list of the newest datasets. Expects `packages` from h.lakehouse_theme_recent_datasets. -#}
+{% set dataset_type = h.default_package_type() %}
+
+<section class="card box lh-recent" aria-labelledby="lh-recent-title">
+  <div class="module-heading lh-recent-head">
+    <h2 id="lh-recent-title">{{ _('Recent Datasets') }}</h2>
+    <a href="{{ h.url_for(dataset_type ~ '.search', sort='metadata_modified desc') }}">{{ _('View all datasets') }}</a>
+  </div>
+  <div class="module-content">
+    {% if packages %}
+      <ul class="dataset-list list-unstyled">
+        {% for package in packages %}
+          {% snippet 'snippets/package_item.html', package=package %}
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty">{{ _('No datasets have been published yet.') }}</p>
+    {% endif %}
+  </div>
+</section>

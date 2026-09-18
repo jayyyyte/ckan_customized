@@ -1,0 +1,17 @@
+{% ckan_extends %}
+
+{% block header_logo %}
+  <a class="lh-brand" href="{{ h.url_for('home.index') }}">
+    {% snippet 'lakehouse_theme/snippets/logo_mark.html' %}
+    <span class="lh-brand-title">{{ g.site_title }}</span>
+  </a>
+{% endblock %}
+
+{#- Classic has a header search already; drop it where the page body has its own search box. -#}
+{% block header_site_search %}
+  {% set dataset_type = h.default_package_type() %}
+  {% set page_has_search = (g.blueprint == 'home' and g.view == 'index') or (g.blueprint == dataset_type and g.view == 'search') %}
+  {% if not page_has_search %}
+    {{ super() }}
+  {% endif %}
+{% endblock %}

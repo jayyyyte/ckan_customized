@@ -1,0 +1,50 @@
+{% ckan_extends %}
+
+{#- Classic nests the attribution and the language picker inside footer_content,
+    so they are rendered again at the bottom of this block. -#}
+{% block footer_content %}
+  {% set links = h.lakehouse_theme_links() %}
+  {% set dataset_type = h.default_package_type() %}
+  {% set org_type = h.default_group_type('organization') %}
+  {% set group_type = h.default_group_type('group') %}
+  <div class="row gy-4">
+    <div class="col-lg-5">
+      <a class="lh-brand" href="{{ h.url_for('home.index') }}">
+        {% snippet 'lakehouse_theme/snippets/logo_mark.html' %}
+        <span class="lh-brand-title">{{ g.site_title }}</span>
+      </a>
+      <p class="lh-footer-about">{{ _('Curated datasets published from the Lakehouse platform, ready to query with Trino or download.') }}</p>
+      <p class="lh-footer-owner">
+        {{ links.organization_name }}
+        {% if links.contact_email %}
+          <br><a href="mailto:{{ links.contact_email }}"><i class="fa fa-envelope" aria-hidden="true"></i> {{ links.contact_email }}</a>
+        {% endif %}
+      </p>
+    </div>
+    <nav class="col-6 col-lg-3 offset-lg-1" aria-labelledby="lh-footer-explore">
+      <h2 class="lh-footer-heading" id="lh-footer-explore">{{ _('Explore') }}</h2>
+      <ul class="list-unstyled">
+        <li><a href="{{ h.url_for(dataset_type ~ '.search') }}">{{ h.humanize_entity_type('package', dataset_type, 'main nav') or _('Datasets') }}</a></li>
+        <li><a href="{{ h.url_for(org_type ~ '.index') }}">{{ h.humanize_entity_type('organization', org_type, 'main nav') or _('Organizations') }}</a></li>
+        <li><a href="{{ h.url_for(group_type ~ '.index') }}">{{ h.humanize_entity_type('group', group_type, 'main nav') or _('Groups') }}</a></li>
+        {{ self.footer_links() }}
+      </ul>
+    </nav>
+    <nav class="col-6 col-lg-3" aria-labelledby="lh-footer-dev">
+      <h2 class="lh-footer-heading" id="lh-footer-dev">{{ _('For developers') }}</h2>
+      <ul class="list-unstyled">
+        {% if links.openmetadata_url %}
+          <li><a href="{{ links.openmetadata_url }}" target="_blank" rel="noopener noreferrer">{{ _('Technical catalog (OpenMetadata)') }}</a></li>
+        {% endif %}
+        {% if links.trino_docs_url %}
+          <li><a href="{{ links.trino_docs_url }}" target="_blank" rel="noopener noreferrer">{{ _('Connecting with Trino JDBC') }}</a></li>
+        {% endif %}
+        <li><a href="https://docs.ckan.org/en/{{ g.ckan_doc_version }}/api/" target="_blank" rel="noopener noreferrer">{{ _('CKAN API') }}</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="row gy-3 lh-footer-bottom">
+    <div class="col-md-8 attribution">{{ self.footer_attribution() }}</div>
+    <div class="col-md-4">{{ self.footer_lang() }}</div>
+  </div>
+{% endblock %}

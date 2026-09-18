@@ -1,0 +1,35 @@
+{#- "How to connect" box for jdbc:trino:// resources. Expects `trino` from h.lakehouse_theme_trino_connection.
+    Literal text in a {% set %} block is not escaped, so placeholders like <user> go through {{ }}. -#}
+{% set user = '<user>' %}
+{% set cli %}trino --server {{ trino.server }}{% if trino.catalog %} --catalog {{ trino.catalog }}{% endif %}{% if trino.schema %} --schema {{ trino.schema }}{% endif %} --user {{ user }}{% endset %}
+{% set python %}from trino.dbapi import connect
+
+conn = connect(
+    host="{{ trino.host }}", port={{ trino.port }}, user="{{ user }}",{% if trino.ssl %} http_scheme="https",{% endif %}
+    {% if trino.catalog %}catalog="{{ trino.catalog }}", {% endif %}{% if trino.schema %}schema="{{ trino.schema }}",{% endif %}
+)
+cur = conn.cursor()
+cur.execute("SHOW TABLES")
+print(cur.fetchall()){% endset %}
+
+<section class="lh-connect" aria-labelledby="lh-connect-title">
+  <h2 class="lh-connect-title" id="lh-connect-title"><i class="fa fa-plug" aria-hidden="true"></i> {{ _('How to connect') }}</h2>
+  <p>{{ _('This resource is a table in the Lakehouse. Query it directly with Trino instead of downloading a copy.') }}</p>
+  <dl class="lh-connect-facts">
+    <div><dt>Server</dt><dd><code>{{ trino.server }}</code></dd></div>
+    {% if trino.catalog %}<div><dt>Catalog</dt><dd><code>{{ trino.catalog }}</code></dd></div>{% endif %}
+    {% if trino.schema %}<div><dt>Schema</dt><dd><code>{{ trino.schema }}</code></dd></div>{% endif %}
+  </dl>
+  {% for label, code in [('JDBC URL', trino.jdbc_url), ('Trino CLI', cli), ('Python (trino)', python)] %}
+    <div class="lh-code">
+      <div class="lh-code-head">
+        <span>{{ label }}</span>
+        <button type="button" class="btn btn-sm lh-copy" data-module="lakehouse_theme-copy" data-module-target="#lh-code-{{ loop.index }}" data-module-done="{{ _('Copied') }}">
+          <i class="fa fa-copy" aria-hidden="true"></i> {{ _('Copy') }}
+        </button>
+      </div>
+      <pre id="lh-code-{{ loop.index }}"><code>{{ code }}</code></pre>
+    </div>
+  {% endfor %}
+  <p class="lh-connect-note">{{ _('In DBeaver or DataGrip, create a Trino connection and paste the JDBC URL. Sign in with your Lakehouse account.') }}</p>
+</section>

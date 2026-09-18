@@ -1,0 +1,16 @@
+{% set intro = g.site_intro_text %}
+{% set stats = h.get_site_statistics() %}
+
+<div class="module-promotion lh-hero">
+  {% if intro %}
+    {{ h.render_markdown(intro) }}
+  {% else %}
+    <p class="lh-hero-eyebrow">{{ g.site_title }}</p>
+    <h1>{{ _('Trusted data, ready to use') }}</h1>
+    <p>{{ _('Find curated datasets from the Lakehouse, check their metadata, then query them directly with Trino or download a copy.') }}</p>
+  {% endif %}
+  <ul class="lh-hero-stats list-unstyled">
+    <li><strong>{{ stats.dataset_count }}</strong> {{ ungettext('dataset', 'datasets', stats.dataset_count) }}</li>
+    <li><strong>{{ stats.organization_count }}</strong> {{ ungettext('organization', 'organizations', stats.organization_count) }}</li>
+  </ul>
+</div>
