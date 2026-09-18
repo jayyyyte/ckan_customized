@@ -1,6 +1,6 @@
 # Giai đoạn 3 — Triển khai lên cụm K8s on-prem (namespace `lakehouse`)
 
-Mục tiêu: CKAN 2.12.0 + theme chạy ổn định tại **http://10.1.117.91:30500**, thay bản stub 2.10, không ảnh hưởng dịch vụ khác trên cluster dùng chung.
+Mục tiêu: CKAN 2.11.6 + theme chạy ổn định tại **http://10.1.117.91:30500**, thay bản stub 2.10, không ảnh hưởng dịch vụ khác trên cluster dùng chung.
 
 Bối cảnh cluster: [cluster-context.md](cluster-context.md). **Mọi lệnh ghi (apply/create/delete/exec psql) đều cần user xác nhận trước.**
 
@@ -10,7 +10,7 @@ Bối cảnh cluster: [cluster-context.md](cluster-context.md). **Mọi lệnh g
 flowchart LR
   U["Người dùng<br/>http://10.1.117.91:30500"] --> SVC["Service ckan-service<br/>NodePort 30500"]
   SVC --> CK["Deployment ckan<br/>image ckan-lakehouse:x.y.z<br/>1 replica, Recreate"]
-  CK --> SOLR["Deployment ckan-solr<br/>ckan/ckan-solr:2.12-solr9<br/>ClusterIP :8983 + PVC local-path"]
+  CK --> SOLR["Deployment ckan-solr<br/>ckan/ckan-solr:2.11-solr9<br/>ClusterIP :8983 + PVC local-path"]
   CK --> RED["Deployment ckan-redis<br/>redis:7-alpine, ClusterIP :6379"]
   CK --> PG[("postgres-service (dùng chung)<br/>DB ckan_default (+ datastore_default)")]
   CK --> PVC["PVC ckan-storage (local-path)<br/>/var/lib/ckan"]
@@ -50,7 +50,7 @@ kubectl -n lakehouse get deploy,svc | grep -i postgres    # tên Deployment Post
    - Nếu infra có registry: push lên đó và dùng `imagePullSecrets` nếu cần.
    - Nếu không: import tarball lên **cả 2 worker** (xem 3.4).
 3. **File upload:** PVC `local-path` (mặc định, đơn giản) hay MinIO (`minio-service:9000`).
-   - MinIO dùng `ckanext-file-keeper-cloud` (adapter `ckan:s3`, chỉ hỗ trợ 2.12). Mẫu cấu hình ở [ckan-overview.md](ckan-overview.md#extension-hữu-ích).
+   - 2.11 không có tầng file `ckan.files.*` của 2.12, nên không dùng được `ckanext-file-keeper-cloud`. MinIO phải qua một extension upload S3 kiểu cũ (thay `IUploader`). Chọn và kiểm tra hỗ trợ 2.11 khi làm (Q10), xem [ckan-overview.md](ckan-overview.md#extension-hữu-ích).
    - Khi dùng MinIO: CKAN không cần PVC `ckan-storage`, pod không bị ghim vào node, và có thể tăng replica sau này.
    - Cần tạo bucket và access key riêng cho CKAN trên MinIO; key đưa vào Secret.
 4. **Tài nguyên:** requests/limits phù hợp với số liệu audit.
@@ -143,10 +143,11 @@ Chạy lại smoke test của GĐ1 trên URL cluster. Cập nhật cluster-conte
 1. Tăng version theme → build `ckan-lakehouse:0.1.1` → save → import lên 2 worker.
 2. `kubectl -n lakehouse set image deploy/ckan ckan=ckan-lakehouse:0.1.1` (hoặc sửa YAML rồi apply).
 3. Nếu lỗi: `kubectl -n lakehouse rollout undo deploy/ckan`.
-4. Nâng CKAN core (vd. 2.12.1): đổi base tag `ckan-base` và tag Solr nếu có bản mới, rồi rebuild.
+4. Nâng bản vá CKAN core (vd. 2.11.7): đổi base tag `ckan-base`, và tag Solr nếu có bản mới, rồi rebuild.
    - `prerun.py` tự chạy `db init`/upgrade. **Backup DB trước.**
    - Đọc migration notes trong changelog; với DataStore có thể phải chạy lại SQL `set-permissions`.
-   - Sau khi deploy chạy `ckan db check` để kiểm tra.
+   - Sau khi deploy chạy `ckan -c /srv/app/ckan.ini db pending-migrations` để kiểm tra (2.11 không có `db check`).
+   - Lên nhánh 2.12 là một dự án riêng: phải đổi Solr schema, theme (Midnight Blue hoặc classic 2.12 dùng Bootstrap 5.3) và kiểm tra lại extension. Không hạ được từ 2.12 về 2.11 bằng `db init` (gotchas 6q).
 
 ## 3.8 Vận hành
 - **Backup:** `pg_dump ckan_default` (và `datastore_default`), cộng nội dung PVC `ckan-storage`. Solr **không cần** backup vì dựng lại được bằng `ckan -c /srv/app/ckan.ini search-index rebuild`.

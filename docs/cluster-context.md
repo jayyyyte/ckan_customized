@@ -35,7 +35,7 @@
 - **Là stub:**
   - không có env cho Postgres, Solr hay Redis (báo cáo tự ghi cần thêm PostgreSQL + Solr);
   - không có trong danh sách `kubectl get svc` ở mục 10.7, nên có thể chưa từng được apply hoặc đang lỗi.
-- Sẽ được thay bằng bản **2.12.0** (image `ckan-lakehouse`) ở GĐ3, sau khi hỏi chủ cluster (Q8).
+- Sẽ được thay bằng bản **2.11.6** (image `ckan-lakehouse`) ở GĐ3, sau khi hỏi chủ cluster (Q8).
 
 ## Quy tắc an toàn (mục 2.7 báo cáo)
 Trước khi tạo tài nguyên phải chạy audit read-only:

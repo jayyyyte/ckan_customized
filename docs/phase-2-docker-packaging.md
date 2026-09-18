@@ -1,26 +1,26 @@
 # Giai đoạn 2 — Đóng gói image + test bằng docker compose
 
-Mục tiêu: có image `ckan-lakehouse:<version>` gồm CKAN 2.12.0 + theme, cấu hình hoàn toàn bằng biến môi trường, đã chạy thử ở local. Compose file ở giai đoạn này ánh xạ 1-1 sang manifest K8s ở GĐ3.
+Mục tiêu: có image `ckan-lakehouse:<version>` gồm CKAN 2.11.6 + theme, cấu hình hoàn toàn bằng biến môi trường, đã chạy thử ở local. Compose file ở giai đoạn này ánh xạ 1-1 sang manifest K8s ở GĐ3.
 
-## Image gốc `ckan/ckan-base:2.12.0` — thông tin đã kiểm chứng
+## Image gốc `ckan/ckan-base:2.11.6` — thông tin đã kiểm chứng
 
-Nguồn: `ckan-docker-base/ckan-2.12/Dockerfile`, `setup/start_ckan.sh`, `setup/prerun.py` và Docker Hub, đọc ngày 2026-09-11.
+Nguồn: `ckan-docker-base/ckan-2.11/Dockerfile`, `setup/start_ckan.sh`, `setup/prerun.py`, README của repo và Docker Hub, đọc ngày 2026-09-18.
 
 | Mục | Giá trị |
 |---|---|
-| Tags | `2.12`, `2.12.0`, `2.12-py3.14`, `2.12.0-py3.14`. Bản dev: `ckan/ckan-dev:2.12.0`. **Chỉ có Python 3.14** (không có biến thể py3.10 như 2.11) |
-| Base | Multi-stage: stage `builder` cài CKAN, rồi copy `/usr/local`, `src`, `ckan.ini` sang stage `base` (`python:3.14-slim-bookworm`). Image runtime không còn g++/git |
+| Tags | `2.11`, `2.11.6`, `2.11-py3.10`, `2.11.6-py3.10` (build 2026-08-27). Bản dev: `ckan/ckan-dev:2.11.6`. **Chỉ có Python 3.10** |
+| Base | Một stage, `python:3.10-slim-bookworm`. Image runtime **có sẵn** `git`, `g++`, `libpq-dev`, `wget`, `patch` |
 | `APP_DIR` / `SRC_DIR` | `/srv/app` / `/srv/app/src` |
 | `CKAN_INI` | `/srv/app/ckan.ini`, sinh lúc build bằng `ckan generate config` |
 | `CKAN_STORAGE_PATH` | `/var/lib/ckan` (mount volume vào đây) |
-| Users | `ckan-sys` (uid 502) sở hữu `/srv/app` và `/docker-entrypoint.d`. `ckan` (uid 503) là user runtime, sở hữu `ckan.ini` và storage. **`/usr/local` (site-packages) thuộc `root`**, khác 2.11 |
-| Server | uWSGI `--http [::]:5000`, 2 process. Chỉnh bằng `UWSGI_OPTS`, `EXTRA_UWSGI_OPTS`, `UWSGI_HARAKIRI` |
+| Users | `ckan-sys` (uid 502) sở hữu `/srv/app`, `/docker-entrypoint.d` **và `/usr/local` (site-packages)**. `ckan` (uid 503) là user runtime, sở hữu `ckan.ini`, `src` và storage |
+| Server | uWSGI `--http [::]:5000`, 2 process, `--harakiri` = `UWSGI_HARAKIRI` (image đặt 50). Chỉnh bằng `UWSGI_OPTS`, `EXTRA_UWSGI_OPTS` |
 | Plugin mặc định | `CKAN__PLUGINS="image_view text_view datatables_view datastore envvars"`; `ckanext-envvars` v0.0.6 có sẵn |
-| Khởi động | `start_ckan.sh` (giống hệt 2.11). Nếu `SECRET_KEY` trống thì **tự sinh** `SECRET_KEY`, `WTF_CSRF_SECRET_KEY` và JWT secret. Sau đó chạy `prerun.py`, rồi `/docker-entrypoint.d/*.sh\|*.py`, cuối cùng là uwsgi |
-| `prerun.py` | Giống hệt 2.11: chờ DB (`CKAN_SQLALCHEMY_URL`) → `ckan db init` (**chạy mỗi lần start**, idempotent, đồng thời upgrade schema) → set plugins → datastore (`CKAN_DATASTORE_WRITE_URL`) + set quyền → kiểm tra Solr (`CKAN_SOLR_URL`) → tạo sysadmin nếu có `CKAN_SYSADMIN_NAME/PASSWORD/EMAIL` |
+| Khởi động | `start_ckan.sh` (giống hệt bản 2.12). Nếu `SECRET_KEY` trống thì **tự sinh** `SECRET_KEY`, `WTF_CSRF_SECRET_KEY` và JWT secret. Sau đó chạy `prerun.py`, rồi `/docker-entrypoint.d/*.sh\|*.py`, cuối cùng là uwsgi |
+| `prerun.py` | Giống hệt bản 2.12: chờ DB (`CKAN_SQLALCHEMY_URL`) → `ckan db init` (**chạy mỗi lần start**, idempotent, đồng thời upgrade schema) → set plugins → datastore (`CKAN_DATASTORE_WRITE_URL`) + set quyền → kiểm tra Solr (`CKAN_SOLR_URL`) → tạo sysadmin nếu có `CKAN_SYSADMIN_NAME/PASSWORD/EMAIL` |
 | Healthcheck (ckan-docker) | `wget -qO /dev/null http://localhost:5000/api/action/status_show` |
 
-Repo tham chiếu `ckan/ckan-docker` (compose mẫu) **vẫn đang dùng `FROM ckan/ckan-base:2.11`** tính đến 2026-09-11. Dự án chỉ dùng repo đó làm mẫu cấu trúc; image của mình build `FROM 2.12.0`.
+Repo tham chiếu `ckan/ckan-docker` (compose mẫu) dùng `FROM ckan/ckan-base:2.11`, đúng nhánh của dự án. Dự án chỉ dùng repo đó làm mẫu cấu trúc; image của mình ghim bản vá cụ thể `FROM ckan/ckan-base:2.11.6`.
 
 Có hai cách cấu hình bằng biến môi trường:
 1. **Biến CKAN core hỗ trợ sẵn:** `CKAN_SQLALCHEMY_URL`, `CKAN_DATASTORE_WRITE_URL`, `CKAN_DATASTORE_READ_URL`, `CKAN_SOLR_URL`, `CKAN_REDIS_URL`, `CKAN_SITE_URL`, `CKAN_SITE_ID`, `CKAN_STORAGE_PATH`, `CKAN_MAX_UPLOAD_SIZE_MB`, `CKAN_SMTP_*`.
@@ -32,7 +32,7 @@ Có hai cách cấu hình bằng biến môi trường:
 
 ```
 ckan_customized/
-├── ckanext-<theme>/            # từ GĐ1
+├── ckanext-lakehouse_theme/    # từ GĐ1
 ├── docker/
 │   ├── Dockerfile
 │   ├── compose.yaml
@@ -46,32 +46,34 @@ ckan_customized/
 ## Dockerfile (khung)
 
 ```dockerfile
-FROM ckan/ckan-base:2.12.0
+FROM ckan/ckan-base:2.11.6
 
-# 2.12: /usr/local (site-packages) thuộc root → pip install phải chạy bằng root.
-# Source extension để trong SRC_DIR, chủ sở hữu ckan-sys như phần còn lại của /srv/app.
+# /usr/local (site-packages) thuộc ckan-sys, user mặc định là ckan → cài bằng root cho gọn
+# (ckan-sys cũng được). Source extension để trong SRC_DIR, chủ ckan-sys như phần còn lại của /srv/app.
 USER root
-COPY --chown=ckan-sys:ckan-sys ckanext-<theme> ${SRC_DIR}/ckanext-<theme>
+COPY --chown=ckan-sys:ckan-sys ckanext-lakehouse_theme ${SRC_DIR}/ckanext-lakehouse_theme
 # Cài -e (giống cách ckan-docker làm): template/asset đọc thẳng từ source,
 # không phụ thuộc vào việc MANIFEST.in/package_data khai báo đủ hay chưa.
-RUN pip3 install --no-cache-dir -e ${SRC_DIR}/ckanext-<theme> && \
-    chown -R ckan-sys:ckan-sys ${SRC_DIR}/ckanext-<theme>
-# Extension khác (sau khi chốt Q4/Q5/Q10). Image runtime KHÔNG có git/g++,
-# nên ưu tiên cài từ PyPI/wheel, ví dụ:
-# RUN pip3 install --no-cache-dir 'ckanext-file-keeper-cloud[s3]'
+# .mo không commit (decision log 2026-09-14) → biên dịch từ .po ngay khi build.
+RUN pip3 install --no-cache-dir -e ${SRC_DIR}/ckanext-lakehouse_theme && \
+    pybabel compile -d ${SRC_DIR}/ckanext-lakehouse_theme/ckanext/lakehouse_theme/i18n -D ckanext-lakehouse_theme && \
+    chown -R ckan-sys:ckan-sys ${SRC_DIR}/ckanext-lakehouse_theme
+# Extension khác (sau khi chốt Q4/Q5/Q10). Image 2.11 có git/g++ nên cài từ git được,
+# nhưng vẫn nên ghim tag, ví dụ:
+# RUN pip3 install --no-cache-dir -e 'git+https://github.com/ckan/ckanext-xloader.git@<tag>#egg=ckanext-xloader'
 
 COPY --chown=ckan-sys:ckan-sys docker/docker-entrypoint.d/ /docker-entrypoint.d/
 
 USER ckan
-ENV CKAN__PLUGINS="<theme> activity image_view text_view datatables_view envvars"
+# Giống local; datatables_view cần DataStore nên chỉ thêm khi chốt Q4.
+ENV CKAN__PLUGINS="lakehouse_theme activity text_view image_view envvars"
 ```
 
 - Build context là **gốc repo**: `docker build -f docker/Dockerfile -t ckan-lakehouse:0.1.0 .`
 - Tag luôn theo phiên bản (`0.1.0`, `0.1.1`…), **không dùng `latest`** (xem gotchas về pull policy).
-- Nếu extension cần build từ git hoặc C: runtime 2.12 không có `git`/`g++`, nên phải `apt-get install` tạm hoặc dùng multi-stage riêng.
 - Kiểm tra lại user/đường dẫn mỗi khi đổi base tag:
   ```bash
-  docker run --rm ckan/ckan-base:2.12.0 sh -c 'id; python3 -V; env | grep -E "APP_DIR|SRC_DIR|CKAN_INI"; ls -ld /usr/local/lib/python3*/site-packages'
+  docker run --rm ckan/ckan-base:2.11.6 sh -c 'id; python3 -V; env | grep -E "APP_DIR|SRC_DIR|CKAN_INI"; ls -ld /usr/local/lib/python3*/site-packages; which git wget curl'
   ```
 
 ## compose.yaml (khung)
@@ -84,7 +86,7 @@ services:
     volumes: [pg_data:/var/lib/postgresql/data, ./postgres-init:/docker-entrypoint-initdb.d:ro]
     healthcheck: {test: ["CMD", "pg_isready", "-U", "postgres"], interval: 5s}
   solr:
-    image: ckan/ckan-solr:2.12-solr9
+    image: ckan/ckan-solr:2.11-solr9
     volumes: [solr_data:/var/solr]
   redis:
     image: redis:7-alpine
@@ -99,7 +101,7 @@ services:
 volumes: {pg_data: {}, solr_data: {}, ckan_storage: {}}
 ```
 
-- Runtime 2.12 cài `curl` chứ không chắc có `wget`. Chạy thử `docker exec <ckan> which wget curl` rồi đổi lệnh healthcheck cho phù hợp (ví dụ `curl -fsS http://localhost:5000/api/action/status_show`).
+- Image 2.11 có `wget` (cài trong Dockerfile gốc), nên healthcheck giống ckan-docker dùng được luôn.
 - Container Solr của GĐ1 (`ckan-solr`, cổng 8983) có thể trùng cổng. Hoặc dừng nó, hoặc không publish cổng Solr trong compose (như khung trên đang làm).
 
 ## `.env.example` (khung, không chứa giá trị thật)
@@ -117,9 +119,7 @@ CKAN_SYSADMIN_PASSWORD=change-me
 CKAN_SYSADMIN_EMAIL=admin@example.com
 CKAN__LOCALE_DEFAULT=vi
 CKAN__LOCALES_OFFERED=vi en
-# Theme gốc (Q9) — bỏ comment nếu chọn Midnight Blue
-# CKAN__BASE_TEMPLATES_FOLDER=templates-midnight-blue
-# CKAN__BASE_PUBLIC_FOLDER=public-midnight-blue
+# Theme gốc: 2.11 chỉ có classic (mặc định), không đặt CKAN__BASE_TEMPLATES_FOLDER / CKAN__BASE_PUBLIC_FOLDER
 # Cố định secret để restart không làm mất session / vô hiệu API token (xem gotchas)
 CKAN___SECRET_KEY=generate-me
 CKAN___WTF_CSRF_SECRET_KEY=generate-me
@@ -140,19 +140,24 @@ Ghi kết quả vào gotchas.
 
 ## Bảng ánh xạ cấu hình
 
-Điền dần từ GĐ1. Mỗi key `ckan.ini` đã chỉnh ở local phải có biến env tương ứng cho GĐ2/3.
+Điền dần từ GĐ1. Mỗi key `ckan.ini` đã chỉnh ở local phải có biến env tương ứng cho GĐ2/3. Script `setup_step2_switch_to_2.11.sh` đặt đúng các giá trị ở cột "Local".
 
 | Key `ckan.ini` | Local (GĐ1) | Env (GĐ2/3) | Giá trị K8s | Secret? |
 |---|---|---|---|---|
 | `sqlalchemy.url` | `postgresql://ckan_default:***@localhost/ckan_default` | `CKAN_SQLALCHEMY_URL` | `postgresql://ckan_default:***@postgres-service.lakehouse:5432/ckan_default` | ✔ |
-| `solr_url` | `http://127.0.0.1:8983/solr/ckan` (mặc định của `generate config` 2.12) | `CKAN_SOLR_URL` | `http://ckan-solr:8983/solr/ckan` | |
+| `solr_url` | `http://127.0.0.1:8983/solr/ckan` (cũng là giá trị `generate config` 2.11 đặt sẵn) | `CKAN_SOLR_URL` | `http://ckan-solr:8983/solr/ckan` | |
 | `ckan.redis.url` | `redis://localhost:6379/0` | `CKAN_REDIS_URL` | `redis://ckan-redis:6379/0` | |
 | `ckan.site_url` | `http://localhost:5000` | `CKAN_SITE_URL` | `http://10.1.117.91:30500` | |
 | `ckan.storage_path` | `/home/tlinh/ckan/storage` | `CKAN_STORAGE_PATH` | `/var/lib/ckan` | |
-| `ckan.plugins` | `activity text_view image_view` (sẽ thêm `<theme>` ở đầu) | `CKAN__PLUGINS` | giống local, `envvars` ở cuối | |
-| `ckan.base_templates_folder` / `ckan.base_public_folder` | theo Q9 | `CKAN__BASE_TEMPLATES_FOLDER` / `CKAN__BASE_PUBLIC_FOLDER` | theo Q9 | |
+| `ckan.plugins` | `lakehouse_theme activity text_view image_view` | `CKAN__PLUGINS` | giống local, `envvars` ở cuối | |
+| `ckan.base_templates_folder` / `ckan.base_public_folder` | `templates` / `public` (mặc định; 2.11 chỉ nhận hai giá trị này) | *(không đặt)* | mặc định | |
 | `ckan.locale_default` | `vi` | `CKAN__LOCALE_DEFAULT` | `vi` | |
 | `ckan.locales_offered` | `vi en` | `CKAN__LOCALES_OFFERED` | `vi en` | |
+| `ckan.site_title` | `Lakehouse Data Portal` | `CKAN__SITE_TITLE` | giống local | |
+| `ckan.site_description` | `Curated data from the Lakehouse platform` | `CKAN__SITE_DESCRIPTION` | giống local | |
+| `ckan.favicon` | `/lakehouse_theme/images/favicon.svg` | `CKAN__FAVICON` | giống local | |
+| `ckanext.lakehouse_theme.openmetadata_url` | `http://10.1.117.91:30858` | `CKANEXT__LAKEHOUSE_THEME__OPENMETADATA_URL` | giống local | |
+| `ckanext.lakehouse_theme.organization_name` / `contact_email` / `trino_docs_url` | mặc định trong plugin (`Lakehouse Data Platform` / trống / docs Trino JDBC) | `CKANEXT__LAKEHOUSE_THEME__…` | đặt khi có thông tin thật (Q2) | |
 | `debug` | `true` (trong `[DEFAULT]`) | *(không đặt)* | `false` | |
 | *(thêm khi phát sinh)* | | | | |
 

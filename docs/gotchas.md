@@ -9,6 +9,10 @@ Thêm mục mới khi gặp bẫy mới. Ghi rõ **triệu chứng → nguyên n
    Viết script `.sh` vào scratchpad rồi chạy file đó.
 3. **sudo trong WSL cần mật khẩu**, agent không chạy non-interactive được.
    Viết script và để user tự chạy. Không hỏi mật khẩu.
+3a. **Restart server bằng `wsl.exe -e bash -c 'pkill -f "etc/ckan.ini run"; exec ckan -c ~/ckan/etc/ckan.ini run'` thoát với exit code 15.** `pkill -f` so pattern với cả dòng lệnh, mà dòng lệnh của chính `bash -c` cũng chứa `etc/ckan.ini run`, nên nó tự kill mình.
+   Tách thành hai lệnh: lệnh kill chạy trước (pattern kiểu `"etc/ckan\.in[i] run"` để không khớp chính nó), rồi mới start ở một lệnh khác.
+3b. **Ảnh chụp mobile bằng Chrome headless `--window-size=400,…` bị cắt lề phải, trông như trang tràn ngang.** Chrome không dàn trang hẹp hơn khoảng 500px, nhưng ảnh vẫn chỉ rộng 400px.
+   Nhúng trang vào `<iframe style="width:400px">` trong một trang rộng hơn rồi chụp trang đó.
 4. **Cluster kind local (`kind-lakehouse`, `kind-lakehouse-lab`) báo connection refused.**
    Docker Desktop đang tắt; mở Docker Desktop trước.
 5. **Code trên `/mnt/c` chậm hơn filesystem Linux.** Đôi khi reloader của `ckan run` không nhận thay đổi.
@@ -22,17 +26,41 @@ Thêm mục mới khi gặp bẫy mới. Ghi rõ **triệu chứng → nguyên n
 
 ## CKAN
 6c. **`pip install -e 'git+...#egg=ckan[requirements]'` báo `error: invalid-egg-fragment`.** Pip ≥ 25 không còn cho đặt extras trong egg fragment, mà docs CKAN vẫn hướng dẫn cú pháp này.
-   `git clone --depth 1 --branch ckan-2.12.0 ... ~/ckan/default/src/ckan`, rồi `pip install -e "$HOME/ckan/default/src/ckan[requirements]"`. Muốn lên bản vá thì `git fetch --depth 1 origin tag ckan-2.12.x` và checkout tag đó.
+   `git clone --depth 1 --branch ckan-2.11.6 ... ~/ckan/default/src/ckan`, rồi `pip install -e "$HOME/ckan/default/src/ckan[requirements]"`. Muốn lên bản vá thì `git fetch --depth 1 origin tag ckan-2.11.x` và checkout tag đó.
 6d. **`ckan config-tool ckan.ini "debug = true"` mà vẫn thấy `debug = false`.** Lệnh này mặc định ghi vào `[app:main]`, còn `debug` nằm ở `[DEFAULT]`, nên file có hai dòng trái nhau.
    Dùng `ckan config-tool ckan.ini -s DEFAULT "debug = true"`, rồi xóa dòng trùng trong `[app:main]`.
 6e. **Mọi lệnh `ckan -c ...`, kể cả `--help`, đều crash `password authentication failed`.** CLI nạp app và kết nối DB trước khi chạy lệnh con, còn `ckan generate config` đặt sẵn mật khẩu mẫu trong `sqlalchemy.url`.
    Điền mật khẩu thật trước khi gọi bất kỳ lệnh `-c` nào. Nếu mật khẩu có ký tự `@ : / # % ?` thì phải **URL-encode**, ví dụ `@` thành `%40`.
-6f. **`ckan.plugins` trống sau `ckan generate config` ở 2.12**; bản 2.11 mặc định có `activity`. Không có activity stream nếu quên bật.
-   Đặt tường minh, ví dụ `ckan.plugins = <theme> activity text_view image_view`.
+6f. **Mất activity stream sau khi đặt lại `ckan.plugins`.** `ckan generate config` của 2.11 đặt sẵn `ckan.plugins = activity` (2.12 để trống). Ghi đè dòng đó mà quên `activity` thì trang dataset không còn tab hoạt động.
+   Đặt tường minh, ví dụ `ckan.plugins = lakehouse_theme activity text_view image_view`.
 6g. **`ModuleNotFoundError: No module named 'flask_debugtoolbar'`** ở mọi lệnh `ckan -c` sau khi bật `debug = true`. `make_flask_stack` import toolbar khi debug bật, mà gói này chỉ có trong `dev-requirements.txt`.
    `pip install -r ~/ckan/default/src/ckan/dev-requirements.txt` (có cả `cookiecutter` cho `ckan generate extension` và `pytest`). Image production không bật debug nên không cần.
-6h. **`db init` in `2 unapplied migrations for activity` nhưng `db check` vẫn báo `up to date`.** `db init` và `db check` chỉ xử lý schema lõi; mỗi plugin có migration riêng. Quên chạy thì trang dataset hoặc dashboard lỗi thiếu bảng `activity`.
+6h. **`db init` in `2 unapplied migrations for activity`** (gặp ở 2.12.0, 2.11 cũng vậy). `db init` chỉ xử lý schema lõi; mỗi plugin có migration riêng. Quên chạy thì trang dataset hoặc dashboard lỗi thiếu bảng `activity`.
    `ckan db upgrade -p activity`, rồi kiểm tra bằng `ckan db pending-migrations`. Bật thêm plugin có bảng riêng thì làm lại. Trên K8s, `prerun.py` của ckan-base cũng phải xử lý việc này (kiểm tra ở GĐ2).
+6i. **CKAN không khởi động, `CkanConfigurationException: You provided an invalid value for ckan.base_public_folder`** (rồi tới `…base_templates_folder`) khi `ckan.ini` còn `public-midnight-blue` / `templates-midnight-blue` (cấu hình từ thời 2.12). `environment.py` của 2.11 chỉ nhận `public` / `templates`; Midnight Blue chỉ có từ 2.12.
+   Xóa hai key đó hoặc đặt về `templates` / `public`. Ở 2.12 thì ngược lại: docstring vẫn ghi "chỉ nhận `templates`" nhưng code nhận cả Midnight Blue.
+6j. **Mọi trang trả 500 `ValueError: Cannot determine url for …/assets/css/lakehouse_theme.css`** sau khi thêm bundle CSS có `filters: cssrewrite`. Ví dụ comment sẵn trong `webassets.yml` do `ckan generate extension` sinh ra có dòng này. `cssrewrite` chỉ biết URL của các thư mục public (`add_public_path` → `env.append_path`), còn thư viện `assets/` tạo bằng `toolkit.add_resource` thì không được map.
+   Bỏ `cssrewrite` khỏi bundle của extension. Ảnh và font đặt trong `public/<theme>/…` và tham chiếu bằng đường dẫn tuyệt đối.
+6k. **`pytest` báo `INTERNALERROR … password authentication failed for user "ckan_default"` kể cả với test không dùng DB.** Plugin pytest `ckan`/`ckan_fixtures` nạp `test-core.ini` và kết nối DB `ckan_test` ngay khi bắt đầu session.
+   Test thuần (helper) chạy với `python -m pytest -o addopts="" -p no:ckan -p no:ckan_fixtures …`. Test cần app hoặc DB thì phải tạo DB test riêng (user tự chạy vì cần sudo). Việc này chưa làm.
+6l. **Placeholder `<user>` biến mất trong đoạn code hiển thị trên trang.** Chữ viết thẳng trong `{% set x %}…{% endset %}` được coi là HTML an toàn nên không bị escape, và trình duyệt hiểu `<user>` là một thẻ.
+   Truyền qua biểu thức: `{% set user = '<user>' %}` rồi dùng `{{ user }}`.
+6m. **Còn chuỗi tiếng Anh khi `locale = vi`**, ví dụ "Search data" và "E.g. environment" ở trang chủ, "Last Updated" ở trang dataset. Catalog `vi` của 2.11.6 chỉ dịch 617/1123 chuỗi; 2.12.0 cũng chỉ khoảng một nửa. Một số chuỗi dịch sai, ví dụ "CKAN API" thành "Giao diện người sử dụng CKAN".
+   Theme implement `ITranslation` (`DefaultTranslation`). CKAN nạp catalog của plugin sau core, nên bản dịch trong `ckanext-lakehouse_theme.po` vừa lấp chỗ trống vừa sửa được chuỗi dịch sai. Sửa `.po` xong phải chạy `pybabel compile` và restart. Tìm chuỗi thiếu: trích `_('…')` từ template của trang rồi đối chiếu với `ckan/i18n/vi/LC_MESSAGES/ckan.po`, lấy những msgid có `msgstr ""`.
+6n. **`ckan.ini` "tự" về mặc định**: `ckan.plugins` trống, `locale_default = en`, `sqlalchemy.url` về mật khẩu mẫu `pass`. Nguyên nhân là `ckan generate config <file>` **ghi đè không hỏi** khi file đã tồn tại. Đã xảy ra ngày 2026-09-17: mất cấu hình ngày 14/09.
+   Không chạy `generate config` vào file đang dùng. Muốn xem mẫu mới thì sinh ra file khác rồi so sánh. Script `setup_step2_switch_to_2.11.sh` backup trước khi sinh lại.
+6o. **Sau khi đổi sang 2.11, mọi lệnh `ckan -c` đều crash `SearchError`** vì phiên bản schema Solr. Lúc nạp app, CKAN gọi `check_solr_schema_version()`: 2.11 chỉ nhận schema `2.8`–`2.11`, còn core Solr cũ là schema 2.12. Nếu Solr tắt thì chỉ có cảnh báo, nên lỗi chỉ hiện khi container cũ đang chạy.
+   Thay Solr **trước** khi chạy lệnh `ckan -c` nào: xóa container `ckan-solr` và volume `ckan_solr_data` (core lưu cấu hình trong volume), chạy `ckan/ckan-solr:2.11-solr9`, rồi `search-index rebuild`.
+6p. **Override `footer_content` ở classic làm mất dòng "Powered by CKAN" và ô chọn ngôn ngữ.** Ở classic, `footer_attribution` và `footer_lang` nằm **bên trong** `footer_content`; Midnight Blue thì để chúng ngoài.
+   Trong block override, gọi lại `{{ self.footer_attribution() }}` và `{{ self.footer_lang() }}`. `self.<block>()` render được cả block lồng trong block đã override.
+6q. **Code 2.11 không chạy được trên DB đã lên schema 2.12.** Alembic của 2.11 không biết các revision 106–109, gồm bảng `file`, `file_owner`, `file_owner_transfer_history` và việc gộp `package_extra`/`group_extra`, nên `db init`/`db upgrade` không hạ xuống được.
+   Hai cách:
+   - Hạ bằng **code 2.12**, khi vẫn còn venv 2.12 và mật khẩu DB: `ckan db downgrade -v <revision head của 2.11>`. Các migration 106–109 đều có `downgrade()`.
+   - Backup (`pg_dump -Fc`) → `ckan db clean --yes` → `db init` bằng 2.11. `db clean` reflect **mọi** bảng trong DB rồi drop, kể cả bảng 2.12 và `alembic_version`.
+
+   Dự án chọn cách thứ hai (2026-09-18) vì DB chỉ có dữ liệu mẫu.
+6r. **Đổi màu nút, pagination bằng `--bs-btn-bg`, `--bs-pagination-*` mà không có tác dụng** trên classic 2.11. 2.11.6 build bằng Bootstrap **5.1.3** (`package.json`: `^5.1.3`), trong khi biến CSS theo component chỉ có từ Bootstrap 5.2. 2.12 dùng `^5.3.6` cho cả classic lẫn Midnight Blue. Ở 5.1, `.btn-primary` đặt thẳng `background-color: #206b82`. Đừng tin comment đầu `main.css`: bản 2.12 vẫn ghi "v5.1.3". Kiểm tra bằng `grep -c -- '--bs-btn-bg' main.css`.
+   Đặt thẳng thuộc tính cho từng trạng thái (`:hover`, `:focus`, `:active`, `.btn-check:checked + …`). Chỉ biến `--bs-primary-rgb` là còn tác dụng, vì các utility `.text-primary`/`.bg-primary` dùng nó. Tìm selector bằng cách grep mã hex trong `public/base/css/main.css`.
 7. **Thêm file template mới mà không thấy tác dụng.**
    Reloader chỉ theo dõi file đã biết. **Restart** `ckan run`.
 8. **Đổi `ckan.ini` (site title, logo…) mà giao diện không đổi.**
@@ -45,8 +73,8 @@ Thêm mục mới khi gặp bẫy mới. Ghi rõ **triệu chứng → nguyên n
 ## Image `ckan-base` / Docker
 11. **Secret bị sinh lại mỗi lần container khởi động.** `start_ckan.sh` tự sinh `SECRET_KEY`, CSRF key và JWT secret khi `ckan.ini` còn trống. Trên K8s, `ckan.ini` nằm trong filesystem tạm của container, nên mỗi lần restart là sinh mới → **mọi API token (Airflow) và session bị vô hiệu**.
     Truyền secret cố định qua env/Secret (xem phase-2, mục cần xác minh).
-12. **`pip install` trong Dockerfile bị Permission denied.** Ở `ckan-base:2.12`, `/usr/local` (site-packages) thuộc **root** (bản 2.11 là `ckan-sys`), còn user mặc định là `ckan`.
-    Dùng `USER root` khi cài, `USER ckan` khi chạy. Kiểm tra lại mỗi lần đổi base tag.
+12. **`pip install` trong Dockerfile bị Permission denied.** Ở `ckan-base:2.11`, `/usr/local` (site-packages) thuộc `ckan-sys`, còn user mặc định là `ckan`. Bản `ckan-base:2.12` thì `/usr/local` thuộc `root`.
+    Dùng `USER root` khi cài (đúng với cả hai bản), `USER ckan` khi chạy. Kiểm tra lại mỗi lần đổi base tag.
 13. **Container kêu thiếu DataStore dù không dùng.** `CKAN__PLUGINS` mặc định của ckan-base có `datastore`.
     Luôn đặt `CKAN__PLUGINS` tường minh.
 14. **Pod khởi động lâu, bị liveness kill vòng lặp.** `prerun.py` chờ DB rồi chạy `ckan db init` mỗi lần start.
@@ -68,16 +96,16 @@ Thêm mục mới khi gặp bẫy mới. Ghi rõ **triệu chứng → nguyên n
 21. **Ảnh hưởng người khác trên cluster dùng chung.**
     Audit read-only trước. Dùng `--dry-run=server` trước mỗi lần `apply`. Tên tài nguyên có tiền tố `ckan-`.
 
-## Riêng CKAN 2.12
-22. **Extension bên thứ ba lỗi import hoặc template.** 2.12 vừa ra (2026-08-26) nên nhiều extension chưa cập nhật. 2.12 cũng bỏ `PackageExtra`/`GroupExtra`, đổi `IGroupForm`.
-    Kiểm tra README, CHANGELOG hoặc CI của extension trước khi cài (Q10). Ghim phiên bản.
-23. **Khác phiên bản Python giữa local và image.** WSL dùng 3.12, còn `ckan-base:2.12.0` dùng 3.14 và không có biến thể Python khác. Một dependency có thể thiếu wheel cho 3.14 hoặc chạy khác đi.
-    Bước kiểm thử GĐ2 sẽ phát hiện. Ghim version trong requirements của extension.
-24. **`pip install git+...` hỏng trong Dockerfile.** Runtime image 2.12 là multi-stage, không có `git`/`g++`.
-    Cài từ PyPI/wheel, hoặc `apt-get install` build deps tạm thời rồi xóa.
-25. **Form POST của extension trả 400/403.** Thiếu CSRF token; 2.12 bắt buộc có.
-    Thêm `{{ h.csrf_input() }}` vào form.
-26. **Block override không hiện gì mà cũng không báo lỗi.** Block đó không tồn tại trong bộ template gốc đang dùng, ví dụ `header_site_search` không có trong Midnight Blue.
-    Kiểm tra danh sách block của đúng bộ gốc (Q9).
+## Riêng CKAN 2.11
+22. **Extension bên thứ ba lỗi import hoặc template.** Bản mới nhất của một extension có thể đã chuyển hẳn sang 2.12, ví dụ dùng tầng `ckan.files.*` hoặc bỏ phụ thuộc `PackageExtra`.
+    Kiểm tra README, CHANGELOG hoặc CI của extension để lấy **phiên bản cuối còn hỗ trợ 2.11** (Q10), rồi ghim đúng phiên bản đó.
+23. **Khác phiên bản Python giữa local và image.** WSL dùng 3.12, còn `ckan-base:2.11.6` dùng **3.10** và không có biến thể Python khác. Code extension dùng tính năng của 3.11+ (`tomllib`, `typing.Self`, `except*`…) sẽ chạy ở local nhưng lỗi trong image.
+    Viết code tương thích 3.10. Bước kiểm thử GĐ2 sẽ phát hiện. Ghim version trong requirements của extension.
+24. **Dockerfile viết theo 2.11 hỏng khi lên 2.12 sau này.** Image 2.11 là một stage, có `git`/`g++`/`wget`, nên `pip install git+...` và healthcheck `wget` chạy được. Runtime 2.12 là multi-stage, không còn các công cụ đó.
+    Khi lên 2.12: cài từ PyPI/wheel hoặc `apt-get install` build deps tạm thời, và kiểm tra lại lệnh healthcheck.
+25. **Form POST của extension chạy được ở 2.11 nhưng trả 400/403 ở 2.12**, hoặc khi đặt `ckan.csrf_protection.ignore_extensions = false`. 2.11 mặc định miễn CSRF cho blueprint của extension.
+    Luôn thêm `{{ h.csrf_input() }}` vào form.
+26. **Block override không hiện gì mà cũng không báo lỗi.** Block đó không tồn tại trong bộ template gốc đang dùng, ví dụ `featured_datasets` chỉ có ở Midnight Blue (2.12), classic 2.11 không có.
+    Kiểm tra danh sách block trong `~/ckan/default/src/ckan/ckan/templates`.
 27. **Grep block bỏ sót.** Nhiều block viết dạng `{%- block scripts %}`.
     Dùng regex `\{%-?\s*block [a-z_]+`.
