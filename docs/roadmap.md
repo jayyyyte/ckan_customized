@@ -34,14 +34,18 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 
 > **2026-09-18 — quay về CKAN 2.11.6** (Decision log). Toàn bộ repo đã chuyển sang 2.11.6: docs, script, CI của extension, theme.
 >
-> Theme phải viết lại cho classic, vì 2.11 không có Midnight Blue. Code đã xong: header, footer, trang chủ, CSS cho Bootstrap 5.1.3, `.po` theo catalog `vi` 2.11.6, unit test 9/9. Còn **chưa xem bằng mắt trên 2.11**.
+> Theme đã viết lại cho classic, vì 2.11 không có Midnight Blue.
 >
-> Hiện trạng local lúc chuyển:
-> - venv vẫn là 2.12.0, vì agent bị chặn xóa venv nên để user tự chạy script.
-> - `ckan.ini` đã bị `ckan generate config` ghi đè ngày 2026-09-17, mất cấu hình và mật khẩu (gotchas 6n).
-> - Docker Desktop đang tắt.
+> Local đã chuyển xong:
+> - User chạy `setup_step2_switch_to_2.11.sh`: CKAN 2.11.6 (`pip check` sạch), Solr `2.11-solr9`, DB lên head, có `admin`. Backup DB 2.12 nằm ở `~/ckan/backup`.
+> - Agent dựng lại dữ liệu mẫu (thêm dataset `demo-outage-summary`); smoke test 22/22 qua.
+> - Kiểm tra theme bằng ảnh chụp:
+>   - debug và prod-like;
+>   - 1366px và 400px;
+>   - tương phản các cặp màu chính ≥ 5.5:1.
+> - Sửa những gì phát hiện: link trong tiêu đề thẻ, chữ tiếng Việt bị ngắt giữa từ, vài chuỗi dịch; `ckan-shot.ini` thêm section logging (gotchas 6s–6u).
 >
-> **Việc tiếp theo:** user chạy `setup_step2_switch_to_2.11.sh`, rồi agent dựng lại dữ liệu mẫu, kiểm tra theme và tick các mục còn lại.
+> **GĐ1 xong trên 2.11.6, sẵn sàng sang GĐ2.** Còn treo, không chặn GĐ2: bộ nhận diện thật (Q2) và test cần DB.
 >
 > *Lịch sử 2026-09-14, trên 2.12.0:* GĐ1 đã xong phần kỹ thuật. CKAN 2.12.0 cài từ source, Solr chạy, smoke test 17/17 qua. Đã chốt Q1 (`ckanext-lakehouse_theme`), Q2 (placeholder) và Q9 (Midnight Blue). Theme làm xong checklist và đã kiểm tra ở chế độ debug lẫn prod-like, trên desktop và mobile. `setup_step1_system.sh` đã được sửa: bỏ `git-core` vì gói này không còn trên 24.04, và cho phép chạy lại nhiều lần.
 
@@ -55,20 +59,32 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
   - CI extension dùng `ckan-dev:2.11`;
   - Q9 → classic;
   - theme viết lại cho classic, thêm helper `lakehouse_theme_recent_datasets`, unit test 9/9.
-- [ ] **User tự chạy** `setup_step2_switch_to_2.11.sh` ([phase-1 bước 1.1b](phase-1-local-source.md#bước-11b--chuyển-bản-cài-2120-sang-2116-user-tự-chạy-không-cần-sudo)). Script làm:
+- [x] **User tự chạy** `setup_step2_switch_to_2.11.sh` ([phase-1 bước 1.1b](phase-1-local-source.md#bước-11b--chuyển-bản-cài-2120-sang-2116-user-tự-chạy-không-cần-sudo)) (2026-09-18). Script đã làm:
   - venv mới với CKAN **2.11.6** từ source;
   - sinh lại `ckan.ini` bằng 2.11, user tự điền mật khẩu DB;
   - Solr `ckan/ckan-solr:2.11-solr9`;
   - backup rồi xóa schema 2.12, sau đó `db init` + `db upgrade -p activity`;
   - tạo sysadmin `admin`.
-- [ ] Smoke test lại trên 2.11.6 (agent, qua API): org `lakehouse-demo`, dataset `demo-curated-orders` có CSV upload và URL `jdbc:trino://…`, tìm kiếm (cả tiếng Việt), trang web 200
-- [ ] Kiểm tra theme classic bằng mắt:
-  - chế độ debug và prod-like (`ckan-shot.ini`, cổng 5002);
-  - bề rộng 1366px và 400px;
-  - tương phản ≥ 4.5:1;
-  - trang chủ, `/dataset`, trang dataset, trang resource Trino, `/organization`.
+- [x] Smoke test lại trên 2.11.6, qua API, 22/22 (2026-09-18):
+  - `status_show` báo 2.11.6;
+  - org `lakehouse-demo`;
+  - dataset `demo-curated-orders` (CSV upload tải về khớp nội dung, URL `jdbc:trino://…`) và `demo-outage-summary`;
+  - tìm kiếm `orders`, `đơn hàng`, `tags:gold`;
+  - 10 trang web trả 200 và có marker của theme;
+  - ô tìm kiếm header bị ẩn ở `/` và `/dataset/`.
 
-  Chỉnh CSS nếu cần.
+  Token API tạm (`user token add`) đã thu hồi.
+- [x] Kiểm tra theme classic bằng ảnh chụp headless Chrome (2026-09-18):
+  - chế độ debug (:5000) và prod-like (:5002);
+  - bề rộng 1366px và 400px;
+  - trang chủ, `/dataset/`, resource Trino, `/organization/`;
+  - tương phản các cặp màu chính từ 5.54:1 trở lên.
+
+  Đã sửa:
+  - link "Xem tất cả" bị lệch vì clearfix trong flex (gotchas 6t);
+  - mô tả org bị ngắt giữa từ (6u);
+  - "số bộ dữ liệu tìm thấy" / "Member" chưa dịch hoặc dịch vụng;
+  - thiếu section logging trong `ckan-shot.ini` (6s).
 
 ### Giai đoạn 2 — Đóng gói Docker · [chi tiết](phase-2-docker-packaging.md)
 - [ ] `.gitignore` (bỏ qua `.env`, `secrets.env`, `*.kubeconfig`, `ckan.ini`, `*.tar*`)

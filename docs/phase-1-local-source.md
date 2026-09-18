@@ -131,7 +131,7 @@ Ghi chú theo `config_declaration.yaml` của 2.11.6:
 ```bash
 ckan -c ~/ckan/etc/ckan.ini db init
 ckan -c ~/ckan/etc/ckan.ini db upgrade -p activity      # db init KHÔNG migrate bảng của plugin
-ckan -c ~/ckan/etc/ckan.ini db pending-migrations       # phải không còn gì
+ckan -c ~/ckan/etc/ckan.ini db pending-migrations       # không có dòng "… unapplied migrations" là sạch (lệnh luôn in "Upgrading DB: SUCCESS")
 ckan -c ~/ckan/etc/ckan.ini sysadmin add admin email=admin@localhost name=admin   # hỏi mật khẩu
 ckan -c ~/ckan/etc/ckan.ini run            # http://localhost:5000
 ```
@@ -146,7 +146,9 @@ ckan -c ~/ckan/etc/ckan.ini run            # http://localhost:5000
 3. Tìm kiếm dataset ở `/dataset`. Thấy kết quả nghĩa là Solr hoạt động.
 4. API: `curl http://localhost:5000/api/3/action/status_show` và `.../package_search?q=`.
 
-Agent tự làm được các bước trên qua API mà không cần mật khẩu admin: `ckan -c ... user token add admin smoke` in ra một API token để dùng tạm; xóa token sau khi xong.
+Agent tự làm được các bước trên qua API mà không cần mật khẩu admin: `ckan -c ... user token add admin smoke` in ra một API token để dùng tạm; thu hồi bằng action `api_token_revoke` sau khi xong.
+
+Ngày 2026-09-18 (trên 2.11.6), dữ liệu mẫu gồm org `lakehouse-demo`, dataset `demo-curated-orders` (CSV + JDBC) và `demo-outage-summary` (CSV).
 
 ## Bước 1.6b — Theme gốc (Q9): classic
 
@@ -172,9 +174,8 @@ pybabel compile -d ckanext-lakehouse_theme/ckanext/lakehouse_theme/i18n -D ckane
 - **Xem thử như production** (tắt debug, asset được bundle/minify, không có toolbar) mà không phải sửa `ckan.ini`:
   1. Tạo `~/ckan/etc/ckan-shot.ini`, trong `[DEFAULT]` đặt `debug = false`.
   2. Trong `[app:main]` đặt `use = config:/home/tlinh/ckan/etc/ckan.ini`, `ckan.site_url = http://localhost:5002`, `ckan.webassets.path = …/webassets-prod`.
-  3. Chạy `ckan -c ~/ckan/etc/ckan-shot.ini run -p 5002`.
-
-  File này đã có và vẫn dùng được với 2.11.
+  3. Ở 2.11, chép thêm các section logging (`[loggers]` … `[formatter_generic]`) vào file này. Thiếu thì CLI crash `KeyError: 'formatters'` (gotchas 6s). File hiện có đã được bổ sung ngày 2026-09-18.
+  4. Chạy `ckan -c ~/ckan/etc/ckan-shot.ini run -p 5002`.
 - Unit test thuần: `python -m pytest -o addopts="" -p no:ckan -p no:ckan_fixtures ckanext/lakehouse_theme/tests/test_helpers.py` (xem gotchas 6k).
 - Cách làm theme chi tiết: [ckan-theming.md](ckan-theming.md).
 
@@ -188,8 +189,8 @@ Chỉ làm khi Q4 được chốt.
 
 ## Tiêu chí hoàn thành GĐ1
 
-Đã đạt hết trên 2.12.0 (2026-09-14). Sau khi quay về 2.11.6 phải kiểm tra lại:
-- [ ] Bước 1.1b chạy xong: `pip show ckan` ra 2.11.6, Solr `2.11-solr9` ping OK, `db pending-migrations` trống.
-- [ ] Smoke test 1.6 qua hết trên 2.11.6.
-- [ ] Theme trên classic 2.11 được kiểm tra bằng mắt: chế độ debug và prod-like, desktop và mobile. Các mục trong checklist theme vẫn đạt.
+Đã đạt hết trên 2.12.0 (2026-09-14), rồi kiểm tra lại trên 2.11.6:
+- [x] Bước 1.1b chạy xong: `pip show ckan` ra 2.11.6, `pip check` sạch, Solr `2.11-solr9` ping OK, `db version` ở head, không còn migration treo (2026-09-18).
+- [x] Smoke test 1.6 qua hết trên 2.11.6: 22/22 (2026-09-18).
+- [x] Theme trên classic 2.11 được kiểm tra bằng ảnh chụp: chế độ debug và prod-like, 1366px và 400px. Các mục trong checklist theme vẫn đạt (2026-09-18).
 - [x] Mọi key `ckan.ini` khác mặc định đã ghi vào [bảng ánh xạ cấu hình](phase-2-docker-packaging.md#bảng-ánh-xạ-cấu-hình) (2026-09-14, rà lại cho 2.11 ngày 2026-09-18).

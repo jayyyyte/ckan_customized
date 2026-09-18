@@ -206,16 +206,16 @@ Nạp asset trong `templates/base.html` (block `styles` và `scripts` đều có
 - **htmx** có sẵn cho các tương tác nhỏ mà không cần viết JS module.
 
 ## Checklist theme dự kiến
-Điều chỉnh theo yêu cầu thật (Q2). Các mục đánh dấu "(2.11: chờ kiểm tra)" đã viết code cho classic nhưng chưa xem bằng mắt trên 2.11.6.
+Điều chỉnh theo yêu cầu thật (Q2). Các mục dưới đây đều đã kiểm tra lại trên classic 2.11.6 bằng ảnh chụp ngày 2026-09-18.
 - [x] Theme gốc (Q9) → ~~Midnight Blue (2026-09-14)~~ → **classic** (2026-09-18, 2.11 chỉ có classic)
 - [x] Logo + favicon (placeholder SVG), `ckan.site_title`, `ckan.site_description`, `ckan.favicon` (2026-09-14)
-- [x] Bảng màu teal gom vào token `--lh-*` (2026-09-14). CSS viết lại cho Bootstrap 5.1.3 của classic (2026-09-18); font dùng font hệ thống của classic. 2.11: chờ kiểm tra
-- [x] Header: logo, menu có sẵn (Dữ liệu, Tổ chức, Nhóm, Thông tin), ô tìm kiếm (của classic), ẩn ở trang đã có ô tìm kiếm. 2.11: chờ kiểm tra
-- [x] Trang chủ: hero giới thiệu portal + số dataset/tổ chức, ô tìm kiếm của classic, "Bộ dữ liệu mới cập nhật", org/nhóm nổi bật (2026-09-18). 2.11: chờ kiểm tra
-- [x] Footer: giới thiệu, đơn vị/liên hệ (cấu hình), link Khám phá, OpenMetadata, Trino JDBC, CKAN API, attribution, chọn ngôn ngữ. 2.11: chờ kiểm tra
+- [x] Bảng màu teal gom vào token `--lh-*` (2026-09-14). CSS viết lại cho Bootstrap 5.1.3 của classic (2026-09-18); font dùng font hệ thống của classic
+- [x] Header: thanh tài khoản, logo, menu có sẵn (Dữ liệu, Tổ chức, Nhóm, Thông tin), ô tìm kiếm dạng pill (của classic), ẩn ở trang đã có ô tìm kiếm (2026-09-18)
+- [x] Trang chủ: hero giới thiệu portal + số dataset/tổ chức, ô tìm kiếm của classic, "Bộ dữ liệu mới cập nhật", org/nhóm nổi bật (2026-09-18)
+- [x] Footer: giới thiệu, đơn vị/liên hệ (cấu hình), link Khám phá, OpenMetadata, Trino JDBC, CKAN API, attribution, chọn ngôn ngữ (2026-09-18)
 - [x] Trang resource: hộp "Cách kết nối" cho `jdbc:trino://` (JDBC URL, Trino CLI, Python, nút sao chép) (2026-09-14; block `resource_read_url` có ở 2.11)
-- [x] Tiếng Việt: `ITranslation` + `.po` bù chuỗi thiếu của catalog `vi` 2.11.6 ở header, trang chủ, dataset, resource (2026-09-18). Còn sót nhãn tiếng Anh ở trang quản trị/form, rà tiếp khi dùng
-- [ ] Responsive + tương phản trên classic: kiểm tra ở 400px và 1366px (đã đạt với Midnight Blue ngày 2026-09-14)
+- [x] Tiếng Việt: `ITranslation` + `.po` bù chuỗi thiếu hoặc dịch vụng của catalog `vi` 2.11.6 ở header, trang chủ, dataset, resource, tổ chức (2026-09-18). Còn sót nhãn tiếng Anh ở trang quản trị/form, rà tiếp khi dùng
+- [x] Responsive + tương phản trên classic: 400px và 1366px không tràn ngang; các cặp màu chính từ 5.54:1 trở lên (2026-09-18)
 - [ ] Thay placeholder bằng bộ nhận diện thật khi có (Q2): logo SVG trong `logo_mark.html` + `favicon.svg`, token `--lh-*`, `ckanext.lakehouse_theme.organization_name` / `contact_email`
 
 ## Kiểm thử extension (tùy chọn)
