@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# CKAN 2.12.x prerequisites — run this INSIDE your WSL Ubuntu terminal.
+# CKAN 2.11.x prerequisites — run this INSIDE your WSL Ubuntu terminal.
+# (Same packages as 2.12; next step: setup_step2_switch_to_2.11.sh.)
 # It needs your sudo password interactively, so it can't be run non-interactively for you.
 # Safe to re-run: existing role/database are detected and skipped.
 #
