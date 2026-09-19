@@ -1,0 +1,180 @@
+@use "mixins" as *;
+
+// Page-wide defaults. Element selectors go through :where() so they keep the
+// lowest specificity and every .evn-* component can override them.
+
+body.evn {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--evn-paper);
+  color: var(--evn-ink);
+  font-family: var(--evn-font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+// Classic underlines links on hover (a:hover); components here signal hover by colour.
+:where(.evn) a {
+  color: var(--evn-blue);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--evn-orange-ink);
+    text-decoration: none;
+  }
+}
+
+// Running text keeps the underline, so links stay distinguishable without colour.
+:where(.evn-prose, .evn-card__text, .evn-page-hero__lead) a {
+  text-decoration: underline;
+}
+
+:where(.evn) :focus-visible {
+  @include focus-ring;
+}
+
+:where(.evn) input,
+:where(.evn) select,
+:where(.evn) button,
+:where(.evn) textarea {
+  font-family: inherit;
+}
+
+:where(.evn) dd {
+  margin: 0;
+}
+
+:where(.evn) dt {
+  font-weight: 400;
+}
+
+:where(.evn) summary {
+  cursor: pointer;
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+}
+
+// Classic main.css appends ":" to every <label> (label:after). The theme's labels
+// wrap inputs or already read as prompts, so drop it for them.
+.evn-hero-search__field,
+.evn-searchbar__field,
+.evn-check,
+.evn-sort label,
+.evn-searchpill label,
+.evn-viz__controls label {
+  &::after {
+    content: none;
+  }
+}
+
+.evn-container {
+  width: 100%;
+  max-width: var(--evn-container);
+  margin-inline: auto;
+  padding-inline: var(--evn-gutter);
+}
+
+.evn-page {
+  flex: 1 0 auto;
+}
+
+.evn-flash .alert {
+  margin: 16px 0 0;
+  border-radius: var(--evn-radius-tile);
+}
+
+.evn-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+// Main column + sidebar. Variants set the sidebar width/side; one column below 1100px.
+.evn-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 310px);
+  gap: 32px;
+  align-items: start;
+
+  &__main,
+  &__aside {
+    min-width: 0;
+  }
+
+  &--detail {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
+    gap: 28px;
+    padding-block: 28px 60px;
+  }
+
+  &--mds {
+    grid-template-columns: minmax(0, 272px) minmax(0, 1fr);
+    gap: 28px;
+    padding-block: 28px 60px;
+  }
+
+  @include below(lg) {
+    &,
+    &--detail,
+    &--mds {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}
+
+.evn-muted {
+  margin: 0;
+  color: var(--evn-muted-2);
+}
+
+.evn-prose {
+  color: var(--evn-ink-2);
+  font-size: 15px;
+  line-height: 1.85;
+  text-wrap: pretty;
+
+  p {
+    margin: 0 0 12px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.evn-offscreen {
+  position: fixed;
+  top: 0;
+  left: -9999px;
+  opacity: 0;
+}
+
+// Skeleton while a filter/sort navigation is loading (no full-page spinner).
+@keyframes evn-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.evn-is-loading .evn-dataset-list .evn-dataset {
+  border-color: transparent;
+  background: var(--evn-surface-4);
+  box-shadow: none;
+  animation: evn-pulse 1.2s ease-in-out infinite;
+
+  > * {
+    visibility: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}

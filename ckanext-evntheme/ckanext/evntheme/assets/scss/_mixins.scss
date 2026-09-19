@@ -1,0 +1,56 @@
+@use "sass:map";
+@use "tokens" as *;
+
+// Media queries by breakpoint name: `@include below(lg) { ... }` means "< 1100px".
+@mixin below($name) {
+  @media (max-width: map.get($breakpoints, $name) - 0.02px) {
+    @content;
+  }
+}
+
+@mixin from($name) {
+  @media (min-width: map.get($breakpoints, $name)) {
+    @content;
+  }
+}
+
+@mixin focus-ring($offset: 2px) {
+  outline: 2px solid var(--evn-blue);
+  outline-offset: $offset;
+}
+
+@mixin card {
+  background: var(--evn-surface);
+  border: 1px solid var(--evn-line);
+  border-radius: var(--evn-radius-card);
+  box-shadow: var(--evn-shadow-card);
+}
+
+// Hover lift for clickable cards (no transform, as the brief asks).
+@mixin card-hover {
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
+
+  &:hover {
+    border-color: var(--evn-line-strong);
+    box-shadow: var(--evn-shadow-card-hover);
+  }
+}
+
+@mixin heading($size, $weight: 700) {
+  font-family: var(--evn-font-heading);
+  font-size: $size;
+  font-weight: $weight;
+  color: var(--evn-ink-strong);
+}
+
+@mixin reset-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+@mixin ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

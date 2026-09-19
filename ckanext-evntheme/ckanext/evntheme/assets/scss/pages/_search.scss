@@ -1,0 +1,418 @@
+@use "../mixins" as *;
+
+// Dataset lists and search pages (also organisation and domain pages).
+
+// --- Dataset card -------------------------------------------------------------
+
+.evn-dataset-list {
+  @include reset-list;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  &--grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+
+    .evn-dataset__notes {
+      -webkit-line-clamp: 3;
+    }
+  }
+}
+
+.evn-dataset {
+  @include card;
+  @include card-hover;
+  position: relative;
+  height: 100%;
+  padding: 20px 22px;
+
+  &__head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 9px;
+  }
+
+  &__title {
+    @include heading(17.5px);
+    flex: 1 1 280px;
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  &__flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  &__notes {
+    display: -webkit-box;
+    max-width: 660px;
+    margin: 0 0 14px;
+    overflow: hidden;
+    color: var(--evn-muted);
+    font-size: 14.5px;
+    line-height: 1.75;
+    text-wrap: pretty;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    align-items: center;
+    color: var(--evn-muted-2);
+    font-size: 13px;
+  }
+
+  &__org {
+    display: inline-flex;
+    gap: 7px;
+    align-items: center;
+  }
+}
+
+// --- Title band ---------------------------------------------------------------
+
+.evn-band {
+  border-bottom: 1px solid var(--evn-line-2);
+  background: var(--evn-surface-2);
+
+  > .evn-container {
+    padding-block: 22px 24px;
+  }
+
+  &__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.evn-searchbar {
+  display: flex;
+  flex: 1 1 520px;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 760px;
+  margin: 0;
+
+  &__field {
+    display: flex;
+    flex: 1 1 280px;
+    gap: 11px;
+    align-items: center;
+    min-width: 0;
+    margin: 0;
+    padding: 0 14px;
+    border: 1px solid var(--evn-line-input);
+    border-radius: var(--evn-radius-tile);
+    background: var(--evn-surface);
+    color: var(--evn-blue);
+    font-weight: 400;
+
+    &:focus-within {
+      border-color: var(--evn-blue);
+      box-shadow: var(--evn-focus);
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 0;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: var(--evn-ink);
+      font-size: 15px;
+    }
+  }
+
+  .evn-btn {
+    padding: 12px 26px;
+    border-radius: var(--evn-radius-tile);
+  }
+}
+
+.evn-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  align-items: center;
+  margin-top: 14px;
+
+  &__label {
+    color: var(--evn-muted-2);
+    font-size: 13px;
+  }
+}
+
+// --- Layout -----------------------------------------------------------------------
+
+.evn-search__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 266px) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+  padding-block: 26px 60px;
+
+  // 768-1100px: one column, filters after the results (as the brief asks).
+  @include below(lg) {
+    grid-template-columns: minmax(0, 1fr);
+
+    .evn-facets {
+      order: 2;
+    }
+  }
+
+  // < 768px: filters first, folded into the "Bộ lọc" disclosure.
+  @include below(md) {
+    .evn-facets {
+      order: 0;
+    }
+  }
+}
+
+// --- Facets -------------------------------------------------------------------------
+
+.evn-facets {
+  min-width: 0;
+
+  &__toggle {
+    display: none;
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 0;
+  }
+
+  @include below(md) {
+    &__toggle {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      min-height: 44px;
+      margin-bottom: 12px;
+      padding: 10px 16px;
+      border: 1px solid var(--evn-line);
+      border-radius: var(--evn-radius-tile);
+      background: var(--evn-surface);
+      color: var(--evn-ink-strong);
+      font-weight: 700;
+
+      .evn-chevron {
+        margin-left: auto;
+      }
+    }
+  }
+}
+
+.evn-facet {
+  overflow: hidden;
+  border: 1px solid var(--evn-line);
+  border-radius: var(--evn-radius-card);
+  background: var(--evn-surface);
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--evn-surface-4);
+
+    .evn-facet:not([open]) > & {
+      border-bottom-color: transparent;
+    }
+  }
+
+  &__title {
+    @include heading(14.5px);
+  }
+
+  &__list {
+    @include reset-list;
+    padding: 8px 12px 4px;
+  }
+
+  &__more {
+    display: inline-block;
+    margin: 2px 18px 14px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  &__empty {
+    margin: 0;
+    padding: 12px 18px 16px;
+    color: var(--evn-muted-2);
+    font-size: 13.5px;
+  }
+}
+
+// --- Results ------------------------------------------------------------------------
+
+.evn-results {
+  min-width: 0;
+
+  &__head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  &__title {
+    margin: 0;
+    color: var(--evn-ink-2);
+    font-family: var(--evn-font-body);
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+
+    strong {
+      color: var(--evn-ink-strong);
+      font-weight: 700;
+    }
+  }
+
+  &__tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+}
+
+// Core pager markup (BootstrapPage.pager): .pagination-wrapper > ul.pagination > li.page-item > a.page-link
+.evn-pager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 22px;
+
+  &__range {
+    margin: 0;
+    color: var(--evn-muted-2);
+    font-size: 13.5px;
+  }
+
+  .pagination-wrapper {
+    margin: 0;
+  }
+
+  .pagination {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin: 0;
+  }
+
+  .pagination .page-link {
+    min-width: 36px;
+    margin: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--evn-line);
+    border-radius: 11px;
+    background: var(--evn-surface);
+    color: var(--evn-ink-2);
+    font-size: 13.5px;
+    font-weight: 600;
+    text-align: center;
+
+    &:hover {
+      border-color: var(--evn-blue);
+      color: var(--evn-blue);
+    }
+  }
+
+  .pagination .page-item.active .page-link {
+    border-color: var(--evn-blue);
+    background: var(--evn-blue);
+    color: #fff;
+  }
+
+  .pagination .page-item.disabled .page-link,
+  .pagination .pager_dotdot {
+    border-color: transparent;
+    background: transparent;
+    color: var(--evn-icon);
+  }
+}
+
+// --- Organisation / domain heading inside the band ----------------------------------
+
+.evn-group-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px 28px;
+  align-items: end;
+  margin-bottom: 20px;
+
+  &__id {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    min-width: 0;
+  }
+
+  &__kicker {
+    margin: 2px 0 4px;
+    color: var(--evn-muted-2);
+    font-size: 13px;
+  }
+
+  &__title {
+    margin: 0 0 8px;
+    color: var(--evn-navy);
+    font-family: var(--evn-font-heading);
+    font-size: clamp(24px, 3.2vw, 34px);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    text-wrap: balance;
+  }
+
+  &__desc {
+    max-width: 640px;
+    margin: 0 0 8px;
+    color: var(--evn-muted);
+    font-size: 14.5px;
+    line-height: 1.75;
+  }
+
+  &__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+
+  &__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin: 0;
+  }
+
+  @include below(md) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

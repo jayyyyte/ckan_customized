@@ -1,0 +1,1019 @@
+@use "sass:map";
+@use "tokens" as *;
+@use "mixins" as *;
+
+// Reusable pieces: icons, buttons, cards, badges, avatars, form controls, tables,
+// segmented controls, chips, stats, empty/error states.
+
+// --- Icons ------------------------------------------------------------------
+
+.evn-icon {
+  flex: none;
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: -0.2em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  &.is-filled {
+    fill: currentColor;
+  }
+}
+
+.evn-chevron {
+  color: var(--evn-icon);
+  transition: transform 0.18s ease;
+
+  details:not([open]) > summary & {
+    transform: rotate(-90deg);
+  }
+}
+
+// --- Buttons ------------------------------------------------------------------
+
+.evn-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border: 1px solid transparent;
+  border-radius: 24px;
+  font-family: var(--evn-font-heading);
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+
+  &:disabled {
+    cursor: progress;
+    opacity: 0.7;
+  }
+}
+
+.evn-btn--cta {
+  background: var(--evn-cta);
+  color: #fff;
+
+  &:hover {
+    background: var(--evn-cta-hover);
+    color: #fff;
+  }
+}
+
+.evn-btn--primary {
+  background: var(--evn-blue);
+  color: #fff;
+
+  &:hover {
+    background: var(--evn-blue-hover);
+    color: #fff;
+  }
+}
+
+.evn-btn--outline {
+  background: var(--evn-surface);
+  border-color: var(--evn-line-strong);
+  color: var(--evn-ink);
+  font-family: var(--evn-font-body);
+  font-size: 14px;
+  font-weight: 600;
+
+  &:hover {
+    border-color: var(--evn-blue);
+    color: var(--evn-blue);
+  }
+}
+
+.evn-btn--sm {
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 13.5px;
+}
+
+.evn-btn--lg {
+  padding: 12px 24px;
+}
+
+.evn-btn--block {
+  width: 100%;
+}
+
+.evn-link-strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.evn-link-accent {
+  color: var(--evn-orange-ink);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+// --- Cards --------------------------------------------------------------------
+
+.evn-card {
+  @include card;
+  min-width: 0;
+}
+
+.evn-card--pad {
+  padding: 20px 22px;
+}
+
+.evn-card--pad-lg {
+  padding: 24px 26px;
+}
+
+.evn-card--muted {
+  border-color: transparent;
+  border-radius: var(--evn-radius-card-lg);
+  background: var(--evn-surface-2);
+  box-shadow: none;
+}
+
+.evn-card__title {
+  @include heading(16px);
+  margin: 0 0 12px;
+  line-height: 1.35;
+
+  &--lg {
+    font-size: 18px;
+  }
+}
+
+.evn-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 26px;
+  border-bottom: 1px solid var(--evn-surface-4);
+
+  .evn-card__title {
+    margin: 0;
+  }
+}
+
+.evn-card__head--title {
+  @include heading(15.5px);
+  display: block;
+  margin: 0;
+  padding: 15px 20px;
+}
+
+.evn-card__meta {
+  color: var(--evn-muted-2);
+  font-size: 13px;
+}
+
+.evn-card__text {
+  margin: 0 0 14px;
+  color: var(--evn-muted-b);
+  font-size: 14.5px;
+  line-height: 1.75;
+
+  &--sm {
+    margin: 14px 0 0;
+    font-size: 13.5px;
+  }
+}
+
+.evn-card__body {
+  padding: 22px 26px;
+}
+
+.evn-card__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 22px;
+  border-top: 1px solid var(--evn-surface-4);
+}
+
+// Whole-card link: the title link's ::after covers the card.
+.evn-stretched {
+  color: inherit;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: var(--evn-radius-card);
+  }
+
+  &:hover {
+    color: inherit;
+  }
+
+  &:focus-visible {
+    outline: none;
+
+    &::after {
+      @include focus-ring;
+    }
+  }
+}
+
+// --- Badges ---------------------------------------------------------------------
+
+.evn-kind,
+.evn-badge {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+@each $name, $kind in $kinds {
+  .evn-kind--#{$name},
+  .evn-badge--kind-#{$name} {
+    background: map.get($kind, bg);
+    color: map.get($kind, ink);
+  }
+
+  .evn-dataset--#{$name} {
+    --evn-kind-dot: #{map.get($kind, dot)};
+  }
+}
+
+.evn-badge {
+  font-weight: 600;
+
+  &--kind-master,
+  &--kind-transaction,
+  &--kind-reference {
+    font-weight: 700;
+  }
+
+  &--outline {
+    border: 1px solid var(--evn-line-input);
+    background: var(--evn-surface);
+    color: var(--evn-muted-b);
+  }
+
+  &--good {
+    background: var(--evn-green-soft);
+    color: var(--evn-green-ink);
+  }
+
+  &--danger {
+    background: var(--evn-red-soft);
+    color: var(--evn-red-ink);
+  }
+}
+
+.evn-format {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: var(--evn-radius-badge);
+  background: var(--evn-format, #{map.get($formats, other)});
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+@each $name, $color in $formats {
+  .evn-format--#{$name} {
+    --evn-format: #{$color};
+  }
+}
+
+.evn-formats {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.evn-flag {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid var(--evn-line-input);
+  border-radius: 14px;
+  color: var(--evn-muted-2);
+  font-size: 12px;
+  font-weight: 700;
+
+  &--danger {
+    border-color: transparent;
+    background: var(--evn-red-soft);
+    color: var(--evn-red-ink);
+  }
+}
+
+@each $name, $status in $statuses {
+  .evn-status--#{$name} {
+    background: map.get($status, bg);
+    color: map.get($status, ink);
+  }
+}
+
+.evn-status {
+  display: inline-flex;
+  padding: 4px 11px;
+  border-radius: 13px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.evn-status-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+
+  &--green { background: var(--evn-green); }
+  &--blue { background: var(--evn-blue); }
+  &--orange { background: var(--evn-orange); }
+  &--sand { background: var(--evn-icon); }
+}
+
+.evn-fresh {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+
+  &::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  &--fresh { color: var(--evn-green-ink); }
+  &--aging { color: var(--evn-aging); }
+  &--stale { color: var(--evn-red); }
+}
+
+.evn-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--evn-kind-dot, var(--evn-icon));
+}
+
+// --- Tones (avatars, domain tiles) ------------------------------------------------
+
+@each $name, $tone in $tones {
+  .evn-tone--#{$name} {
+    --evn-tone-ink: #{map.get($tone, ink)};
+    --evn-tone-dot: #{map.get($tone, dot)};
+    --evn-tone-bg: #{map.get($tone, bg)};
+  }
+}
+
+.evn-avatar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  background: var(--evn-tone-bg, var(--evn-surface-4));
+  color: var(--evn-tone-ink, var(--evn-ink-2));
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  line-height: 1;
+
+  &--xs { width: 26px; height: 26px; border-radius: 9px; font-size: 9.5px; letter-spacing: -0.4px; }
+  &--sm { width: 34px; height: 34px; border-radius: 12px; font-size: 11.5px; }
+  &--md { width: 44px; height: 44px; border-radius: 14px; font-size: 12px; }
+
+  &--xl {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    font-family: var(--evn-font-heading);
+    font-size: 17px;
+    font-weight: 800;
+  }
+
+  &--image {
+    border: 1px solid var(--evn-line);
+    background: var(--evn-surface);
+    object-fit: contain;
+  }
+}
+
+// --- Stats (value above label, markup keeps <dt> first) -----------------------------
+
+.evn-stat,
+.evn-hero-card,
+.evn-figure {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.evn-stat {
+  align-items: center;
+  text-align: center;
+
+  &__value {
+    font-family: var(--evn-font-heading);
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  &__label {
+    margin-top: 7px;
+    color: var(--evn-muted-2);
+    font-size: 13px;
+  }
+}
+
+.evn-hero-card {
+  flex: 1 1 130px;
+  padding: 18px 20px;
+  border: 1px solid var(--evn-line);
+  border-radius: var(--evn-radius-card);
+  background: var(--evn-surface);
+
+  &__value {
+    font-family: var(--evn-font-heading);
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.25;
+  }
+
+  &__label {
+    margin-top: 6px;
+    color: var(--evn-muted-2);
+    font-size: 13px;
+  }
+}
+
+.evn-figure {
+  &__value {
+    font-family: var(--evn-font-heading);
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.25;
+  }
+
+  &__label {
+    margin-top: 4px;
+    color: var(--evn-muted-2);
+    font-size: 12.5px;
+  }
+}
+
+// Tone of the figure value, shared by the three stat styles.
+@each $block in (evn-stat, evn-hero-card, evn-figure) {
+  .#{$block}--navy .#{$block}__value { color: var(--evn-navy); }
+  .#{$block}--blue .#{$block}__value { color: var(--evn-blue); }
+  .#{$block}--green .#{$block}__value { color: var(--evn-green); }
+  .#{$block}--orange .#{$block}__value { color: var(--evn-orange-display); }
+}
+
+// KPI tiles: label above value (the natural <dt>/<dd> order).
+.evn-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin: 22px 0 0;
+
+  &--compact {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    margin-top: 18px;
+  }
+}
+
+.evn-kpi {
+  padding: 16px 18px;
+  border-radius: var(--evn-radius-tile);
+  background: var(--evn-surface-3);
+
+  &__label {
+    margin-bottom: 7px;
+    color: var(--evn-muted-3);
+    font-size: 13px;
+  }
+
+  &__value {
+    color: var(--evn-blue);
+    font-family: var(--evn-font-heading);
+    font-size: 21px;
+    font-weight: 800;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  &--ink &__label {
+    margin-bottom: 6px;
+    font-size: 12.5px;
+  }
+
+  &--ink &__value {
+    color: var(--evn-ink-strong);
+    font-family: var(--evn-font-body);
+    font-size: 15px;
+    font-weight: 700;
+  }
+}
+
+// --- Form controls ------------------------------------------------------------------
+
+.evn-select {
+  padding: 7px 9px;
+  border: 1px solid var(--evn-line);
+  border-radius: 10px;
+  background-color: var(--evn-surface);
+  color: var(--evn-muted);
+  font-size: 14px;
+
+  &--sm {
+    font-size: 13.5px;
+  }
+}
+
+.evn-input {
+  padding: 10px 13px;
+  border: 1px solid var(--evn-line);
+  border-radius: var(--evn-radius-input);
+  background: var(--evn-paper);
+  color: var(--evn-ink-2);
+  font-size: 13.5px;
+
+  &:focus {
+    border-color: var(--evn-blue);
+    outline: none;
+    box-shadow: var(--evn-focus);
+  }
+}
+
+.evn-sort {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  margin: 0;
+  color: var(--evn-muted-2);
+  font-size: 13.5px;
+
+  label {
+    margin: 0;
+    font-weight: 400;
+  }
+}
+
+// Custom checkbox: the real input stays focusable, the box mirrors its state.
+.evn-check {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0;
+  padding: 8px 6px;
+  border-radius: 8px;
+  color: var(--evn-ink-2);
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--evn-surface-3);
+  }
+
+  &__input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
+  &__box {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 17px;
+    height: 17px;
+    border: 1.5px solid var(--evn-icon);
+    border-radius: 5px;
+    background: var(--evn-surface);
+    color: #fff;
+
+    .evn-icon {
+      width: 12px;
+      height: 12px;
+      stroke-width: 2.5;
+      opacity: 0;
+    }
+  }
+
+  &__input:checked + &__box {
+    border-color: var(--evn-blue);
+    background: var(--evn-blue);
+
+    .evn-icon {
+      opacity: 1;
+    }
+  }
+
+  &__input:focus-visible + &__box {
+    @include focus-ring;
+  }
+
+  &__label {
+    @include ellipsis;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__count {
+    color: var(--evn-muted-3);
+    font-size: 12.5px;
+  }
+}
+
+// --- Segmented control ---------------------------------------------------------------
+
+.evn-segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 22px;
+  background: var(--evn-surface-4);
+
+  &__item {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    padding: 6px 14px;
+    border: 0;
+    border-radius: 18px;
+    background: transparent;
+    color: var(--evn-muted-2);
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--evn-ink-strong);
+    }
+
+    &[aria-pressed="true"],
+    &[aria-selected="true"],
+    &.is-active {
+      background: var(--evn-surface);
+      color: var(--evn-ink-strong);
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(80, 60, 30, 0.08);
+    }
+  }
+
+  &--lg {
+    padding: 5px;
+    border-radius: 24px;
+
+    .evn-segmented__item {
+      padding: 7px 15px;
+      border-radius: 20px;
+    }
+  }
+}
+
+// --- Chips ---------------------------------------------------------------------------
+
+.evn-pill-link {
+  padding: 6px 14px;
+  border: 1px solid var(--evn-line-2);
+  border-radius: var(--evn-radius-pill);
+  background: var(--evn-surface);
+  color: var(--evn-muted);
+  font-size: 13.5px;
+
+  &:hover {
+    border-color: var(--evn-blue-line);
+    color: var(--evn-blue);
+  }
+}
+
+.evn-chips {
+  @include reset-list;
+  display: contents;
+}
+
+.evn-chip {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 6px 4px 13px;
+  border: 1px solid var(--evn-blue-line);
+  border-radius: var(--evn-radius-pill);
+  background: var(--evn-blue-soft);
+  color: var(--evn-blue);
+  font-size: 13.5px;
+
+  &__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: var(--evn-muted-2);
+
+    &:hover {
+      background: var(--evn-blue-soft-2);
+      color: var(--evn-ink-strong);
+    }
+  }
+}
+
+.evn-tags {
+  @include reset-list;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.evn-tag {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: var(--evn-surface-2);
+  color: var(--evn-muted);
+  font-size: 13px;
+
+  &:hover {
+    background: var(--evn-blue-soft);
+    color: var(--evn-blue);
+  }
+}
+
+// --- Breadcrumb -----------------------------------------------------------------------
+
+.evn-breadcrumb ol {
+  @include reset-list;
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  color: var(--evn-muted-2);
+  font-size: 13px;
+
+  li + li::before {
+    content: "/";
+    margin: 0 6px;
+    color: var(--evn-icon);
+  }
+
+  a {
+    color: inherit;
+
+    &:hover {
+      color: var(--evn-blue);
+    }
+  }
+}
+
+// --- Tables -----------------------------------------------------------------------------
+
+.evn-table-wrap {
+  overflow-x: auto;
+}
+
+.evn-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--evn-line-2);
+    background: var(--evn-surface-2);
+    color: var(--evn-ink-2);
+    font-size: 13px;
+    font-weight: 700;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 11px 15px;
+    border-bottom: 1px solid var(--evn-line-3);
+    color: var(--evn-ink-2);
+    font-size: 13.5px;
+    white-space: nowrap;
+  }
+
+  tbody tr:nth-child(odd) {
+    background: var(--evn-surface);
+  }
+
+  tbody tr:nth-child(even) {
+    background: var(--evn-stripe);
+  }
+
+  &--wide {
+    min-width: 820px;
+  }
+
+  &--codes {
+    min-width: 740px;
+
+    th { padding: 13px 16px; }
+    td { padding: 12px 16px; }
+  }
+
+  // Qualified with `td` to win over `.evn-table td` above.
+  td#{&}__code {
+    color: var(--evn-blue);
+    font-weight: 700;
+  }
+
+  td#{&}__strong {
+    color: var(--evn-ink-strong);
+    font-size: 14px;
+  }
+}
+
+// Indentation of hierarchical codes (VT-01 > VT-01-01 > ...).
+@for $level from 2 through 4 {
+  .evn-table .evn-level-#{$level} {
+    padding-left: 16px + ($level - 1) * 18px;
+  }
+}
+
+.evn-mini-pager {
+  display: flex;
+  gap: 7px;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    padding: 7px 10px;
+    border: 1px solid var(--evn-line);
+    border-radius: 11px;
+    background: var(--evn-surface);
+    color: var(--evn-ink-2);
+    font-size: 13.5px;
+
+    &[aria-current="page"] {
+      border-color: var(--evn-blue);
+      background: var(--evn-blue);
+      color: #fff;
+      font-weight: 600;
+    }
+  }
+}
+
+// --- Progress bars (data quality) ---------------------------------------------------------
+
+.evn-progress {
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 4px;
+  background: var(--evn-surface-4);
+  appearance: none;
+  color: var(--evn-bar);
+
+  &::-webkit-progress-bar {
+    border-radius: 4px;
+    background: var(--evn-surface-4);
+  }
+
+  &::-webkit-progress-value {
+    border-radius: 4px;
+    background: var(--evn-bar);
+  }
+
+  &::-moz-progress-bar {
+    border-radius: 4px;
+    background: var(--evn-bar);
+  }
+
+  &--green { --evn-bar: var(--evn-green); }
+  &--blue { --evn-bar: var(--evn-blue); }
+  &--orange { --evn-bar: var(--evn-orange); }
+}
+
+// --- Code blocks -------------------------------------------------------------------------
+
+.evn-code {
+  position: relative;
+
+  &__pre {
+    max-height: 420px;
+    margin: 0;
+    padding: 20px 22px;
+    overflow: auto;
+    border-radius: var(--evn-radius-tile);
+    background: var(--evn-code-bg);
+    color: var(--evn-code-ink);
+    font-family: var(--evn-font-mono);
+    font-size: 13px;
+    line-height: 1.85;
+    white-space: pre;
+  }
+
+  &__copy {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    padding: 6px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #e6eef6;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 16px 0 6px;
+    color: var(--evn-ink-2);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  &--light .evn-code__copy {
+    position: static;
+    border-color: var(--evn-line-strong);
+    background: var(--evn-surface);
+    color: var(--evn-ink);
+
+    &:hover {
+      border-color: var(--evn-blue);
+      color: var(--evn-blue);
+    }
+  }
+
+  &--light .evn-code__pre {
+    max-height: none;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}
+
+// --- States ---------------------------------------------------------------------------------
+
+.evn-empty {
+  padding: 40px 20px;
+  border: 1px dashed var(--evn-line-strong);
+  border-radius: var(--evn-radius-card);
+  background: var(--evn-surface);
+  text-align: center;
+
+  p {
+    margin: 0 auto 14px;
+    max-width: 520px;
+    color: var(--evn-muted-2);
+    font-size: 15px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.evn-alert {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: var(--evn-radius-tile);
+  font-size: 14px;
+
+  &--error {
+    background: var(--evn-red-soft);
+    color: var(--evn-red-ink);
+  }
+
+  .evn-icon {
+    margin-top: 2px;
+  }
+}

@@ -1,0 +1,214 @@
+@use "../mixins" as *;
+
+// Pages the theme does not redraw (login, user profile, dataset/resource forms,
+// resource page, admin...) keep CKAN's classic markup; this file recolours it
+// with the tokens so they sit well between the new header and footer.
+//
+// Classic 2.11 is built on Bootstrap 5.1.3, whose components have no --bs-btn-*
+// variables: colours are set per state, on the same selectors main.css uses
+// (docs/gotchas.md 6r). Selectors are ported from the tested lakehouse_theme CSS.
+
+// --- Layout -------------------------------------------------------------------
+
+body.evn > .main {
+  flex: 1 0 auto;
+  padding-block: 24px 60px;
+  background: transparent;
+}
+
+.evn .main > .container {
+  max-width: var(--evn-container);
+  padding-inline: var(--evn-gutter);
+}
+
+.evn .wrapper {
+  overflow: hidden;
+  border: 1px solid var(--evn-line);
+  border-radius: var(--evn-radius-card-lg);
+  background: var(--evn-surface);
+  box-shadow: var(--evn-shadow-card);
+
+  &::before {
+    border-right-color: var(--evn-line);
+    background: var(--evn-stripe);
+  }
+}
+
+.evn .toolbar .breadcrumb {
+  color: var(--evn-muted-2);
+  font-size: 13px;
+
+  a {
+    color: inherit;
+
+    &:hover {
+      color: var(--evn-blue);
+    }
+  }
+}
+
+.evn .module-heading {
+  border-color: var(--evn-line);
+  background: var(--evn-surface-2);
+  color: var(--evn-ink-strong);
+  font-family: var(--evn-font-heading);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.evn .primary h1,
+.evn .primary h2,
+.evn .secondary h2,
+.evn .page-heading {
+  color: var(--evn-navy);
+  font-family: var(--evn-font-heading);
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.evn .flash-messages .alert,
+.evn .alert {
+  border-radius: var(--evn-radius-tile);
+}
+
+// --- Links and Bootstrap components ---------------------------------------------
+
+.evn .btn-link,
+.evn .nav-link,
+.evn .page-link,
+.evn .link-primary {
+  color: var(--evn-blue);
+}
+
+.evn .btn-primary,
+.evn .btn-primary:disabled,
+.evn .btn-primary.disabled {
+  border-color: var(--evn-blue);
+  border-radius: var(--evn-radius-pill);
+  background-color: var(--evn-blue);
+  color: #fff;
+  font-weight: 700;
+}
+
+.evn .btn-primary:hover,
+.evn .btn-primary:focus,
+.evn .btn-check:focus + .btn-primary,
+.evn .btn-primary:active,
+.evn .btn-primary.active,
+.evn .btn-check:checked + .btn-primary,
+.evn .show > .btn-primary.dropdown-toggle {
+  border-color: var(--evn-blue-hover);
+  background-color: var(--evn-blue-hover);
+  color: #fff;
+}
+
+.evn .btn-default,
+.evn .btn-secondary,
+.evn .btn-outline-primary {
+  border-color: var(--evn-line-strong);
+  border-radius: var(--evn-radius-pill);
+  background-color: var(--evn-surface);
+  color: var(--evn-ink);
+
+  &:hover,
+  &:focus,
+  &:active {
+    border-color: var(--evn-blue);
+    background-color: var(--evn-surface);
+    color: var(--evn-blue);
+  }
+}
+
+.evn .btn-danger {
+  border-radius: var(--evn-radius-pill);
+}
+
+.evn .form-control,
+.evn .form-select {
+  border-color: var(--evn-line-input);
+  border-radius: 10px;
+  background-color: var(--evn-surface);
+}
+
+.evn .form-control:focus,
+.evn .form-select:focus,
+.evn .form-check-input:focus,
+.evn .btn-primary:focus,
+.evn .page-link:focus {
+  border-color: var(--evn-blue);
+  box-shadow: var(--evn-focus);
+}
+
+.evn .form-check-input:checked {
+  border-color: var(--evn-blue);
+  background-color: var(--evn-blue);
+}
+
+.evn .nav-pills .nav-link.active,
+.evn .dropdown-item.active,
+.evn .dropdown-item:active,
+.evn .progress-bar {
+  background-color: var(--evn-blue);
+}
+
+.evn .page-item.active .page-link,
+.evn .list-group-item.active {
+  border-color: var(--evn-blue);
+  background-color: var(--evn-blue);
+}
+
+.evn .nav-tabs .nav-link.active,
+.evn .page-header .nav-tabs li.active a {
+  color: var(--evn-blue);
+  font-weight: 700;
+}
+
+// --- CKAN modules ---------------------------------------------------------------
+
+.evn .module-narrow .nav-item.active > a,
+.evn .module-narrow .nav-aside li.active a {
+  background-color: var(--evn-blue);
+}
+
+.evn .module-narrow .nav-item.active > a::before,
+.evn .module-narrow .nav-aside li.active a::before {
+  border-left-color: var(--evn-blue);
+}
+
+.evn .media-grid .media-item {
+  border: 1px solid var(--evn-line);
+  border-radius: var(--evn-radius-card);
+  background: var(--evn-surface);
+  box-shadow: var(--evn-shadow-card);
+}
+
+.evn .media-view:hover,
+.evn .media-view.hovered,
+.evn .view-list li a.active,
+.evn .view-list li a:hover {
+  border-color: var(--evn-blue);
+}
+
+.evn a.tag {
+  border-radius: 20px;
+
+  &:hover {
+    border-color: var(--evn-blue);
+    background-color: var(--evn-blue);
+    box-shadow: none;
+  }
+}
+
+// Classic sets word-break: break-all on descriptions, which splits Vietnamese
+// syllables ("kiểm tr|a"): wrap at spaces, break only very long tokens (gotchas 6u).
+.evn .media-description,
+.evn .context-info .description {
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+// Long non-http resource URLs (jdbc:trino://...) have no spaces to wrap at.
+.evn .resource-read .break-word,
+.evn .break-word {
+  overflow-wrap: anywhere;
+}

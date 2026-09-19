@@ -1,0 +1,457 @@
+@use "../mixins" as *;
+
+// Dataset page: hero + tabs, files, preview (table/chart/map), API console,
+// activity timeline, sidebar. Also the resource page's Trino box.
+
+.evn-detail-hero {
+  border-bottom: 1px solid var(--evn-line-2);
+  background: var(--evn-page-gradient);
+
+  > .evn-container {
+    padding-top: 22px;
+  }
+
+  .evn-breadcrumb ol {
+    margin-bottom: 16px;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 20px 26px;
+    align-items: end;
+
+    @include below(lg) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  &__title {
+    margin: 0 0 14px;
+    color: var(--evn-navy);
+    font-family: var(--evn-font-heading);
+    font-size: clamp(24px, 3.2vw, 36px);
+    font-weight: 800;
+    letter-spacing: -0.6px;
+    line-height: 1.22;
+    text-wrap: balance;
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    align-items: center;
+    color: var(--evn-muted-b);
+    font-size: 14px;
+  }
+
+  &__org {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    color: inherit;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    justify-content: flex-end;
+
+    @include below(md) {
+      justify-content: flex-start;
+    }
+  }
+}
+
+.evn-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 13px;
+}
+
+.evn-rating {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  color: var(--evn-orange-ink);
+  font-weight: 600;
+}
+
+.evn-follow[aria-pressed="true"] {
+  border-color: var(--evn-blue-line);
+  background: var(--evn-blue-soft);
+  color: var(--evn-blue);
+
+  .evn-follow__icon {
+    fill: currentColor;
+  }
+}
+
+// Tabs "stuck" to the bottom of the hero.
+.evn-tabs {
+  margin-top: 24px;
+
+  &__list {
+    @include reset-list;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  &__tab {
+    display: block;
+    padding: 12px 20px;
+    border-radius: 14px 14px 0 0;
+    color: var(--evn-muted-b);
+    font-family: var(--evn-font-heading);
+    font-size: 14.5px;
+    font-weight: 700;
+    white-space: nowrap;
+
+    &:hover {
+      color: var(--evn-blue);
+    }
+
+    &[aria-selected="true"] {
+      background: var(--evn-paper);
+      color: var(--evn-blue);
+    }
+
+    &:focus-visible {
+      outline-offset: -2px;
+    }
+  }
+}
+
+.evn-tabpanel:focus {
+  outline: none;
+}
+
+// --- Files ----------------------------------------------------------------------
+
+.evn-files {
+  @include reset-list;
+}
+
+.evn-file {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 26px;
+  border-bottom: 1px solid var(--evn-line-3);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  &__main {
+    display: flex;
+    flex: 1 1 260px;
+    gap: 14px;
+    align-items: center;
+    min-width: 0;
+  }
+
+  &__type {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: var(--evn-radius-tile);
+    background: var(--evn-format);
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+
+  &__body {
+    min-width: 0;
+  }
+
+  &__name {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--evn-ink-strong);
+    font-size: 14.5px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  &__meta {
+    margin: 0;
+    color: var(--evn-muted-2);
+    font-size: 13px;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+// --- Preview -------------------------------------------------------------------------
+
+.evn-viz {
+  overflow: hidden;
+
+  .evn-card__head {
+    padding: 15px 22px;
+  }
+
+  &__controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 16px 22px 0;
+    color: var(--evn-muted-2);
+    font-size: 13.5px;
+
+    label {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin: 0;
+      font-weight: 400;
+    }
+  }
+
+  &__canvas {
+    position: relative;
+    height: 340px;
+    padding: 12px 22px 8px;
+  }
+
+  &__map,
+  &__map.leaflet-container {
+    height: 420px;
+    background: var(--evn-surface-2);
+    font-family: var(--evn-font-body);
+  }
+
+  &__note {
+    margin: 0;
+    padding: 4px 22px 16px;
+    color: var(--evn-muted-3);
+    font-size: 12.5px;
+  }
+
+  .evn-alert {
+    margin: 16px 22px;
+  }
+}
+
+.evn-quality {
+  @include reset-list;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 20px;
+
+  &__item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    row-gap: 8px;
+    align-items: baseline;
+
+    .evn-progress {
+      grid-column: 1 / -1;
+    }
+  }
+
+  &__label {
+    color: var(--evn-muted-b);
+    font-size: 13.5px;
+  }
+
+  &__value {
+    @include heading(16px, 800);
+  }
+}
+
+// --- API console --------------------------------------------------------------------
+
+.evn-api {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+
+  &__method {
+    padding: 10px 14px;
+    border-radius: var(--evn-radius-input);
+    background: var(--evn-green-soft);
+    color: var(--evn-green-ink);
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+
+  &__endpoint {
+    flex: 1 1 250px;
+    min-width: 0;
+  }
+
+  .evn-btn {
+    padding: 10px 22px;
+    border-radius: var(--evn-radius-input);
+    font-family: var(--evn-font-body);
+    font-size: 14px;
+  }
+}
+
+// --- Activity -----------------------------------------------------------------------
+
+.evn-timeline {
+  @include reset-list;
+  margin-bottom: 14px;
+
+  &__item {
+    display: flex;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--evn-line-3);
+  }
+
+  &__icon {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+
+    &--updated { background: var(--evn-green-soft); color: var(--evn-green-ink); }
+    &--checked { background: var(--evn-blue-soft); color: var(--evn-blue); }
+    &--edited { background: #fbe9d8; color: #9a5116; }
+    &--warning { background: var(--evn-red-soft); color: var(--evn-red-ink); }
+    &--created { background: var(--evn-surface-4); color: #6e6559; }
+  }
+
+  &__text {
+    margin: 0;
+    color: var(--evn-ink);
+    font-size: 14.5px;
+    line-height: 1.65;
+  }
+
+  &__time {
+    display: block;
+    margin-top: 3px;
+    color: var(--evn-muted-3);
+    font-size: 12.5px;
+  }
+}
+
+// --- Sidebar ------------------------------------------------------------------------
+
+.evn-info {
+  overflow: hidden;
+
+  .evn-card__head--title {
+    border-bottom: 1px solid var(--evn-surface-4);
+  }
+
+  &__list {
+    margin: 0;
+    padding: 6px 20px 14px;
+  }
+
+  &__row {
+    padding: 11px 0;
+    border-bottom: 1px solid var(--evn-surface-3);
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    dt {
+      margin-bottom: 4px;
+      color: var(--evn-muted-3);
+      font-size: 12.5px;
+    }
+
+    dd {
+      color: var(--evn-ink-2);
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  &__edit {
+    margin: 0;
+    padding: 0 20px 16px;
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+}
+
+.evn-stars {
+  display: inline-flex;
+  gap: 2px;
+  color: var(--evn-orange);
+
+  .evn-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .is-on {
+    fill: currentColor;
+  }
+}
+
+.evn-related {
+  @include reset-list;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  a {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.55;
+  }
+}
+
+// --- Resource page: "How to connect" (jdbc:trino://) ------------------------------------
+
+.evn-connect {
+  @include card;
+  margin: 24px 0;
+  padding: 22px 24px;
+
+  p {
+    color: var(--evn-muted);
+    font-size: 14.5px;
+    line-height: 1.75;
+  }
+
+  &__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    margin: 12px 0 4px;
+
+    dt {
+      color: var(--evn-muted-3);
+      font-size: 12.5px;
+    }
+
+    code {
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: var(--evn-surface-2);
+      color: var(--evn-ink-strong);
+    }
+  }
+}

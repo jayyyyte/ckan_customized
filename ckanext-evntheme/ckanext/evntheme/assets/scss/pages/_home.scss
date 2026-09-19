@@ -1,0 +1,350 @@
+@use "../mixins" as *;
+
+// Home: hero, data domains, "recently updated" + sidebar cards.
+
+.evn-hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--evn-hero-gradient);
+
+  // Two soft glows from the mockup: orange top-right, blue bottom-left.
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    width: 420px;
+    height: 420px;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  &::before {
+    top: -120px;
+    right: -80px;
+    background: radial-gradient(circle, rgba(232, 132, 60, 0.16), transparent 66%);
+  }
+
+  &::after {
+    bottom: -160px;
+    left: -100px;
+    background: radial-gradient(circle, rgba(11, 90, 162, 0.12), transparent 68%);
+  }
+
+  &__inner {
+    position: relative;
+    z-index: 1;
+    padding-block: 60px 52px;
+    text-align: center;
+  }
+
+  &__title {
+    max-width: 780px;
+    margin: 0 auto 18px;
+    color: var(--evn-navy);
+    font-family: var(--evn-font-heading);
+    font-size: clamp(30px, 4.6vw, 52px);
+    font-weight: 800;
+    letter-spacing: -0.8px;
+    line-height: 1.18;
+    text-wrap: balance;
+  }
+
+  &__lead {
+    max-width: 580px;
+    margin: 0 auto 32px;
+    color: var(--evn-muted);
+    font-size: 16px;
+    line-height: 1.75;
+    text-wrap: pretty;
+  }
+
+  &__stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 22px 34px;
+    margin: 38px 0 0;
+  }
+}
+
+.evn-eyebrow {
+  display: inline-block;
+  margin: 0 0 22px;
+  padding: 6px 16px;
+  border: 1px solid var(--evn-line-input);
+  border-radius: var(--evn-radius-pill);
+  background: var(--evn-surface);
+  color: var(--evn-muted-2);
+  font-size: 13px;
+}
+
+.evn-hero-search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 9px;
+  border-radius: var(--evn-radius-card-lg);
+  background: var(--evn-surface);
+  box-shadow: var(--evn-shadow-search);
+  text-align: left;
+
+  &__field {
+    display: flex;
+    flex: 1 1 240px;
+    gap: 11px;
+    align-items: center;
+    min-width: 0;
+    margin: 0;
+    padding: 0 12px;
+    border-radius: var(--evn-radius-input);
+    color: var(--evn-blue);
+    font-weight: 400;
+    cursor: text;
+
+    &:focus-within {
+      box-shadow: inset 0 0 0 2px var(--evn-blue-soft-2);
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      padding: 13px 0;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: var(--evn-ink);
+      font-size: 15px;
+    }
+  }
+
+  &__domain {
+    min-height: 48px;
+    padding: 0 12px;
+    border-radius: var(--evn-radius-input);
+    font-size: 14px;
+  }
+
+  &__submit {
+    padding: 13px 28px;
+    border-radius: var(--evn-radius-input);
+    font-size: 15px;
+  }
+
+  @include below(sm) {
+    &__domain,
+    &__submit {
+      flex: 1 1 100%;
+    }
+  }
+}
+
+.evn-hot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 18px;
+
+  &__label {
+    color: var(--evn-muted-2);
+    font-size: 13px;
+  }
+}
+
+.evn-section {
+  padding-block: 48px 8px;
+
+  &__head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 22px;
+
+    &--tight {
+      margin-bottom: 18px;
+    }
+  }
+
+  &__title {
+    @include heading(24px);
+    margin: 0 0 6px;
+    letter-spacing: -0.3px;
+    line-height: 1.3;
+
+    .evn-section__head--tight & {
+      margin: 0;
+    }
+  }
+
+  &__lead {
+    margin: 0;
+    color: var(--evn-muted-2);
+    font-size: 14.5px;
+  }
+}
+
+.evn-domain-grid {
+  @include reset-list;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.evn-domain {
+  @include card;
+  @include card-hover;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  height: 100%;
+  padding: 22px 20px;
+  color: inherit;
+
+  &:hover {
+    color: inherit;
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: var(--evn-tone-bg);
+
+    > span {
+      width: 14px;
+      height: 14px;
+      border-radius: 5px;
+      background: var(--evn-tone-dot);
+    }
+
+    &--lg {
+      width: 64px;
+      height: 64px;
+      border-radius: 20px;
+
+      > span {
+        width: 20px;
+        height: 20px;
+        border-radius: 7px;
+      }
+    }
+  }
+
+  &__title {
+    @include heading(16px);
+    line-height: 1.35;
+  }
+
+  &__desc {
+    margin-top: -8px;
+    color: var(--evn-muted-2);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  &__count {
+    margin-top: auto;
+    color: var(--evn-blue);
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+}
+
+.evn-home__main {
+  padding-block: 44px 56px;
+}
+
+.evn-home__all {
+  margin-top: 20px;
+}
+
+// Developer card (navy).
+.evn-devcard {
+  padding: 24px;
+  border-radius: var(--evn-radius-card-lg);
+  background: var(--evn-navy);
+  color: #fff;
+
+  &__eyebrow {
+    margin: 0 0 10px;
+    color: #a9c8e4;
+    font-size: 13px;
+  }
+
+  &__title {
+    margin: 0 0 14px;
+    color: #fff;
+    font-family: var(--evn-font-heading);
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  &__metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0 0 18px;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 13.5px;
+
+    div {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    dd {
+      color: #fff;
+      font-weight: 700;
+
+      &.is-good {
+        color: var(--evn-green-bright);
+      }
+    }
+  }
+
+  .evn-btn {
+    border-radius: var(--evn-radius-pill);
+    font-size: 14px;
+  }
+}
+
+// Ranked list (top publishers).
+.evn-rank {
+  @include reset-list;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  &__item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 0;
+    color: var(--evn-ink);
+    font-size: 14px;
+
+    &:hover {
+      color: var(--evn-blue);
+    }
+  }
+
+  &__name {
+    @include ellipsis;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__count {
+    color: var(--evn-muted-2);
+    font-size: 13px;
+  }
+}

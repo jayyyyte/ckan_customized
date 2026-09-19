@@ -1,0 +1,207 @@
+@use "../mixins" as *;
+
+// /organization directory and the shared "page hero" (also used by code lists).
+
+.evn-page-hero {
+  border-bottom: 1px solid var(--evn-line-2);
+  background: var(--evn-page-gradient);
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 28px;
+    align-items: end;
+    padding-block: 40px 38px;
+  }
+
+  &__title {
+    margin: 0 0 12px;
+    color: var(--evn-navy);
+    font-family: var(--evn-font-heading);
+    font-size: clamp(26px, 3.6vw, 40px);
+    font-weight: 800;
+    letter-spacing: -0.6px;
+    line-height: 1.2;
+    text-wrap: balance;
+  }
+
+  &__lead {
+    max-width: 470px;
+    margin: 0;
+    color: var(--evn-muted);
+    font-size: 15.5px;
+    line-height: 1.8;
+  }
+}
+
+.evn-hero-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 0;
+}
+
+.evn-orgs__body {
+  padding-block: 28px 60px;
+}
+
+.evn-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+
+  &__end {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+}
+
+.evn-searchpill {
+  margin: 0;
+
+  label {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin: 0;
+    padding: 0 15px;
+    border: 1px solid var(--evn-line);
+    border-radius: var(--evn-radius-pill);
+    background: var(--evn-surface);
+    color: var(--evn-icon);
+    font-weight: 400;
+
+    &:focus-within {
+      border-color: var(--evn-blue);
+      box-shadow: var(--evn-focus);
+    }
+  }
+
+  input {
+    width: 170px;
+    padding: 10px 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--evn-ink);
+    font-size: 14px;
+  }
+}
+
+.evn-featured {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 22px;
+  padding: 26px;
+  border: 1px solid var(--evn-line);
+  border-radius: var(--evn-radius-card-lg);
+  background: var(--evn-surface);
+  box-shadow: var(--evn-shadow-raised);
+
+  &__main {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    min-width: 0;
+  }
+
+  &__label {
+    margin: 0 0 5px;
+    color: var(--evn-orange-ink);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  &__name {
+    @include heading(19px);
+    margin: 0;
+    line-height: 1.35;
+
+    a {
+      color: inherit;
+
+      &:hover {
+        color: var(--evn-blue);
+      }
+    }
+  }
+
+  &__meta {
+    margin: 6px 0 0;
+    color: var(--evn-muted-2);
+    font-size: 13.5px;
+  }
+
+  &__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+    justify-content: flex-end;
+    margin: 0;
+  }
+}
+
+.evn-org-grid {
+  @include reset-list;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.evn-org-card {
+  @include card;
+  @include card-hover;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  height: 100%;
+  padding: 22px 20px;
+
+  &__top {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  &__type {
+    color: var(--evn-muted-3);
+    font-size: 12px;
+    text-align: right;
+  }
+
+  &__name {
+    @include heading(16px);
+    margin: 0 0 6px;
+    line-height: 1.4;
+  }
+
+  &__domain {
+    margin: 0;
+    color: var(--evn-muted-2);
+    font-size: 13px;
+  }
+
+  &__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: auto 0 0;
+    padding-top: 13px;
+    border-top: 1px solid var(--evn-line-3);
+    color: var(--evn-muted-b);
+    font-size: 13px;
+
+    strong {
+      color: var(--evn-ink-strong);
+    }
+  }
+}

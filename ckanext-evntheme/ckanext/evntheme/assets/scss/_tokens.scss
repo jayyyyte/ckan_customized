@@ -1,0 +1,137 @@
+// Design tokens: the only place colours, fonts, radii and shadows are defined.
+//
+// Two layers of colour:
+//   * design values: the mockup's hex codes, used for fills, dots, bars and big numbers;
+//   * "ink" values: text colours. Where the mockup pair was below WCAG AA (4.5:1 for
+//     text, 3:1 for large text and icons) the ink is darkened just enough; the
+//     measured ratio is noted next to each value.
+// To restyle the portal, change this file only.
+
+@use "sass:map";
+
+// Breakpoints, used through the mixins in _mixins.scss.
+$breakpoints: (
+  sm: 576px,
+  md: 768px,
+  lg: 1100px,
+);
+
+// Colour pairs for avatars and domain tiles: ink (text), dot (decoration), bg.
+$tones: (
+  "blue": (ink: #0b5aa2, dot: #0b5aa2, bg: #e6eff8),   // ink 6.0:1
+  "orange": (ink: #9a5116, dot: #e8843c, bg: #fbe9d8), // ink 5.0:1 (mockup #c06730)
+  "green": (ink: #2c7456, dot: #3f8d6d, bg: #e3f2e9),  // ink 4.9:1 (mockup #3f8d6d)
+  "sky": (ink: #2a6b9b, dot: #3d8cc4, bg: #e7f1f9),    // ink 5.0:1 (mockup #3d8cc4)
+  "sand": (ink: #6e6559, dot: #8a7f6f, bg: #f2ece2),   // ink 4.9:1
+);
+
+// Resource format badges: white text on these fills.
+$formats: (
+  csv: #3a8265,     // 4.6:1 (mockup #3f8d6d, 4.0:1)
+  json: #5b6b7a,
+  api: #0b5aa2,
+  xlsx: #2f7a5c,
+  geojson: #357bae, // 4.6:1 (mockup #3d8cc4, 3.65:1)
+  pdf: #b3543a,
+  other: #5b6b7a,
+);
+
+// Data types ("Dữ liệu chủ / giao dịch / tham chiếu"): badge bg, badge text, dot.
+$kinds: (
+  master: (bg: #fbe4cd, ink: #9a5116, dot: #e8843c),      // 4.8:1 (mockup #a05518, 4.49:1)
+  transaction: (bg: #e6eff8, ink: #0b5aa2, dot: #0b5aa2),
+  reference: (bg: #f0ece2, ink: #6e6559, dot: #a89e90),
+);
+
+// Status badges (code lists, consumers): bg, text.
+$statuses: (
+  "green": (bg: #e3f2e9, ink: #2c7456),
+  "orange": (bg: #fbe4cd, ink: #9a5116),
+  "sand": (bg: #f0ece2, ink: #6f685e),
+  "blue": (bg: #e6eff8, ink: #0b5aa2),
+);
+
+:root {
+  // Brand
+  --evn-blue: #0b5aa2;
+  --evn-blue-hover: #094c89;
+  --evn-blue-soft: #e6eff8;
+  --evn-blue-soft-2: #d3e4f4;
+  --evn-blue-line: #cfe0f0;
+  --evn-navy: #153b5e;
+  --evn-orange: #e8843c;          // decoration only: white text on it is 2.7:1
+  --evn-orange-display: #c4661f;  // big numbers (>= 24px) on light backgrounds, 3.5:1
+  --evn-orange-ink: #a45219;      // orange text, 4.8:1 on every light surface (mockup #d9762f, 3.0:1)
+  --evn-cta: #b95b17;             // call-to-action fill, white text 4.6:1 (mockup #e8843c)
+  --evn-cta-hover: #a14e12;
+  --evn-green: #3f8d6d;           // bars, dots, big numbers (3.9:1)
+  --evn-green-ink: #2c7456;       // green text, 4.9:1 on its soft background
+  --evn-green-soft: #e3f2e9;
+  --evn-green-bright: #8fd4b0;    // on navy
+  --evn-red: #b3543a;
+  --evn-red-ink: #a14a33;
+  --evn-red-soft: #f7ece4;
+  --evn-aging: #ad5a28;           // "fresh ~1 day" (mockup #c06730, 4.0:1)
+
+  // Surfaces and lines
+  --evn-paper: #fbf8f3;
+  --evn-surface: #fffdf9;
+  --evn-surface-2: #f4efe6;       // secondary sections, table heads
+  --evn-surface-3: #f7f2e9;       // KPI tiles
+  --evn-surface-4: #f2ece2;       // segmented controls, progress tracks
+  --evn-stripe: #fdfaf5;
+  --evn-band: #f2ede4;            // utility bar
+  --evn-line: #ece5da;
+  --evn-line-2: #e7dfd2;
+  --evn-line-3: #f4efe6;
+  --evn-line-input: #e3d9c9;
+  --evn-line-strong: #d9cfbe;     // outline buttons, card hover
+
+  // Text
+  --evn-ink: #33383c;
+  --evn-ink-strong: #1f2a33;
+  --evn-ink-2: #4b5358;
+  --evn-muted: #5f6a72;           // descriptions, 5.4:1
+  --evn-muted-b: #6e7378;         // 4.7:1
+  --evn-muted-2: #6f685e;         // meta text, >= 4.7:1 (mockup #8b8377 3.7:1, #7a7268 4.1:1)
+  --evn-muted-3: #71685d;         // labels and counts, >= 4.6:1 (mockup #a89e90, 2.6:1)
+  --evn-icon: #938672;            // icons and checkbox borders, >= 3:1 (mockup #b3a99a, 2.3:1)
+  --evn-on-dark: rgba(255, 255, 255, 0.72);
+  --evn-code-bg: #1b2b3a;
+  --evn-code-ink: #cfe0ef;
+
+  // Type
+  --evn-font-heading: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --evn-font-body: "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --evn-font-mono: ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+
+  // Geometry
+  --evn-radius-card: 16px;
+  --evn-radius-card-lg: 18px;
+  --evn-radius-tile: 14px;
+  --evn-radius-input: 12px;
+  --evn-radius-pill: 22px;
+  --evn-radius-badge: 12px;
+  --evn-shadow-card: 0 2px 8px rgba(80, 60, 30, 0.04);
+  --evn-shadow-card-hover: 0 8px 22px rgba(80, 60, 30, 0.09);
+  --evn-shadow-raised: 0 2px 10px rgba(80, 60, 30, 0.05);
+  --evn-shadow-search: 0 10px 28px rgba(33, 52, 72, 0.1);
+  --evn-focus: 0 0 0 3px rgba(11, 90, 162, 0.18);
+
+  // Logo: fixed height, width follows the file (a square logo stays 44x44 as in the mockup,
+  // a wide one grows up to the max width instead of shrinking into the square).
+  --evn-logo-header: 44px;
+  --evn-logo-footer: 40px;
+  --evn-logo-max-width: 176px;
+
+  // Layout
+  --evn-container: 1240px;
+  --evn-gutter: 26px;
+  --evn-hero-gradient: linear-gradient(168deg, #eaf2fa 0%, #f7efe3 100%);
+  --evn-page-gradient: linear-gradient(165deg, #eaf2fa, #f6f0e6);
+
+  @media (max-width: map.get($breakpoints, sm) - 0.02px) {
+    --evn-gutter: 16px;
+    --evn-logo-max-width: 88px;
+  }
+}
