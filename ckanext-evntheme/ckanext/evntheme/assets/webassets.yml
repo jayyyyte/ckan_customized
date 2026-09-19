@@ -1,0 +1,26 @@
+# Assets of the theme. No `cssrewrite` filter: it cannot resolve URLs for an assets/
+# library (docs/gotchas.md 6j); fonts and images are referenced by absolute /evntheme/... paths.
+
+evntheme-css:
+  output: ckanext-evntheme/%(version)s-evn-theme.css
+  contents:
+    # Compiled from scss/main.scss with `npm run build:css` (the CSS is committed).
+    - css/evn-theme.css
+
+evntheme-js:
+  filters: rjsmin
+  output: ckanext-evntheme/%(version)s-evn-theme.js
+  extra:
+    preload:
+      - base/main
+  contents:
+    - js/evn-utils.js
+    - js/modules/evn-autosubmit.js
+    - js/modules/evn-facets.js
+    - js/modules/evn-view-toggle.js
+    - js/modules/evn-tabs.js
+    - js/modules/evn-copy.js
+    - js/modules/evn-share.js
+    - js/modules/evn-follow.js
+    - js/modules/evn-api-console.js
+    - js/modules/evn-viz.js
