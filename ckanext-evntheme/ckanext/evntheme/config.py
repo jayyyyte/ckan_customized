@@ -76,7 +76,7 @@ CORE_GAPS: dict[str, tuple[list[str], str]] = {
 # The logo is CKAN's own `ckan.site_logo`: set in ckan.ini / env var, or uploaded on
 # /ckan-admin/config (stored in the database, overrides ckan.ini). Any image format works.
 SITE_LOGO = "ckan.site_logo"
-THEME_LOGO = "/evntheme/public/evntheme/images/evn-logo.jpg"
+THEME_LOGO = "/evntheme/images/evn-logo.jpg"
 
 
 def declare(declaration: Any, key: Any) -> None:
