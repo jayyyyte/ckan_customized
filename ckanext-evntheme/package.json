@@ -1,0 +1,12 @@
+{
+  "name": "ckanext-evntheme-assets",
+  "private": true,
+  "description": "Build tooling for the theme stylesheet only. The compiled CSS is committed, so CKAN images do not need Node.",
+  "scripts": {
+    "build:css": "sass --no-source-map --style=expanded ckanext/evntheme/assets/scss/main.scss ckanext/evntheme/assets/css/evn-theme.css",
+    "watch:css": "sass --no-source-map --style=expanded --watch ckanext/evntheme/assets/scss/main.scss ckanext/evntheme/assets/css/evn-theme.css"
+  },
+  "devDependencies": {
+    "sass": "1.79.4"
+  }
+}

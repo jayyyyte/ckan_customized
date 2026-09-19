@@ -1,0 +1,6 @@
+include README.md
+include LICENSE
+include requirements.txt
+recursive-include ckanext/evntheme *.html *.json *.js *.css *.scss *.mo *.po *.yml *.svg *.ini *.mako *.txt *.md
+recursive-include ckanext/evntheme/public *.*
+recursive-include ckanext/evntheme/migration *.ini *.py *.mako README
