@@ -1,0 +1,928 @@
+# Vietnamese translations for ckanext-evntheme.
+# Theme strings (English msgids, extracted with `pybabel extract -F babel.cfg`, see README)
+# plus core strings that the CKAN 2.11.6 vi catalog leaves untranslated or translates
+# awkwardly on pages that keep the core markup (plugin catalogs are merged after core).
+# Compile: pybabel compile -d ckanext/evntheme/i18n -D ckanext-evntheme
+msgid ""
+msgstr ""
+"Project-Id-Version: ckanext-evntheme 0.1.0\n"
+"Language: vi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+# --- Header, footer, navigation ------------------------------------------------
+
+msgid "Home"
+msgstr "Trang chủ"
+
+msgid "Datasets"
+msgstr "Bộ dữ liệu"
+
+msgid "Organizations"
+msgstr "Tổ chức"
+
+msgid "Code lists"
+msgstr "Danh mục chuẩn"
+
+msgid "Main navigation"
+msgstr "Điều hướng chính"
+
+msgid "Menu"
+msgstr "Menu"
+
+msgid "Help"
+msgstr "Trợ giúp"
+
+msgid "User guide"
+msgstr "Hướng dẫn sử dụng"
+
+msgid "API documentation"
+msgstr "Tài liệu API"
+
+msgid "Support"
+msgstr "Hỗ trợ"
+
+msgid "My profile"
+msgstr "Hồ sơ của tôi"
+
+msgid "Log out"
+msgstr "Đăng xuất"
+
+msgid "Breadcrumb"
+msgstr "Đường dẫn trang"
+
+msgid "The shared data platform of {owner}."
+msgstr "Nền tảng chia sẻ dữ liệu dùng chung của {owner}."
+
+msgid "Operated by {operator}."
+msgstr "Vận hành bởi {operator}."
+
+msgid "Data"
+msgstr "Dữ liệu"
+
+msgid "Data domains"
+msgstr "Miền dữ liệu"
+
+msgid "Developers"
+msgstr "Nhà phát triển"
+
+msgid "API gateway"
+msgstr "Cổng API"
+
+msgid "Technical documentation"
+msgstr "Tài liệu kỹ thuật"
+
+msgid "Terms of use"
+msgstr "Quy định sử dụng"
+
+msgid "About {0}"
+msgstr "Giới thiệu {0}"
+
+msgid "Contact"
+msgstr "Liên hệ"
+
+msgid "Powered by"
+msgstr "Vận hành trên"
+
+msgid "Language"
+msgstr "Ngôn ngữ"
+
+# --- Home -----------------------------------------------------------------------
+
+msgid "“Accurate · Complete · Clean · Live” data of the Group"
+msgstr "Dữ liệu “Đúng · Đủ · Sạch · Sống” của Tập đoàn"
+
+msgid "Unlock the value of EVN data"
+msgstr "Khai phá giá trị dữ liệu EVN"
+
+msgid "Find the dataset you need, preview it right in your browser and connect it to your unit's systems with a single API key."
+msgstr "Tìm nhanh bộ dữ liệu bạn cần, xem trước ngay trên trình duyệt và kết nối vào hệ thống của đơn vị mình chỉ với một khóa API."
+
+msgid "Search datasets"
+msgstr "Tìm bộ dữ liệu"
+
+msgid "What data are you looking for?"
+msgstr "Bạn đang tìm dữ liệu gì?"
+
+msgid "What data are you looking for? E.g. {example}"
+msgstr "Bạn đang tìm dữ liệu gì? VD: {example}"
+
+msgid "All data domains"
+msgstr "Tất cả miền dữ liệu"
+
+msgid "Search"
+msgstr "Tìm kiếm"
+
+msgid "People are searching for:"
+msgstr "Mọi người đang tìm:"
+
+msgid "Publishers"
+msgstr "Đơn vị công bố"
+
+msgid "APIs available"
+msgstr "API đang chạy"
+
+msgid "Browse by data domain"
+msgstr "Chọn theo miền dữ liệu"
+
+msgid "{n} main data domains, matching the fields the Group works in."
+msgstr "{n} miền dữ liệu chính, tương ứng với các lĩnh vực hoạt động của Tập đoàn."
+
+msgid "View all"
+msgstr "Xem tất cả"
+
+msgid "{n} dataset"
+msgid_plural "{n} datasets"
+msgstr[0] "{n} bộ dữ liệu"
+
+msgid "dataset"
+msgid_plural "datasets"
+msgstr[0] "bộ dữ liệu"
+
+msgid "Highlights"
+msgstr "Điểm nổi bật"
+
+msgid "Recently updated"
+msgstr "Mới cập nhật"
+
+msgid "Sort by"
+msgstr "Sắp xếp theo"
+
+msgid "Newest"
+msgstr "Mới nhất"
+
+msgid "Most viewed"
+msgstr "Xem nhiều nhất"
+
+msgid "Apply"
+msgstr "Áp dụng"
+
+msgid "View all {n} dataset"
+msgid_plural "View all {n} datasets"
+msgstr[0] "Xem tất cả {n} bộ dữ liệu"
+
+msgid "No datasets have been published yet."
+msgstr "Chưa có bộ dữ liệu nào được công bố."
+
+msgid "For developers"
+msgstr "Dành cho nhà phát triển"
+
+msgid "{n} API ready to connect to your systems"
+msgid_plural "{n} APIs ready to connect to your systems"
+msgstr[0] "{n} API sẵn sàng kết nối vào hệ thống của bạn"
+
+msgid "Uptime (30 days)"
+msgstr "Ổn định 30 ngày"
+
+msgid "Calls today"
+msgstr "Lượt gọi hôm nay"
+
+msgid "Response time"
+msgstr "Thời gian phản hồi"
+
+msgid "Open the API documentation"
+msgstr "Mở tài liệu API"
+
+msgid "Top contributing publishers"
+msgstr "Đơn vị đóng góp nhiều nhất"
+
+msgid "Shared code lists"
+msgstr "Danh mục chuẩn dùng chung"
+
+msgid "{n} code list issued so internal systems reference one single source."
+msgid_plural "{n} code lists issued so internal systems reference one single source."
+msgstr[0] "{n} bộ mã đã ban hành để các hệ thống nội bộ cùng tham chiếu một nguồn."
+
+msgid "Look up code lists"
+msgstr "Tra cứu danh mục"
+
+# --- Dataset cards and search ---------------------------------------------------------
+
+msgid "Private"
+msgstr "Riêng tư"
+
+msgid "Draft"
+msgstr "Bản nháp"
+
+msgid "Deleted"
+msgstr "Đã xóa"
+
+msgid "Updated {ago}"
+msgstr "Cập nhật {ago}"
+
+msgid "{n} download"
+msgid_plural "{n} downloads"
+msgstr[0] "{n} lượt tải"
+
+msgid "Frequency: {frequency}"
+msgstr "Chu kỳ: {frequency}"
+
+msgid "Master data"
+msgstr "Dữ liệu chủ"
+
+msgid "Transactional data"
+msgstr "Dữ liệu giao dịch"
+
+msgid "Reference data"
+msgstr "Dữ liệu tham chiếu"
+
+msgid "real time"
+msgstr "thời gian thực"
+
+msgid "hourly"
+msgstr "hằng giờ"
+
+msgid "daily"
+msgstr "hàng ngày"
+
+msgid "weekly"
+msgstr "hàng tuần"
+
+msgid "monthly"
+msgstr "hàng tháng"
+
+msgid "quarterly"
+msgstr "hàng quý"
+
+msgid "yearly"
+msgstr "hàng năm"
+
+msgid "irregular"
+msgstr "không định kỳ"
+
+msgid "Search datasets..."
+msgstr "Tìm bộ dữ liệu..."
+
+msgid "Add Dataset"
+msgstr "Thêm bộ dữ liệu"
+
+msgid "Filtering by:"
+msgstr "Đang lọc:"
+
+msgid "Remove filter: {label}"
+msgstr "Bỏ bộ lọc: {label}"
+
+msgid "Clear all"
+msgstr "Xóa tất cả"
+
+msgid "Clear all filters"
+msgstr "Xóa tất cả bộ lọc"
+
+msgid "Filters"
+msgstr "Bộ lọc"
+
+msgid "Publisher"
+msgstr "Đơn vị công bố"
+
+msgid "File format"
+msgstr "Định dạng tệp"
+
+msgid "Data type"
+msgstr "Loại dữ liệu"
+
+msgid "Popular tags"
+msgstr "Thẻ phổ biến"
+
+msgid "License"
+msgstr "Giấy phép"
+
+msgid "Data domain"
+msgstr "Miền dữ liệu"
+
+msgid "Format"
+msgstr "Định dạng"
+
+msgid "Tag"
+msgstr "Thẻ"
+
+msgid "Domain"
+msgstr "Miền"
+
+msgid "Show {n} more"
+msgstr "Xem thêm {n}"
+
+msgid "Show less"
+msgstr "Thu gọn"
+
+msgid "Nothing to filter by in these results."
+msgstr "Không có giá trị nào để lọc trong kết quả này."
+
+msgid "The search could not be run"
+msgstr "Không thực hiện được tìm kiếm"
+
+#, python-format
+msgid "Found <strong>%(number)s dataset</strong> for “%(query)s”"
+msgid_plural "Found <strong>%(number)s datasets</strong> for “%(query)s”"
+msgstr[0] "Tìm thấy <strong>%(number)s bộ dữ liệu</strong> cho “%(query)s”"
+
+#, python-format
+msgid "<strong>%(number)s dataset</strong> available"
+msgid_plural "<strong>%(number)s datasets</strong> available"
+msgstr[0] "Có <strong>%(number)s bộ dữ liệu</strong>"
+
+msgid "Relevance"
+msgstr "Liên quan nhất"
+
+msgid "Last modified"
+msgstr "Mới cập nhật"
+
+msgid "Name A-Z"
+msgstr "Tên A–Z"
+
+msgid "Name Z-A"
+msgstr "Tên Z–A"
+
+msgid "Layout"
+msgstr "Cách hiển thị"
+
+msgid "List"
+msgstr "Danh sách"
+
+msgid "Grid"
+msgstr "Dạng lưới"
+
+msgid "There was an error while searching. Please try again, or simplify the query."
+msgstr "Đã có lỗi khi tìm kiếm. Vui lòng thử lại hoặc rút gọn từ khóa."
+
+msgid "Showing {first}–{last} of {total} results"
+msgstr "Đang xem {first}–{last} trong {total} kết quả"
+
+msgid "No dataset matches this search. Try other words or remove some filters."
+msgstr "Không có bộ dữ liệu nào khớp. Hãy thử từ khóa khác hoặc bỏ bớt bộ lọc."
+
+# --- Dataset page --------------------------------------------------------------------
+
+msgid "About this dataset"
+msgstr "Thông tin về bộ dữ liệu"
+
+msgid "Golden record"
+msgstr "Bản ghi vàng"
+
+msgid "Follows {standard}"
+msgstr "Đã chuẩn hóa {standard}"
+
+msgid "{average} ({count} reviews)"
+msgstr "{average} ({count} đánh giá)"
+
+msgid "Download all ({n} files)"
+msgstr "Tải tất cả ({n} tệp)"
+
+msgid "Download"
+msgstr "Tải về"
+
+msgid "Follow"
+msgstr "Theo dõi"
+
+msgid "Following"
+msgstr "Đang theo dõi"
+
+msgid "Could not update, please try again."
+msgstr "Chưa cập nhật được, vui lòng thử lại."
+
+msgid "Share"
+msgstr "Chia sẻ"
+
+msgid "Link copied"
+msgstr "Đã sao chép liên kết"
+
+msgid "Manage"
+msgstr "Quản lý"
+
+msgid "Dataset sections"
+msgstr "Các mục của bộ dữ liệu"
+
+msgid "Overview"
+msgstr "Tổng quan"
+
+msgid "Data preview"
+msgstr "Xem trước dữ liệu"
+
+msgid "Try the API"
+msgstr "Thử API"
+
+msgid "Activity"
+msgstr "Nhật ký"
+
+msgid "What is this dataset?"
+msgstr "Bộ dữ liệu này là gì?"
+
+msgid "The publisher has not described this dataset yet."
+msgstr "Đơn vị công bố chưa mô tả bộ dữ liệu này."
+
+msgid "Records"
+msgstr "Số bản ghi"
+
+msgid "Update frequency"
+msgstr "Chu kỳ cập nhật"
+
+msgid "Completeness"
+msgstr "Độ đầy đủ"
+
+msgid "Source system"
+msgstr "Hệ thống nguồn"
+
+msgid "Files and links"
+msgstr "Tệp có thể tải về"
+
+msgid "{n} file"
+msgid_plural "{n} files"
+msgstr[0] "{n} tệp"
+
+msgid "{n} on the DataStore"
+msgid_plural "{n} on the DataStore"
+msgstr[0] "{n} tệp lưu trên DataStore"
+
+msgid "This dataset has no files yet."
+msgstr "Bộ dữ liệu này chưa có tệp nào."
+
+msgid "Add a file"
+msgstr "Thêm tệp"
+
+msgid "Preview"
+msgstr "Xem trước"
+
+msgid "Details"
+msgstr "Chi tiết"
+
+msgid "Open"
+msgstr "Mở"
+
+msgid "Connect"
+msgstr "Kết nối"
+
+msgid "{n} rows"
+msgstr "{n} dòng"
+
+msgid "updated {ago}"
+msgstr "cập nhật {ago}"
+
+msgid "Preview type"
+msgstr "Kiểu xem trước"
+
+msgid "Table"
+msgstr "Bảng"
+
+msgid "Chart"
+msgstr "Biểu đồ"
+
+msgid "Map"
+msgstr "Bản đồ"
+
+msgid "{n} row"
+msgid_plural "{n} rows"
+msgstr[0] "{n} dòng"
+
+msgid "{n} column"
+msgid_plural "{n} columns"
+msgstr[0] "{n} cột"
+
+msgid "File"
+msgstr "Tệp"
+
+msgid "Show"
+msgstr "Xem"
+
+msgid "Data preview is not enabled on this portal yet. Download the files from the Overview tab."
+msgstr "Cổng dữ liệu chưa bật xem trước dữ liệu. Bạn có thể tải tệp ở tab Tổng quan."
+
+msgid "None of the files of this dataset has been loaded into the DataStore, so it cannot be previewed."
+msgstr "Chưa có tệp nào của bộ dữ liệu này được nạp vào DataStore nên chưa xem trước được."
+
+msgid "The data preview is unavailable right now. Please try again later."
+msgstr "Tạm thời chưa xem trước được dữ liệu. Vui lòng thử lại sau."
+
+msgid "Page {page} / {pages}"
+msgstr "Trang {page} / {pages}"
+
+msgid "Preview pages"
+msgstr "Các trang xem trước"
+
+msgid "Previous page"
+msgstr "Trang trước"
+
+msgid "Next page"
+msgstr "Trang sau"
+
+msgid "Group by"
+msgstr "Nhóm theo"
+
+msgid "Sum of"
+msgstr "Tổng của"
+
+msgid "Chart of the data preview"
+msgstr "Biểu đồ của dữ liệu xem trước"
+
+msgid "Built from the first 500 rows."
+msgstr "Tổng hợp từ 500 dòng đầu tiên."
+
+msgid "Map of the dataset features"
+msgstr "Bản đồ các đối tượng của bộ dữ liệu"
+
+msgid "The map needs JavaScript."
+msgstr "Bản đồ cần bật JavaScript."
+
+msgid "Could not load the data for this view."
+msgstr "Không tải được dữ liệu cho chế độ xem này."
+
+msgid "Data quality"
+msgstr "Chất lượng dữ liệu"
+
+msgid "Uniqueness"
+msgstr "Tính duy nhất"
+
+msgid "Valid format"
+msgstr "Đúng định dạng"
+
+msgid "Updated on time"
+msgstr "Đúng hạn cập nhật"
+
+msgid "Try the API right here"
+msgstr "Thử API ngay tại đây"
+
+msgid "Query the DataStore directly to pull the data into your own systems."
+msgstr "Gọi trực tiếp DataStore để lấy dữ liệu về hệ thống của đơn vị bạn."
+
+msgid "Read this dataset's metadata with the CKAN Action API. Row-level queries become available once a file is loaded into the DataStore."
+msgstr "Đọc metadata của bộ dữ liệu bằng CKAN Action API. Truy vấn tới từng dòng dữ liệu sẽ dùng được khi tệp đã được nạp vào DataStore."
+
+msgid "Enter a path of this portal starting with /api/."
+msgstr "Hãy nhập một đường dẫn của cổng dữ liệu, bắt đầu bằng /api/."
+
+msgid "The request failed."
+msgstr "Yêu cầu không thành công."
+
+msgid "Endpoint"
+msgstr "Endpoint"
+
+msgid "Send"
+msgstr "Gửi"
+
+msgid "Copy"
+msgstr "Sao chép"
+
+msgid "Copied"
+msgstr "Đã sao chép"
+
+msgid "API response"
+msgstr "Phản hồi của API"
+
+msgid "Rate limit"
+msgstr "Hạn mức"
+
+msgid "Authentication"
+msgstr "Xác thực"
+
+msgid "API token"
+msgstr "Khóa API"
+
+msgid "Not needed for public data"
+msgstr "Không cần với dữ liệu công khai"
+
+msgid "Response format"
+msgstr "Định dạng trả về"
+
+msgid "Need the whole table?"
+msgstr "Cần toàn bộ bảng?"
+
+msgid "Download it as CSV from the DataStore"
+msgstr "Tải về dạng CSV từ DataStore"
+
+msgid "Activity log"
+msgstr "Nhật ký hoạt động"
+
+msgid "{actor} published this dataset."
+msgstr "{actor} đã công bố bộ dữ liệu."
+
+msgid "{actor} updated this dataset."
+msgstr "{actor} đã cập nhật bộ dữ liệu."
+
+msgid "{actor} deleted this dataset."
+msgstr "{actor} đã xóa bộ dữ liệu."
+
+msgid "{actor} changed this dataset."
+msgstr "{actor} đã thay đổi bộ dữ liệu."
+
+msgid "See the full activity stream"
+msgstr "Xem toàn bộ nhật ký"
+
+msgid "No activity recorded for this dataset yet."
+msgstr "Chưa có hoạt động nào được ghi nhận."
+
+msgid "Dataset information"
+msgstr "Thông tin bộ dữ liệu"
+
+msgid "Identifier"
+msgstr "Mã định danh"
+
+msgid "Spatial coverage"
+msgstr "Phạm vi không gian"
+
+msgid "Temporal coverage"
+msgstr "Phạm vi thời gian"
+
+msgid "Metadata standard"
+msgstr "Chuẩn siêu dữ liệu"
+
+msgid "Version"
+msgstr "Phiên bản"
+
+msgid "Openness"
+msgstr "Mức độ mở"
+
+msgid "{n} of 5 stars"
+msgstr "{n} trên 5 sao"
+
+msgid "Manage data domains"
+msgstr "Quản lý miền dữ liệu"
+
+msgid "Tags"
+msgstr "Thẻ"
+
+msgid "You may also need"
+msgstr "Có thể bạn cũng cần"
+
+msgid "Dataset not found"
+msgstr "Không tìm thấy bộ dữ liệu"
+
+msgid "This dataset has no uploaded files"
+msgstr "Bộ dữ liệu này không có tệp tải lên"
+
+msgid "The files are too large to download together; download them one by one."
+msgstr "Các tệp quá lớn để tải chung một lần, vui lòng tải từng tệp."
+
+# Trino "How to connect" box (resource page)
+
+msgid "How to connect"
+msgstr "Cách kết nối"
+
+msgid "This resource is a table in the Lakehouse. Query it directly with Trino instead of downloading a copy."
+msgstr "Tài nguyên này là một bảng trong Lakehouse. Hãy truy vấn trực tiếp bằng Trino thay vì tải bản sao về."
+
+msgid "In DBeaver or DataGrip, create a Trino connection and paste the JDBC URL. Sign in with your Lakehouse account."
+msgstr "Trong DBeaver hoặc DataGrip, tạo kết nối Trino rồi dán JDBC URL. Đăng nhập bằng tài khoản Lakehouse của bạn."
+
+# --- Organizations ---------------------------------------------------------------------
+
+msgid "Data publishers"
+msgstr "Các đơn vị công bố dữ liệu"
+
+msgid "{n} department or unit, each responsible for the quality of the data in its scope."
+msgid_plural "{n} departments and units, each responsible for the quality of the data in its scope."
+msgstr[0] "{n} Ban chuyên môn và đơn vị trực thuộc, mỗi đơn vị chịu trách nhiệm về chất lượng dữ liệu trong phạm vi của mình."
+
+msgid "Published on time"
+msgstr "Công bố đúng hạn"
+
+msgid "Filter by unit type"
+msgstr "Lọc theo loại đơn vị"
+
+msgid "Find a unit"
+msgstr "Tìm đơn vị"
+
+msgid "Find a unit…"
+msgstr "Tìm đơn vị…"
+
+msgid "Add Organization"
+msgstr "Thêm tổ chức"
+
+msgid "All"
+msgstr "Tất cả"
+
+msgid "Departments"
+msgstr "Ban chuyên môn"
+
+msgid "Power corporations"
+msgstr "Tổng công ty"
+
+msgid "Other units"
+msgstr "Đơn vị khác"
+
+msgid "Department"
+msgstr "Ban chuyên môn"
+
+msgid "Power corporation"
+msgstr "Tổng công ty"
+
+msgid "Affiliated unit"
+msgstr "Đơn vị trực thuộc"
+
+msgid "Other unit"
+msgstr "Đơn vị khác"
+
+msgid "No unit matches your search."
+msgstr "Không có đơn vị nào khớp với từ khóa."
+
+msgid "There are no publishers yet."
+msgstr "Chưa có đơn vị công bố nào."
+
+msgid "Show all units"
+msgstr "Xem tất cả đơn vị"
+
+msgid "Featured publisher this month"
+msgstr "Đơn vị nổi bật tháng này"
+
+msgid "last update {label}"
+msgstr "cập nhật gần nhất: {label}"
+
+msgid "Downloads"
+msgstr "Lượt tải"
+
+msgid "fresh {age}"
+msgstr "tươi {age}"
+
+#, python-format
+msgid "<strong>%(n)s</strong> dataset"
+msgid_plural "<strong>%(n)s</strong> datasets"
+msgstr[0] "<strong>%(n)s</strong> bộ"
+
+msgid "About"
+msgstr "Giới thiệu"
+
+msgid "Activity Stream"
+msgstr "Nhật ký hoạt động"
+
+msgid "Members"
+msgstr "Thành viên"
+
+# --- Code lists (MDS) -----------------------------------------------------------------
+
+msgid "{n} code list issued. Internal systems reference it instead of creating their own codes, so figures match across units."
+msgid_plural "{n} code lists issued. Internal systems reference them instead of creating their own codes, so figures match across units."
+msgstr[0] "{n} bộ mã đã ban hành. Các hệ thống nội bộ tham chiếu về đây thay vì tự sinh mã riêng, để số liệu giữa các đơn vị khớp nhau."
+
+msgid "Code lists issued"
+msgstr "Bộ mã đã ban hành"
+
+msgid "Codes in force"
+msgstr "Mã đang hiệu lực"
+
+msgid "Referencing systems"
+msgstr "Hệ thống tham chiếu"
+
+msgid "No code list has been published yet."
+msgstr "Chưa có danh mục chuẩn nào được ban hành."
+
+msgid "Other"
+msgstr "Khác"
+
+msgid "Code list: {code}"
+msgstr "Mã bộ danh mục: {code}"
+
+msgid "Version {version}"
+msgstr "Phiên bản {version}"
+
+msgid "In force from {date}"
+msgstr "Hiệu lực từ {date}"
+
+msgid "Currently in force"
+msgstr "Đang hiệu lực"
+
+msgid "In force"
+msgstr "Hiệu lực"
+
+msgid "New"
+msgstr "Mới"
+
+msgid "Retired"
+msgstr "Ngừng"
+
+msgid "Synced"
+msgstr "Đã đồng bộ"
+
+msgid "Live API"
+msgstr "Gọi API trực tiếp"
+
+msgid "Late"
+msgstr "Trễ"
+
+msgid "Download CSV"
+msgstr "Tải CSV"
+
+msgid "Download JSON"
+msgstr "Tải JSON"
+
+msgid "Codes"
+msgstr "Số mã"
+
+msgid "{n} level"
+msgid_plural "{n} levels"
+msgstr[0] "{n} cấp"
+
+msgid "Hierarchy"
+msgstr "Cấp phân lớp"
+
+msgid "Issued by"
+msgstr "Ban hành bởi"
+
+msgid "Sync"
+msgstr "Đồng bộ"
+
+msgid "Code"
+msgstr "Mã"
+
+msgid "Name"
+msgstr "Tên"
+
+msgid "Parent code"
+msgstr "Mã cha"
+
+msgid "Items"
+msgstr "Số mục"
+
+msgid "Status"
+msgstr "Trạng thái"
+
+msgid "Version history"
+msgstr "Lịch sử phiên bản"
+
+msgid "Systems referencing it"
+msgstr "Hệ thống đang tham chiếu"
+
+msgid "Choose a code list on the left."
+msgstr "Chọn một danh mục ở cột bên trái."
+
+msgid "Code list not found"
+msgstr "Không tìm thấy danh mục"
+
+# --- Core strings missing from the CKAN 2.11.6 vi catalog (pages that keep core markup)
+
+msgid "Search data"
+msgstr "Tìm kiếm dữ liệu"
+
+msgid "Search Datasets..."
+msgstr "Tìm bộ dữ liệu..."
+
+msgid "Submit"
+msgstr "Gửi"
+
+msgid "Toggle navigation"
+msgstr "Mở/đóng menu"
+
+msgid "Account"
+msgstr "Tài khoản"
+
+msgid "Profile settings"
+msgstr "Cài đặt tài khoản"
+
+msgid "View dashboard"
+msgstr "Xem bảng điều khiển"
+
+msgid "Skip to main content"
+msgstr "Chuyển tới nội dung chính"
+
+msgid "Last Updated"
+msgstr "Cập nhật lần cuối"
+
+msgid "Data last updated"
+msgstr "Dữ liệu cập nhật lần cuối"
+
+msgid "Metadata last updated"
+msgstr "Metadata cập nhật lần cuối"
+
+msgid "There is no description for this dataset"
+msgstr "Bộ dữ liệu này chưa có mô tả"
+
+msgid "This dataset has no data"
+msgstr "Bộ dữ liệu này chưa có dữ liệu"
+
+msgid "Here are some reasons you may not be seeing expected views:"
+msgstr "Một số lý do khiến bạn không thấy chế độ xem như mong đợi:"
+
+msgid "No view has been created that is suitable for this resource"
+msgstr "Chưa có chế độ xem nào phù hợp với tài nguyên này"
+
+msgid "The site administrators may not have enabled the relevant view plugins"
+msgstr "Quản trị viên có thể chưa bật plugin hiển thị tương ứng"
+
+msgid "If a view requires the DataStore, the DataStore plugin may not be enabled, or the data may not have been pushed to the DataStore, or the DataStore hasn't finished processing the data yet"
+msgstr "Nếu chế độ xem cần DataStore thì có thể plugin DataStore chưa được bật, dữ liệu chưa được đẩy vào DataStore, hoặc DataStore chưa xử lý xong"
+
+# Core vi: "{number} số bộ dữ liệu tìm thấy".
+msgid "{number} dataset found"
+msgid_plural "{number} datasets found"
+msgstr[0] "Tìm thấy {number} bộ dữ liệu"
+
+msgid "{number} group found"
+msgid_plural "{number} groups found"
+msgstr[0] "Tìm thấy {number} miền dữ liệu"
+
+# Untranslated in core vi (organization/group cards).
+msgid "{num} Member"
+msgid_plural "{num} Members"
+msgstr[0] "{num} thành viên"
+
+msgid "0 Members"
+msgstr "0 thành viên"
+
+# Core vi translates this as "Giao diện người sử dụng CKAN" (user interface), which is wrong.
+msgid "CKAN API"
+msgstr "CKAN API"
+
+# Groups are presented as data domains.
+msgid "Groups"
+msgstr "Miền dữ liệu"
+
+msgid "Search groups..."
+msgstr "Tìm miền dữ liệu..."
