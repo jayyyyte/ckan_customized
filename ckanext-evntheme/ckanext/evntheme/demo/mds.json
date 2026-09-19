@@ -1,0 +1,122 @@
+{
+  "_comment": "Demo code lists for local development. Same format as `ckan evntheme mds load FILE`.",
+  "catalogs": [
+    {
+      "code": "MDS-VT-001", "name": "Nhóm vật tư thiết bị", "group": "Tài sản & Vật tư", "position": 10,
+      "version": "4.2", "effective_from": "2026-07-01", "status": "active",
+      "issuer": "Ban Quản lý đấu thầu", "sync_note": "Hằng đêm 02:00",
+      "name_label": "Tên nhóm", "count_label": "Số vật tư",
+      "codes": [
+        {"code": "VT-01", "name": "Thiết bị chính", "count": 4812},
+        {"code": "VT-01-01", "name": "Máy biến áp", "parent": "VT-01", "count": 1204},
+        {"code": "VT-01-01-01", "name": "Máy biến áp 110kV", "parent": "VT-01-01", "count": 412},
+        {"code": "VT-01-02", "name": "Máy cắt, dao cách ly", "parent": "VT-01", "count": 986},
+        {"code": "VT-02", "name": "Vật liệu điện", "count": 6740},
+        {"code": "VT-02-01", "name": "Dây dẫn, cáp điện", "parent": "VT-02", "count": 2318},
+        {"code": "VT-02-04", "name": "Phụ kiện đường dây", "parent": "VT-02", "count": 1507, "status": "new"},
+        {"code": "VT-03", "name": "Thiết bị đo đếm", "count": 1882},
+        {"code": "VT-09", "name": "Vật tư thu hồi (cũ)", "count": 204, "status": "retired"}
+      ],
+      "versions": [
+        {"version": "4.2", "note": "Bổ sung nhóm Phụ kiện đường dây (VT-02-04)", "date": "2026-07-01"},
+        {"version": "4.1", "note": "Gộp 18 mã trùng lặp trong nhóm đo đếm", "date": "2026-03-15"},
+        {"version": "4.0", "note": "Chuẩn hóa cấu trúc danh mục thành 3 cấp", "date": "2026-01-01"},
+        {"version": "3.6", "note": "Ngừng hiệu lực nhóm vật tư thu hồi", "date": "2025-09-20"}
+      ],
+      "consumers": [
+        {"name": "ERP (SAP) — Mua sắm", "sync": "đồng bộ 02:00", "status": "ok"},
+        {"name": "EAM — Quản lý tài sản", "sync": "đồng bộ 02:15", "status": "ok"},
+        {"name": "CMIS 3.0 — Kinh doanh", "sync": "gọi API trực tiếp", "status": "live"},
+        {"name": "PMIS — Đầu tư xây dựng", "sync": "trễ 1 ngày", "status": "late"}
+      ]
+    },
+    {
+      "code": "MDS-VT-002", "name": "Đơn vị tính", "group": "Tài sản & Vật tư", "position": 11,
+      "version": "2.0", "effective_from": "2025-01-01", "issuer": "Ban Quản lý đấu thầu", "sync_note": "Khi có thay đổi",
+      "name_label": "Tên đơn vị",
+      "codes": [
+        {"code": "DVT-CAI", "name": "Cái"}, {"code": "DVT-BO", "name": "Bộ"}, {"code": "DVT-M", "name": "Mét"},
+        {"code": "DVT-KG", "name": "Kilôgam"}, {"code": "DVT-TU", "name": "Tủ"}, {"code": "DVT-THUNG", "name": "Thùng"}
+      ],
+      "versions": [{"version": "2.0", "note": "Chuẩn hóa ký hiệu theo TCVN", "date": "2025-01-01"}],
+      "consumers": [{"name": "ERP (SAP) — Mua sắm", "sync": "đồng bộ 02:00", "status": "ok"}]
+    },
+    {
+      "code": "MDS-VT-003", "name": "Cấp điện áp", "group": "Tài sản & Vật tư", "position": 12,
+      "version": "1.1", "effective_from": "2024-06-01", "issuer": "Ban Kỹ thuật – Sản xuất", "sync_note": "Khi có thay đổi",
+      "name_label": "Cấp điện áp",
+      "codes": [
+        {"code": "U500", "name": "500 kV"}, {"code": "U220", "name": "220 kV"}, {"code": "U110", "name": "110 kV"},
+        {"code": "U35", "name": "35 kV"}, {"code": "U22", "name": "22 kV"}, {"code": "U10", "name": "10 kV"},
+        {"code": "U6", "name": "6 kV", "status": "retired"}, {"code": "U04", "name": "0,4 kV"}
+      ],
+      "consumers": [{"name": "EAM — Quản lý tài sản", "sync": "đồng bộ 02:15", "status": "ok"}]
+    },
+    {
+      "code": "MDS-TC-001", "name": "Mã đơn vị EVN", "group": "Tổ chức", "position": 20,
+      "version": "5.0", "effective_from": "2026-01-01", "issuer": "Ban Tổ chức & Nhân sự", "sync_note": "Hằng đêm 01:00",
+      "name_label": "Tên đơn vị",
+      "codes": [
+        {"code": "EVN", "name": "Tập đoàn Điện lực Việt Nam"},
+        {"code": "NPC", "name": "Tổng công ty Điện lực miền Bắc", "parent": "EVN"},
+        {"code": "CPC", "name": "Tổng công ty Điện lực miền Trung", "parent": "EVN"},
+        {"code": "SPC", "name": "Tổng công ty Điện lực miền Nam", "parent": "EVN"},
+        {"code": "PA01", "name": "Công ty Điện lực Nam Định", "parent": "NPC"},
+        {"code": "PC01", "name": "Công ty Điện lực Quảng Bình", "parent": "CPC"}
+      ],
+      "consumers": [
+        {"name": "HRMS — Nhân sự", "sync": "đồng bộ 01:00", "status": "ok"},
+        {"name": "ERP (SAP) — Mua sắm", "sync": "đồng bộ 02:00", "status": "ok"}
+      ]
+    },
+    {
+      "code": "MDS-TC-002", "name": "Chức danh", "group": "Tổ chức", "position": 21,
+      "version": "1.3", "effective_from": "2025-04-01", "issuer": "Ban Tổ chức & Nhân sự",
+      "codes": [
+        {"code": "CD-01", "name": "Trưởng ban"}, {"code": "CD-02", "name": "Phó trưởng ban"},
+        {"code": "CD-10", "name": "Chuyên viên"}, {"code": "CD-20", "name": "Kỹ sư vận hành"}
+      ],
+      "consumers": [{"name": "HRMS — Nhân sự", "sync": "đồng bộ 01:00", "status": "ok"}]
+    },
+    {
+      "code": "MDS-KH-001", "name": "Mục đích sử dụng điện", "group": "Khách hàng & DVKH", "position": 30,
+      "version": "3.0", "effective_from": "2025-07-01", "issuer": "Ban Kinh doanh",
+      "codes": [
+        {"code": "MD-SH", "name": "Sinh hoạt"}, {"code": "MD-SX", "name": "Sản xuất"},
+        {"code": "MD-KD", "name": "Kinh doanh"}, {"code": "MD-HC", "name": "Hành chính sự nghiệp"}
+      ],
+      "consumers": [{"name": "CMIS 3.0 — Kinh doanh", "sync": "gọi API trực tiếp", "status": "live"}]
+    },
+    {
+      "code": "MDS-KH-002", "name": "Loại hợp đồng", "group": "Khách hàng & DVKH", "position": 31,
+      "version": "1.0", "effective_from": "2024-01-01", "issuer": "Ban Kinh doanh",
+      "codes": [{"code": "HD-SH", "name": "Hợp đồng sinh hoạt"}, {"code": "HD-NSH", "name": "Hợp đồng ngoài sinh hoạt"}],
+      "consumers": [{"name": "CMIS 3.0 — Kinh doanh", "sync": "gọi API trực tiếp", "status": "live"}]
+    },
+    {
+      "code": "MDS-KH-003", "name": "Kênh tiếp nhận yêu cầu", "group": "Khách hàng & DVKH", "position": 32,
+      "version": "1.2", "effective_from": "2025-10-01", "issuer": "Ban Kinh doanh",
+      "codes": [
+        {"code": "KN-TT", "name": "Tổng đài"}, {"code": "KN-APP", "name": "Ứng dụng di động"},
+        {"code": "KN-WEB", "name": "Cổng dịch vụ trực tuyến"}, {"code": "KN-QUAY", "name": "Tại quầy giao dịch"}
+      ],
+      "consumers": [{"name": "CSKH — Chăm sóc khách hàng", "sync": "đồng bộ 03:00", "status": "ok"}]
+    },
+    {
+      "code": "MDS-DL-001", "name": "Tỉnh / Thành phố", "group": "Địa lý", "position": 40,
+      "version": "2025.1", "effective_from": "2025-07-01", "issuer": "Ban Tổ chức & Nhân sự",
+      "codes": [
+        {"code": "01", "name": "Thành phố Hà Nội"}, {"code": "31", "name": "Thành phố Hải Phòng"},
+        {"code": "48", "name": "Thành phố Đà Nẵng"}, {"code": "79", "name": "Thành phố Hồ Chí Minh"}
+      ],
+      "consumers": [{"name": "PMIS — Đầu tư xây dựng", "sync": "trễ 1 ngày", "status": "late"}]
+    },
+    {
+      "code": "MDS-DL-002", "name": "Quận / Huyện", "group": "Địa lý", "position": 41,
+      "version": "2025.1", "effective_from": "2025-07-01", "issuer": "Ban Tổ chức & Nhân sự",
+      "codes": [
+        {"code": "001", "name": "Quận Ba Đình", "parent": "01"}, {"code": "002", "name": "Quận Hoàn Kiếm", "parent": "01"}
+      ]
+    }
+  ]
+}

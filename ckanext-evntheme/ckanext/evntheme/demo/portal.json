@@ -1,0 +1,290 @@
+{
+  "_comment": "Demo content for local development (`ckan evntheme seed-demo`). Fictional sample data taken from the UI mockup; do not load into production.",
+  "groups": [
+    {"name": "kinh-doanh-dvkh", "title": "Kinh doanh & DVKH", "description": "Khách hàng, hóa đơn, chăm sóc khách hàng", "tone": "blue"},
+    {"name": "ky-thuat-an-toan", "title": "Kỹ thuật – An toàn", "description": "Lưới điện, vận hành, sự cố", "tone": "orange"},
+    {"name": "dau-tu-xay-dung", "title": "Đầu tư xây dựng", "description": "Dự án, tiến độ, giải ngân", "tone": "green"},
+    {"name": "tai-chinh-vat-tu", "title": "Tài chính – Vật tư", "description": "Kho, mua sắm, chi phí", "tone": "sky"},
+    {"name": "to-chuc-nhan-su", "title": "Tổ chức – Nhân sự", "description": "Đơn vị, định biên, đào tạo", "tone": "sand"}
+  ],
+  "organizations": [
+    {"name": "trung-tam-dieu-do-htd-qg", "title": "Trung tâm Điều độ Hệ thống điện Quốc gia", "description": "Điều độ vận hành hệ thống điện quốc gia, công bố thông số vận hành lưới truyền tải.", "extras": {"org_type": "affiliate", "abbreviation": "A0", "domain": "ky-thuat-an-toan"}},
+    {"name": "evnnpc", "title": "Tổng công ty Điện lực miền Bắc", "description": "Phân phối và kinh doanh điện năng tại 27 tỉnh, thành phố miền Bắc.", "extras": {"org_type": "corporation", "abbreviation": "NPC", "domain": "kinh-doanh-dvkh"}},
+    {"name": "evncpc", "title": "Tổng công ty Điện lực miền Trung", "description": "Phân phối và kinh doanh điện năng tại 13 tỉnh, thành phố miền Trung – Tây Nguyên.", "extras": {"org_type": "corporation", "abbreviation": "CPC", "domain": "kinh-doanh-dvkh"}},
+    {"name": "ban-ky-thuat-san-xuat", "title": "Ban Kỹ thuật – Sản xuất", "description": "Quản lý kỹ thuật, định mức và an toàn sản xuất.", "extras": {"org_type": "department", "abbreviation": "KTSX", "domain": "ky-thuat-an-toan"}},
+    {"name": "ban-quan-ly-dau-thau", "title": "Ban Quản lý đấu thầu", "description": "Quản lý mua sắm, danh mục vật tư và nhà cung cấp.", "extras": {"org_type": "department", "abbreviation": "QLĐT", "domain": "tai-chinh-vat-tu"}},
+    {"name": "ban-tai-chinh-ke-toan", "title": "Ban Tài chính – Kế toán", "description": "Quản lý tài chính, tồn kho và chi phí.", "extras": {"org_type": "department", "abbreviation": "TCKT", "domain": "tai-chinh-vat-tu"}},
+    {"name": "ban-kinh-doanh", "title": "Ban Kinh doanh", "description": "Theo dõi sản lượng, doanh thu và dịch vụ khách hàng.", "extras": {"org_type": "department", "abbreviation": "KD", "domain": "kinh-doanh-dvkh"}},
+    {"name": "ban-quan-ly-dau-tu-xay-dung", "title": "Ban Quản lý đầu tư xây dựng", "description": "Quản lý dự án, tiến độ và giải ngân đầu tư.", "extras": {"org_type": "department", "abbreviation": "ĐTXD", "domain": "dau-tu-xay-dung"}},
+    {"name": "ban-to-chuc-nhan-su", "title": "Ban Tổ chức & Nhân sự", "description": "Quản lý cơ cấu tổ chức, định biên và đào tạo.", "extras": {"org_type": "department", "abbreviation": "TCNS", "domain": "to-chuc-nhan-su"}}
+  ],
+  "datasets": [
+    {
+      "name": "danh-muc-vat-tu-thiet-bi",
+      "title": "Danh mục Vật tư thiết bị thống nhất toàn EVN",
+      "owner_org": "ban-quan-ly-dau-thau",
+      "notes": "Danh mục vật tư thiết bị đã được chuẩn hóa và loại bỏ trùng lặp trên toàn Tập đoàn. Mỗi bản ghi có một mã định danh duy nhất kèm thuộc tính kỹ thuật, đơn vị tính và nhóm vật tư.\n\nDùng cho công tác mua sắm, quản lý kho và điều chuyển tài sản giữa các Tổng công ty. Đây cũng là nguồn tham chiếu bắt buộc cho ERP, EAM và PMIS.",
+      "license_id": "other-closed",
+      "groups": ["tai-chinh-vat-tu"],
+      "tags": ["vật tư", "danh mục chuẩn", "bản ghi vàng", "mua sắm", "ERP", "kho"],
+      "maintainer": "Nguyễn Văn A.",
+      "maintainer_email": "data@evn.com.vn",
+      "version": "4.2",
+      "extras": {"data_type": "master", "update_frequency": "daily", "source_system": "ERP · EAM", "record_count": "128402", "golden_record": "true", "metadata_standard": "DCAT-AP 2.1", "spatial_coverage": "Toàn quốc (63 tỉnh/thành)", "temporal_coverage": "Từ 01/2019 đến nay", "open_level": "3", "quality_completeness": "98.4", "quality_uniqueness": "100", "quality_validity": "96.1", "quality_timeliness": "91.7"},
+      "age_hours": 2,
+      "views": 5400,
+      "resources": [
+        {"name": "danh-muc-vat-tu-full.csv", "format": "CSV", "description": "Toàn bộ danh mục, mỗi dòng một mã vật tư.", "downloads": 2847, "rows": [
+          ["ma_vat_tu", "ten_vat_tu", "nhom", "don_vi_tinh", "cap_dien_ap", "he_thong_nguon", "ngay_cap_nhat"],
+          ["MAT-0001204", "Máy biến áp 110/22kV - 40MVA", "Thiết bị chính", "Cái", "110 kV", "ERP", "2026-09-18"],
+          ["MAT-0001205", "Máy cắt SF6 ngoài trời 110kV", "Thiết bị chính", "Cái", "110 kV", "ERP", "2026-09-18"],
+          ["MAT-0004411", "Dây nhôm lõi thép ACSR 240/32", "Vật liệu", "m", "22 kV", "EAM", "2026-09-17"],
+          ["MAT-0004412", "Cách điện treo thủy tinh U120B", "Vật liệu", "Cái", "110 kV", "EAM", "2026-09-17"],
+          ["MAT-0007780", "Công tơ điện tử 1 pha 2 dây", "Đo đếm", "Cái", "0,4 kV", "CMIS", "2026-09-16"],
+          ["MAT-0007781", "Công tơ điện tử 3 pha trực tiếp", "Đo đếm", "Cái", "0,4 kV", "CMIS", "2026-09-16"],
+          ["MAT-0009120", "Tủ phân phối hạ thế 400V", "Thiết bị phụ", "Tủ", "0,4 kV", "ERP", "2026-09-15"],
+          ["MAT-0009121", "Chống sét van 22kV", "Thiết bị phụ", "Cái", "22 kV", "ERP", "2026-09-15"]
+        ]},
+        {"name": "Endpoint package_show", "format": "API", "description": "REST · JSON", "api": true},
+        {"name": "danh-muc-vat-tu-theo-nhom.json", "format": "JSON", "description": "Danh mục nhóm theo cây 3 cấp.", "json": {"nhom": [{"ma": "VT-01", "ten": "Thiết bị chính", "con": ["VT-01-01", "VT-01-02"]}, {"ma": "VT-02", "ten": "Vật liệu điện", "con": ["VT-02-01", "VT-02-04"]}]}}
+      ]
+    },
+    {
+      "name": "thong-so-van-hanh-luoi-500kv",
+      "title": "Thông số vận hành lưới truyền tải 500kV",
+      "owner_org": "trung-tam-dieu-do-htd-qg",
+      "notes": "Dữ liệu theo chu kỳ 5 phút: công suất truyền tải, điện áp nút và trạng thái máy cắt trên toàn bộ đường dây 500kV.",
+      "license_id": "other-closed",
+      "groups": ["ky-thuat-an-toan"],
+      "tags": ["lưới điện", "500kV", "vận hành", "thời gian thực"],
+      "extras": {"data_type": "transaction", "update_frequency": "realtime", "source_system": "SCADA/EMS", "record_count": "8640000", "quality_completeness": "99.1", "quality_timeliness": "99.6"},
+      "age_hours": 0.25,
+      "views": 8200,
+      "resources": [
+        {"name": "Endpoint package_show", "format": "API", "api": true, "downloads": 5102},
+        {"name": "thong-so-van-hanh-moi-nhat.json", "format": "JSON", "json": {"thoi_diem": "2026-09-19T10:05:00+07:00", "duong_day": [{"ma": "500-HB-DN", "cong_suat_mw": 1840, "dien_ap_kv": 512}, {"ma": "500-DN-PL", "cong_suat_mw": 1520, "dien_ap_kv": 509}]}},
+        {"name": "tram-500kv.geojson", "format": "GeoJSON", "geojson": {"type": "FeatureCollection", "features": [
+          {"type": "Feature", "properties": {"ten": "Trạm 500kV khu vực Hà Nội (demo)"}, "geometry": {"type": "Point", "coordinates": [105.85, 21.02]}},
+          {"type": "Feature", "properties": {"ten": "Trạm 500kV khu vực Hà Tĩnh (demo)"}, "geometry": {"type": "Point", "coordinates": [105.9, 18.34]}},
+          {"type": "Feature", "properties": {"ten": "Trạm 500kV khu vực Đà Nẵng (demo)"}, "geometry": {"type": "Point", "coordinates": [108.2, 16.05]}},
+          {"type": "Feature", "properties": {"ten": "Trạm 500kV khu vực Pleiku (demo)"}, "geometry": {"type": "Point", "coordinates": [108.0, 13.98]}},
+          {"type": "Feature", "properties": {"ten": "Trạm 500kV khu vực TP.HCM (demo)"}, "geometry": {"type": "Point", "coordinates": [106.7, 10.78]}},
+          {"type": "Feature", "properties": {"ten": "Đường dây 500kV Bắc – Nam (minh họa)"}, "geometry": {"type": "LineString", "coordinates": [[105.85, 21.02], [105.9, 18.34], [108.2, 16.05], [108.0, 13.98], [106.7, 10.78]]}}
+        ]}}
+      ]
+    },
+    {
+      "name": "danh-muc-to-chuc-don-vi",
+      "title": "Danh mục Tổ chức – Đơn vị trực thuộc EVN",
+      "owner_org": "ban-to-chuc-nhan-su",
+      "notes": "Cây tổ chức chuẩn tới cấp Điện lực quận/huyện, kèm mã đơn vị dùng chung cho toàn bộ hệ thống nội bộ.",
+      "license_id": "other-closed",
+      "groups": ["to-chuc-nhan-su"],
+      "tags": ["tổ chức", "danh mục chuẩn", "mã đơn vị"],
+      "extras": {"data_type": "reference", "update_frequency": "monthly", "source_system": "HRMS", "record_count": "742", "open_level": "3"},
+      "age_hours": 26,
+      "views": 2100,
+      "resources": [
+        {"name": "danh-muc-don-vi.csv", "format": "CSV", "downloads": 1336, "rows": [
+          ["ma_don_vi", "ten_don_vi", "ma_cha", "cap"],
+          ["EVN", "Tập đoàn Điện lực Việt Nam", "", "1"],
+          ["NPC", "Tổng công ty Điện lực miền Bắc", "EVN", "2"],
+          ["CPC", "Tổng công ty Điện lực miền Trung", "EVN", "2"],
+          ["SPC", "Tổng công ty Điện lực miền Nam", "EVN", "2"],
+          ["PA01", "Công ty Điện lực Nam Định", "NPC", "3"],
+          ["PC01", "Công ty Điện lực Quảng Bình", "CPC", "3"]
+        ]},
+        {"name": "danh-muc-don-vi.xlsx", "format": "XLSX", "url": "https://data.evn.example/demo/danh-muc-don-vi.xlsx"},
+        {"name": "Endpoint package_show", "format": "API", "api": true}
+      ]
+    },
+    {
+      "name": "san-luong-dien-thuong-pham",
+      "title": "Sản lượng điện thương phẩm theo Tổng công ty",
+      "owner_org": "ban-kinh-doanh",
+      "notes": "Điện thương phẩm, tổn thất và doanh thu theo từng Tổng công ty Điện lực, tổng hợp theo tháng từ năm 2019.",
+      "license_id": "other-at",
+      "groups": ["kinh-doanh-dvkh"],
+      "tags": ["sản lượng thương phẩm", "doanh thu", "kinh doanh"],
+      "extras": {"data_type": "transaction", "update_frequency": "monthly", "source_system": "CMIS", "record_count": "1260", "quality_completeness": "97.2"},
+      "age_hours": 74,
+      "views": 4300,
+      "resources": [
+        {"name": "san-luong-thuong-pham-2026.csv", "format": "CSV", "downloads": 3418, "rows": [
+          ["thang", "tong_cong_ty", "san_luong_gwh", "ton_that_pct", "doanh_thu_ty_dong"],
+          ["2026-06", "EVNNPC", "8120", "4.1", "16320"],
+          ["2026-06", "EVNCPC", "2890", "3.9", "5710"],
+          ["2026-06", "EVNSPC", "8470", "3.6", "17100"],
+          ["2026-07", "EVNNPC", "8560", "4.0", "17200"],
+          ["2026-07", "EVNCPC", "3010", "3.8", "5950"],
+          ["2026-07", "EVNSPC", "8630", "3.5", "17440"]
+        ]},
+        {"name": "san-luong-thuong-pham.xlsx", "format": "XLSX", "url": "https://data.evn.example/demo/san-luong-thuong-pham.xlsx"},
+        {"name": "san-luong-thuong-pham.json", "format": "JSON", "json": {"don_vi": "GWh", "nguon": "CMIS"}}
+      ]
+    },
+    {
+      "name": "dinh-muc-vat-tu-dai-tu-tba-110kv",
+      "title": "Định mức vật tư đại tu trạm biến áp 110kV",
+      "owner_org": "ban-ky-thuat-san-xuat",
+      "notes": "Định mức vật tư, nhân công và thiết bị cho các hạng mục đại tu, sửa chữa lớn trạm biến áp 110kV.",
+      "license_id": "other-closed",
+      "groups": ["ky-thuat-an-toan", "tai-chinh-vat-tu"],
+      "tags": ["vật tư", "định mức", "trạm biến áp 110kV"],
+      "extras": {"data_type": "reference", "update_frequency": "quarterly", "source_system": "EAM"},
+      "age_hours": 98,
+      "views": 1300,
+      "resources": [
+        {"name": "dinh-muc-dai-tu-110kv.xlsx", "format": "XLSX", "url": "https://data.evn.example/demo/dinh-muc-dai-tu-110kv.xlsx", "downloads": 921},
+        {"name": "dinh-muc-dai-tu-110kv.csv", "format": "CSV", "rows": [
+          ["hang_muc", "ma_vat_tu", "so_luong", "don_vi_tinh"],
+          ["Thay dầu máy biến áp", "MAT-0003310", "12", "thùng"],
+          ["Thay sứ xuyên 110kV", "MAT-0004412", "3", "Cái"],
+          ["Bảo dưỡng máy cắt", "MAT-0001205", "1", "Bộ"]
+        ]}
+      ]
+    },
+    {
+      "name": "ton-kho-vat-tu",
+      "title": "Tồn kho vật tư theo Tổng công ty",
+      "owner_org": "ban-tai-chinh-ke-toan",
+      "notes": "Số lượng và giá trị tồn kho theo mã vật tư, kho và đơn vị quản lý, đối soát trực tiếp với hệ thống ERP.",
+      "license_id": "other-closed",
+      "groups": ["tai-chinh-vat-tu"],
+      "tags": ["vật tư", "kho", "ERP"],
+      "extras": {"data_type": "transaction", "update_frequency": "daily", "source_system": "ERP"},
+      "age_hours": 18,
+      "views": 1900,
+      "resources": [
+        {"name": "ton-kho-vat-tu.csv", "format": "CSV", "downloads": 1475, "rows": [
+          ["ma_vat_tu", "kho", "don_vi", "so_luong", "gia_tri_trieu_dong"],
+          ["MAT-0001204", "Kho Đông Anh", "EVNNPC", "4", "38400"],
+          ["MAT-0004411", "Kho Hòa Khánh", "EVNCPC", "12500", "2120"],
+          ["MAT-0007780", "Kho Thủ Đức", "EVNSPC", "8200", "4920"]
+        ]},
+        {"name": "Endpoint package_show", "format": "API", "api": true}
+      ]
+    },
+    {
+      "name": "nha-cung-cap-vat-tu-da-danh-gia",
+      "title": "Danh sách nhà cung cấp vật tư đã đánh giá",
+      "owner_org": "ban-quan-ly-dau-thau",
+      "notes": "Nhà cung cấp kèm kết quả đánh giá năng lực, lịch sử trúng thầu và nhóm hàng hóa cung cấp.",
+      "license_id": "other-closed",
+      "groups": ["tai-chinh-vat-tu"],
+      "tags": ["vật tư", "mua sắm", "nhà cung cấp"],
+      "extras": {"data_type": "reference", "update_frequency": "monthly"},
+      "age_hours": 170,
+      "views": 800,
+      "resources": [
+        {"name": "nha-cung-cap.csv", "format": "CSV", "downloads": 664, "rows": [
+          ["ma_nha_cung_cap", "ten", "nhom_hang", "xep_hang"],
+          ["NCC-0012", "Công ty Thiết bị điện A (demo)", "Thiết bị chính", "A"],
+          ["NCC-0047", "Công ty Cáp điện B (demo)", "Vật liệu điện", "B"]
+        ]},
+        {"name": "tieu-chi-danh-gia.pdf", "format": "PDF", "url": "https://data.evn.example/demo/tieu-chi-danh-gia.pdf"}
+      ]
+    },
+    {
+      "name": "dieu-chuyen-vat-tu-giua-don-vi",
+      "title": "Lịch sử điều chuyển vật tư giữa các đơn vị",
+      "owner_org": "evnnpc",
+      "notes": "Giao dịch điều chuyển nội bộ: đơn vị gửi, đơn vị nhận, mã vật tư, số lượng và trạng thái phê duyệt.",
+      "license_id": "other-closed",
+      "groups": ["tai-chinh-vat-tu"],
+      "tags": ["vật tư", "điều chuyển"],
+      "extras": {"data_type": "transaction", "update_frequency": "weekly", "source_system": "ERP"},
+      "age_hours": 50,
+      "views": 600,
+      "resources": [
+        {"name": "dieu-chuyen-2026.csv", "format": "CSV", "downloads": 388, "rows": [
+          ["ngay", "don_vi_gui", "don_vi_nhan", "ma_vat_tu", "so_luong", "trang_thai"],
+          ["2026-09-12", "PA01", "PA05", "MAT-0004411", "1200", "Đã duyệt"],
+          ["2026-09-15", "PA03", "PA01", "MAT-0007780", "300", "Chờ duyệt"]
+        ]},
+        {"name": "dieu-chuyen-2026.json", "format": "JSON", "json": {"so_giao_dich": 2}},
+        {"name": "Endpoint package_show", "format": "API", "api": true}
+      ]
+    },
+    {
+      "name": "ton-that-luoi-dien",
+      "title": "Tổn thất điện năng lưới phân phối",
+      "owner_org": "evncpc",
+      "notes": "Tỷ lệ tổn thất điện năng theo Công ty Điện lực và cấp điện áp, tổng hợp hàng tháng.",
+      "license_id": "other-at",
+      "groups": ["ky-thuat-an-toan", "kinh-doanh-dvkh"],
+      "tags": ["tổn thất lưới điện", "phân phối"],
+      "extras": {"data_type": "transaction", "update_frequency": "monthly", "source_system": "CMIS · PMIS", "quality_completeness": "95.8"},
+      "age_hours": 30,
+      "views": 1500,
+      "resources": [
+        {"name": "ton-that-2026.csv", "format": "CSV", "downloads": 702, "rows": [
+          ["thang", "cong_ty_dien_luc", "cap_dien_ap", "ton_that_pct"],
+          ["2026-07", "PC Quảng Bình", "22 kV", "3.2"],
+          ["2026-07", "PC Đà Nẵng", "22 kV", "2.4"],
+          ["2026-07", "PC Gia Lai", "0,4 kV", "5.1"]
+        ]},
+        {"name": "ton-that-2026.xlsx", "format": "XLSX", "url": "https://data.evn.example/demo/ton-that-2026.xlsx"}
+      ]
+    },
+    {
+      "name": "tram-bien-ap-110kv",
+      "title": "Danh sách trạm biến áp 110kV",
+      "owner_org": "ban-ky-thuat-san-xuat",
+      "notes": "Vị trí, công suất đặt và đơn vị quản lý của các trạm biến áp 110kV.",
+      "license_id": "cc-by",
+      "groups": ["ky-thuat-an-toan"],
+      "tags": ["trạm biến áp 110kV", "lưới điện"],
+      "extras": {"data_type": "reference", "update_frequency": "yearly", "source_system": "PMIS", "open_level": "4"},
+      "age_hours": 400,
+      "views": 1100,
+      "resources": [
+        {"name": "tram-110kv.csv", "format": "CSV", "downloads": 540, "rows": [
+          ["ma_tram", "ten_tram", "cong_suat_mva", "don_vi_quan_ly"],
+          ["T110-001", "Trạm 110kV khu vực A (demo)", "2x63", "EVNNPC"],
+          ["T110-002", "Trạm 110kV khu vực B (demo)", "2x40", "EVNCPC"]
+        ]},
+        {"name": "tram-110kv.geojson", "format": "GeoJSON", "geojson": {"type": "FeatureCollection", "features": [
+          {"type": "Feature", "properties": {"ten": "Trạm 110kV khu vực A (demo)"}, "geometry": {"type": "Point", "coordinates": [106.17, 20.42]}},
+          {"type": "Feature", "properties": {"ten": "Trạm 110kV khu vực B (demo)"}, "geometry": {"type": "Point", "coordinates": [106.6, 17.47]}}
+        ]}}
+      ]
+    },
+    {
+      "name": "tien-do-du-an-dau-tu",
+      "title": "Tiến độ và giải ngân dự án đầu tư xây dựng",
+      "owner_org": "ban-quan-ly-dau-tu-xay-dung",
+      "notes": "Tiến độ thi công và giải ngân các dự án lưới điện từ 110kV trở lên, cập nhật hằng tháng.",
+      "license_id": "other-closed",
+      "groups": ["dau-tu-xay-dung"],
+      "tags": ["dự án", "giải ngân", "tiến độ"],
+      "extras": {"data_type": "transaction", "update_frequency": "monthly", "source_system": "PMIS"},
+      "age_hours": 120,
+      "views": 700,
+      "resources": [
+        {"name": "tien-do-du-an.xlsx", "format": "XLSX", "url": "https://data.evn.example/demo/tien-do-du-an.xlsx", "downloads": 310},
+        {"name": "bao-cao-giai-ngan.pdf", "format": "PDF", "url": "https://data.evn.example/demo/bao-cao-giai-ngan.pdf"}
+      ]
+    },
+    {
+      "name": "khach-hang-su-dung-dien",
+      "title": "Khách hàng sử dụng điện theo mục đích",
+      "owner_org": "evnnpc",
+      "notes": "Số lượng khách hàng và sản lượng theo mục đích sử dụng điện, theo tỉnh.",
+      "license_id": "other-closed",
+      "groups": ["kinh-doanh-dvkh"],
+      "tags": ["khách hàng", "kinh doanh"],
+      "extras": {"data_type": "master", "update_frequency": "daily", "source_system": "CMIS", "golden_record": "true"},
+      "age_hours": 60,
+      "views": 1200,
+      "resources": [
+        {"name": "Endpoint package_show", "format": "API", "api": true, "downloads": 460},
+        {"name": "khach-hang-theo-muc-dich.csv", "format": "CSV", "rows": [
+          ["tinh", "muc_dich", "so_khach_hang"],
+          ["Nam Định", "Sinh hoạt", "612300"],
+          ["Nam Định", "Kinh doanh", "31200"]
+        ]}
+      ]
+    }
+  ]
+}
