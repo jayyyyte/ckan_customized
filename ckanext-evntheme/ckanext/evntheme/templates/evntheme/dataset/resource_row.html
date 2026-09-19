@@ -1,0 +1,34 @@
+{#- One resource in the "Files and links" card.
+    Own snippet rather than an override of package/snippets/resource_item.html, which
+    core also uses on the resource page sidebar and the "edit resources" list. -#}
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set badge = h.evn_format_badge(res.format) %}
+{% set details_url = h.url_for(pkg.type ~ '_resource.read', id=pkg.name, resource_id=res.id) %}
+{% set meta = h.evn_resource_meta(res) %}
+<li class="evn-file">
+  <div class="evn-file__main">
+    <span class="evn-file__type evn-format--{{ badge.style }}" aria-hidden="true">{{ badge.label|truncate(7, true, '') }}</span>
+    <div class="evn-file__body">
+      <a class="evn-file__name" href="{{ details_url }}">{{ h.resource_display_name(res) }}</a>
+      {% if meta or res.description %}
+        <p class="evn-file__meta">{{ meta|join(' · ') if meta else h.markdown_extract(h.get_translated(res, 'description'), extract_length=90) }}</p>
+      {% endif %}
+    </div>
+  </div>
+  <div class="evn-file__actions">
+    {% if res.datastore_active %}
+      <a class="evn-btn evn-btn--outline evn-btn--sm" href="{{ h.url_for(pkg.type ~ '.read', id=pkg.name, tab='preview', resource_id=res.id) }}">{{ ui.icon('eye') }}{{ _('Preview') }}</a>
+    {% else %}
+      <a class="evn-btn evn-btn--outline evn-btn--sm" href="{{ details_url }}">{{ _('Details') }}</a>
+    {% endif %}
+    {% if res.url and h.is_url(res.url) %}
+      {% if res.url_type == 'upload' %}
+        <a class="evn-btn evn-btn--primary evn-btn--sm resource-url-analytics" href="{{ res.url }}">{{ ui.icon('download') }}{{ _('Download') }}</a>
+      {% else %}
+        <a class="evn-btn evn-btn--primary evn-btn--sm resource-url-analytics" href="{{ res.url }}" rel="noreferrer">{{ ui.icon('external') }}{{ _('Open') }}</a>
+      {% endif %}
+    {% elif h.evn_trino_connection(res.url) %}
+      <a class="evn-btn evn-btn--primary evn-btn--sm" href="{{ details_url }}#connect">{{ ui.icon('plug') }}{{ _('Connect') }}</a>
+    {% endif %}
+  </div>
+</li>

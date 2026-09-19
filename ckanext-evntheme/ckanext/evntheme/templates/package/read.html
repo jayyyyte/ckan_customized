@@ -1,0 +1,32 @@
+{% ckan_extends %}
+
+{#- Dataset page: hero with tabs, four tab panels, sidebar.
+    Every panel is rendered on the server and the inactive ones are `hidden`, so
+    ?tab=... works without JS; evn-tabs only switches panels and updates the URL. -#}
+{% block content %}
+  {% set tab = h.evn_active_tab() %}
+  {% set can_edit = h.check_access('package_update', {'id': pkg.id}) %}
+  <div class="evn-page evn-detail" data-module="evn-tabs">
+    {% block evn_dataset_hero %}
+      {% snippet 'evntheme/dataset/hero.html', pkg=pkg, can_edit=can_edit %}
+    {% endblock %}
+    <div class="evn-container evn-flash">{{ self.flash() }}</div>
+    <div class="evn-container evn-split evn-split--detail">
+      <div class="evn-split__main">
+        {% for code, template in [('overview', 'overview'), ('preview', 'preview'), ('api', 'api'), ('activity', 'activity')] %}
+          {% if code != 'activity' or h.plugin_loaded('activity') %}
+            <section class="evn-tabpanel evn-stack" id="tab-{{ code }}" role="tabpanel" aria-labelledby="tab-{{ code }}-link"
+                     tabindex="-1"{% if tab != code %} hidden{% endif %}>
+              {% snippet 'evntheme/dataset/' ~ template ~ '.html', pkg=pkg, can_edit=can_edit %}
+            </section>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <aside class="evn-split__aside evn-stack" aria-label="{{ _('About this dataset') }}">
+        {% block evn_dataset_sidebar %}
+          {% snippet 'evntheme/dataset/sidebar.html', pkg=pkg, can_edit=can_edit %}
+        {% endblock %}
+      </aside>
+    </div>
+  </div>
+{% endblock %}

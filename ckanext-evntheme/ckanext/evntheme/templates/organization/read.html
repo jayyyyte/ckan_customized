@@ -1,0 +1,34 @@
+{% ckan_extends %}
+{% import 'evntheme/macros/ui.html' as ui %}
+
+{% block page_primary_action %}
+  {% if h.check_access('package_create', {'owner_org': group_dict.id}) %}
+    <a class="evn-btn evn-btn--primary" href="{{ h.url_for(dataset_type ~ '.new', group=group_dict.id) }}">
+      {{ ui.icon('plus') }}{{ h.humanize_entity_type('package', dataset_type, 'add link') or _('Add Dataset') }}
+    </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  {% set read_url = h.url_for(group_type ~ '.read', id=group_dict.name) %}
+  {% set header %}{% snippet 'evntheme/search/group_header.html', group_dict=group_dict, is_org=true %}{% endset %}
+  <div class="evn-page evn-search">
+    {% snippet 'evntheme/search/band.html',
+               breadcrumb=[(_('Home'), h.url_for('home.index')),
+                           (h.humanize_entity_type('organization', group_type, 'breadcrumb') or _('Organizations'), h.url_for(group_type ~ '.index')),
+                           (group_dict.display_name|truncate(50), none)],
+               header=header, action=read_url, query=q,
+               placeholder=h.humanize_entity_type('package', dataset_type, 'search_placeholder') or _('Search datasets...'),
+               primary_action=self.page_primary_action(),
+               fields_grouped=fields_grouped, search_facets=search_facets, remove_field=remove_field,
+               clear_url=h.url_for(group_type ~ '.read', id=group_dict.name, q=q or none) %}
+    <div class="evn-container evn-flash">{{ self.flash() }}</div>
+    <div class="evn-container evn-search__layout">
+      {% snippet 'evntheme/search/facets.html', facet_titles=facet_titles, search_facets=search_facets,
+                 action=read_url, skip=('organization',), extras={'id': group_dict.id} %}
+      {% snippet 'evntheme/search/results.html', page=page, query=q, query_error=query_error,
+                 sort_selected=sort_by_selected, action=read_url,
+                 clear_url=h.url_for(group_type ~ '.read', id=group_dict.name, q=q or none) %}
+    </div>
+  </div>
+{% endblock %}

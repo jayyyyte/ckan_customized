@@ -1,0 +1,89 @@
+{% ckan_extends %}
+{% import 'evntheme/macros/ui.html' as ui %}
+
+{#- The whole masthead is redrawn, but the account menu still renders CKAN's own
+    blocks (self.header_account_logged / header_account_notlogged), so plugins that
+    extend them (activity: dashboard badge, SSO: login link) keep working. -#}
+{% block header_wrapper %}
+  {% block evn_utility_bar %}
+    {% snippet 'evntheme/header/utility_bar.html' %}
+  {% endblock %}
+
+  <header class="evn-header">
+    <div class="evn-container evn-header__inner">
+      {% block header_logo %}
+        {% set logo = h.evn_logo() %}
+        <a class="evn-brand" href="{{ h.url_for('home.index') }}">
+          {% if logo %}<img class="evn-brand__logo" src="{{ h.url_for_static_or_external(logo) }}" alt="" width="44" height="44">{% endif %}
+          <span class="evn-brand__text">
+            <span class="evn-brand__title">{{ g.site_title }}</span>
+            {% if g.site_description %}<span class="evn-brand__tagline">{{ g.site_description }}</span>{% endif %}
+          </span>
+        </a>
+      {% endblock %}
+
+      <button class="evn-header__toggle" type="button" data-bs-toggle="collapse" data-bs-target="#evn-header-menu"
+              aria-controls="evn-header-menu" aria-expanded="false">
+        {{ ui.icon('menu') }}<span class="visually-hidden">{{ _('Menu') }}</span>
+      </button>
+
+      <div class="evn-header__menu collapse" id="evn-header-menu">
+        {% block header_site_navigation %}
+          <nav class="evn-nav" aria-label="{{ _('Main navigation') }}">
+            <ul class="evn-nav__list">
+              {% for item in h.evn_nav_items() %}
+                <li>
+                  <a class="evn-nav__link{% if item.active %} is-active{% endif %}" href="{{ item.url }}"{% if item.active %} aria-current="page"{% endif %}>
+                    {{ item.label }}
+                    {%- if item.count is not none %}<span class="evn-nav__count">{{ h.evn_number(item.count) }}</span>{% endif %}
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          </nav>
+        {% endblock %}
+
+        <div class="evn-account">
+          {% if current_user.is_authenticated %}
+            <div class="dropdown evn-user">
+              <button class="evn-user__toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                {{ h.user_image(current_user.name, size=28) }}
+                <span class="evn-user__name">{{ current_user.display_name }}</span>
+                {{ ui.icon('chevron-down') }}
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end evn-user__menu">
+                {{ self.header_account_logged() }}
+              </ul>
+            </div>
+          {% else %}
+            <ul class="evn-account__guest">
+              {{ self.header_account_notlogged() }}
+            </ul>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </header>
+{% endblock %}
+
+{#- Text labels instead of the icon-only core links: they sit in a dropdown here. -#}
+{% block header_account_profile %}
+  <li>
+    <a href="{{ h.url_for('user.read', id=current_user.name) }}">
+      <i class="fa fa-user" aria-hidden="true"></i>
+      <span class="text">{{ _('My profile') }}</span>
+    </a>
+  </li>
+{% endblock %}
+
+{% block header_account_log_out_link %}
+  <li>
+    <form action="{{ h.url_for('user.logout') }}" method="post">
+      {{ h.csrf_input() }}
+      <button class="evn-user__logout" type="submit">
+        <i class="fa fa-sign-out" aria-hidden="true"></i>
+        <span class="text">{{ _('Log out') }}</span>
+      </button>
+    </form>
+  </li>
+{% endblock %}

@@ -1,0 +1,43 @@
+{#- Heading of an organisation or data domain page, shown inside the search band.
+
+    group_dict - organisation or group
+    is_org     - true for organisations (type, stats, members link) -#}
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set group_type = group_dict.type %}
+{% set can_manage = h.check_access(('organization_update' if is_org else 'group_update'), {'id': group_dict.id}) %}
+{% set stats = h.evn_org_stats(group_dict) if is_org else none %}
+<div class="evn-group-head">
+  <div class="evn-group-head__id">
+    {% if group_dict.image_display_url and group_dict.image_url %}
+      <img class="evn-avatar evn-avatar--xl evn-avatar--image" src="{{ group_dict.image_display_url }}" alt="">
+    {% elif is_org %}
+      {{ ui.avatar(group_dict, 'xl') }}
+    {% else %}
+      <span class="evn-domain__icon evn-domain__icon--lg evn-tone--{{ h.evn_org_avatar(group_dict).tone }}" aria-hidden="true"><span></span></span>
+    {% endif %}
+    <div>
+      {% if is_org %}<p class="evn-group-head__kicker">{{ _(h.evn_org_type(group_dict).label) }}</p>{% endif %}
+      <h1 class="evn-group-head__title">{{ group_dict.display_name }}</h1>
+      {% if group_dict.description %}
+        <p class="evn-group-head__desc">{{ h.markdown_extract(h.get_translated(group_dict, 'description'), extract_length=260) }}</p>
+      {% endif %}
+      <p class="evn-group-head__links">
+        <a href="{{ h.url_for(group_type ~ '.about', id=group_dict.name) }}">{{ _('About') }}</a>
+        {% if h.plugin_loaded('activity') %}
+          <a href="{{ h.url_for('activity.' ~ ('organization' if is_org else 'group') ~ '_activity', id=group_dict.name) }}">{{ _('Activity Stream') }}</a>
+        {% endif %}
+        {% if can_manage %}
+          <a href="{{ h.url_for(group_type ~ '.members', id=group_dict.name) }}">{{ _('Members') }}</a>
+          <a href="{{ h.url_for(group_type ~ '.edit', id=group_dict.name) }}">{{ _('Manage') }}</a>
+        {% endif %}
+      </p>
+    </div>
+  </div>
+  {% if stats %}
+    <dl class="evn-group-head__stats">
+      {{ ui.stat(h.evn_number(stats.datasets), _('Datasets'), 'navy', 'evn-figure') }}
+      {{ ui.stat(h.evn_number(stats.apis), 'API', 'blue', 'evn-figure') }}
+      {% if stats.on_time is not none %}{{ ui.stat(h.evn_percent(stats.on_time), _('Published on time'), 'green', 'evn-figure') }}{% endif %}
+    </dl>
+  {% endif %}
+</div>

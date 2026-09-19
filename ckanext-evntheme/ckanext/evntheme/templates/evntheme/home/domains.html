@@ -1,0 +1,24 @@
+{% set domains = h.evn_domains() %}
+{% if domains %}
+  <section class="evn-container evn-section" aria-labelledby="evn-domains-title">
+    <div class="evn-section__head">
+      <div>
+        <h2 class="evn-section__title" id="evn-domains-title">{{ _('Browse by data domain') }}</h2>
+        <p class="evn-section__lead">{{ _('{n} main data domains, matching the fields the Group works in.').format(n=domains|length) }}</p>
+      </div>
+      <a class="evn-link-strong" href="{{ h.url_for(h.default_group_type('group') ~ '.index') }}">{{ _('View all') }} →</a>
+    </div>
+    <ul class="evn-domain-grid">
+      {% for domain in domains %}
+        <li>
+          <a class="evn-domain" href="{{ domain.url }}">
+            <span class="evn-domain__icon evn-tone--{{ domain.tone }}" aria-hidden="true"><span></span></span>
+            <span class="evn-domain__title">{{ domain.title }}</span>
+            {% if domain.description %}<span class="evn-domain__desc">{{ domain.description }}</span>{% endif %}
+            <span class="evn-domain__count">{{ ungettext('{n} dataset', '{n} datasets', domain.count).format(n=h.evn_number(domain.count)) }}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}

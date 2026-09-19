@@ -1,0 +1,40 @@
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set rows = h.evn_info_rows(pkg) %}
+{% set related = h.evn_related(pkg) %}
+
+<section class="evn-card evn-info" aria-labelledby="evn-info-title">
+  <h2 class="evn-card__head evn-card__head--title" id="evn-info-title">{{ _('Dataset information') }}</h2>
+  <dl class="evn-info__list">
+    {% for row in rows %}
+      <div class="evn-info__row">
+        <dt>{{ row.label }}</dt>
+        <dd>{% if row.stars is defined %}{{ ui.stars(row.stars, row.value) }}{% else %}{{ row.value }}{% endif %}</dd>
+      </div>
+    {% endfor %}
+  </dl>
+  {% if can_edit %}
+    <p class="evn-info__edit"><a href="{{ h.url_for(pkg.type ~ '.groups', id=pkg.name) }}">{{ _('Manage data domains') }}</a></p>
+  {% endif %}
+</section>
+
+{% if pkg.tags %}
+  <section class="evn-card evn-card--pad" aria-labelledby="evn-tags-title">
+    <h2 class="evn-card__title" id="evn-tags-title">{{ _('Tags') }}</h2>
+    <ul class="evn-tags">
+      {% for tag in pkg.tags %}
+        <li><a class="evn-tag" href="{{ h.url_for(pkg.type ~ '.search', tags=tag.name) }}">{{ tag.display_name }}</a></li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+
+{% if related %}
+  <section class="evn-card evn-card--pad" aria-labelledby="evn-related-title">
+    <h2 class="evn-card__title" id="evn-related-title">{{ _('You may also need') }}</h2>
+    <ul class="evn-related">
+      {% for item in related %}
+        <li><a href="{{ h.url_for(item.type ~ '.read', id=item.name) }}">{{ h.dataset_display_name(item) }}</a></li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}

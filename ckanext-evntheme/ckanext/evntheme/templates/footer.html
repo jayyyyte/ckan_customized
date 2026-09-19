@@ -1,0 +1,69 @@
+{#- Standalone footer (no ckan_extends): the layout differs completely from core,
+    but the core block names are kept so other plugins can still extend them. -#}
+{% set links = h.evn_links() %}
+{% set dataset_type = h.default_package_type() %}
+<footer class="evn-footer site-footer">
+  {% block footer_content %}
+    <div class="evn-container evn-footer__grid">
+      {% block footer_brand %}
+        <div class="evn-footer__brand">
+          <div class="evn-footer__identity">
+            {% set logo = h.evn_logo() %}
+            {% if logo %}<img class="evn-footer__logo" src="{{ h.url_for_static_or_external(logo) }}" alt="" width="40" height="40">{% endif %}
+            <span class="evn-footer__title">{{ g.site_title }}</span>
+          </div>
+          <p>
+            {{ _('The shared data platform of {owner}.').format(owner=links.owner_name) }}
+            {% if links.operator %}{{ _('Operated by {operator}.').format(operator=links.operator) }}{% endif %}
+          </p>
+        </div>
+      {% endblock %}
+
+      {% block footer_nav %}
+        {% block footer_links %}
+          <nav class="evn-footer__col" aria-labelledby="evn-footer-data">
+            <h2 class="evn-footer__heading" id="evn-footer-data">{{ _('Data') }}</h2>
+            <ul>
+              <li><a href="{{ h.url_for(dataset_type ~ '.search') }}">{{ _('Datasets') }}</a></li>
+              <li><a href="{{ h.url_for(h.default_group_type('organization') ~ '.index') }}">{{ _('Organizations') }}</a></li>
+              <li><a href="{{ h.url_for('evntheme_mds.index') }}">{{ _('Code lists') }}</a></li>
+              <li><a href="{{ h.url_for(h.default_group_type('group') ~ '.index') }}">{{ _('Data domains') }}</a></li>
+            </ul>
+          </nav>
+          <nav class="evn-footer__col" aria-labelledby="evn-footer-dev">
+            <h2 class="evn-footer__heading" id="evn-footer-dev">{{ _('Developers') }}</h2>
+            <ul>
+              <li><a href="{{ h.url_for('api.get_api', ver=3) }}">{{ _('API gateway') }}</a></li>
+              {% if links.api_docs_url %}<li><a href="{{ links.api_docs_url }}">{{ _('Technical documentation') }}</a></li>{% endif %}
+              {% if links.terms_url %}<li><a href="{{ links.terms_url }}">{{ _('Terms of use') }}</a></li>{% endif %}
+              <li><a href="{{ h.url_for('home.about') }}">{{ _('About {0}').format(g.site_title) }}</a></li>
+            </ul>
+          </nav>
+        {% endblock %}
+        {% if links.contact_email or links.contact_address %}
+          <div class="evn-footer__col">
+            <h2 class="evn-footer__heading">{{ _('Contact') }}</h2>
+            <ul>
+              {% if links.contact_email %}<li><a href="mailto:{{ links.contact_email }}">{{ links.contact_email }}</a></li>{% endif %}
+              {% if links.contact_address %}<li><address>{{ links.contact_address }}</address></li>{% endif %}
+            </ul>
+          </div>
+        {% endif %}
+      {% endblock %}
+    </div>
+
+    <div class="evn-footer__bottom">
+      <div class="evn-container evn-footer__bottom-inner">
+        <span>© {{ h.evn_year() }} {{ links.owner_name }}</span>
+        <span class="evn-footer__meta">
+          {% block footer_attribution %}
+            <span>{{ _('Powered by') }} <a href="https://ckan.org">CKAN</a></span>
+          {% endblock %}
+          {% block footer_lang %}
+            {% snippet 'evntheme/snippets/language_links.html' %}
+          {% endblock %}
+        </span>
+      </div>
+    </div>
+  {% endblock %}
+</footer>

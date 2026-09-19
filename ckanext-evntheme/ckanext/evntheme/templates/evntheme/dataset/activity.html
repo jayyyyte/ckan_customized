@@ -1,0 +1,22 @@
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set activities = h.evn_activities(pkg) %}
+{% set icons = {'created': 'plus', 'updated': 'refresh', 'edited': 'edit', 'warning': 'flag', 'checked': 'check-circle'} %}
+<section class="evn-card evn-card--pad-lg" aria-labelledby="evn-activity-title">
+  <h2 class="evn-card__title evn-card__title--lg" id="evn-activity-title">{{ _('Activity log') }}</h2>
+  {% if activities %}
+    <ol class="evn-timeline">
+      {% for item in activities %}
+        <li class="evn-timeline__item">
+          <span class="evn-timeline__icon evn-timeline__icon--{{ item.tone }}">{{ ui.icon(icons.get(item.tone, 'edit')) }}</span>
+          <div>
+            <p class="evn-timeline__text">{{ item.text }}</p>
+            <time class="evn-timeline__time" datetime="{{ item.timestamp }}">{{ h.evn_time_ago(item.timestamp) }}</time>
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+    <a class="evn-link-strong" href="{{ h.url_for('activity.package_activity', id=pkg.name) }}">{{ _('See the full activity stream') }} →</a>
+  {% else %}
+    <p class="evn-muted">{{ _('No activity recorded for this dataset yet.') }}</p>
+  {% endif %}
+</section>

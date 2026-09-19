@@ -1,0 +1,12 @@
+{% set summary = h.evn_mds_summary() %}
+{% if summary.catalogs %}
+  <section class="evn-card evn-card--muted evn-card--pad" aria-labelledby="evn-mds-card-title">
+    <h2 class="evn-card__title" id="evn-mds-card-title">{{ _('Shared code lists') }}</h2>
+    <p class="evn-card__text">
+      {{ ungettext('{n} code list issued so internal systems reference one single source.',
+                   '{n} code lists issued so internal systems reference one single source.',
+                   summary.catalogs).format(n=h.evn_number(summary.catalogs)) }}
+    </p>
+    <a class="evn-link-strong" href="{{ h.url_for('evntheme_mds.index') }}">{{ _('Look up code lists') }} →</a>
+  </section>
+{% endif %}

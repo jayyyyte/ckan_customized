@@ -1,0 +1,20 @@
+{% ckan_extends %}
+
+{% block links %}
+  {{ super() }}
+  {#- Preload the body and heading fonts (Vietnamese subset) to avoid a flash of fallback text. -#}
+  <link rel="preload" href="{{ h.url_for_static('/evntheme/fonts/nunito-sans-normal-vietnamese.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ h.url_for_static('/evntheme/fonts/nunito-normal-vietnamese.woff2') }}" as="font" type="font/woff2" crossorigin>
+{% endblock %}
+
+{% block styles %}
+  {{ super() }}
+  {% asset 'evntheme/evntheme-css' %}
+{% endblock %}
+
+{% block bodytag %}{{ super() }} class="evn"{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  {% asset 'evntheme/evntheme-js' %}
+{% endblock %}

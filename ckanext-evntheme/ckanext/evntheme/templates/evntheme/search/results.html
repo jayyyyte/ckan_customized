@@ -1,0 +1,55 @@
+{#- Results column of a dataset search: count, sort, list/grid switch, list, pager.
+
+    page, query, query_error, sort_selected - from the CKAN search view
+    action    - URL of the search page (sort form)
+    clear_url - URL without filters, offered when nothing matches -#}
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set count = page.item_count or 0 %}
+{% set number = h.evn_number(count) %}
+<section class="evn-results" aria-labelledby="evn-results-title">
+  <div class="evn-results__head">
+    <h2 class="evn-results__title" id="evn-results-title" aria-live="polite">
+      {%- if query_error -%}
+        {{ _('The search could not be run') }}
+      {%- elif query -%}
+        {% trans count=count, number=number, query=query %}Found <strong>{{ number }} dataset</strong> for “{{ query }}”{% pluralize %}Found <strong>{{ number }} datasets</strong> for “{{ query }}”{% endtrans %}
+      {%- else -%}
+        {% trans count=count, number=number %}<strong>{{ number }} dataset</strong> available{% pluralize %}<strong>{{ number }} datasets</strong> available{% endtrans %}
+      {%- endif -%}
+    </h2>
+    <div class="evn-results__tools">
+      <form class="evn-sort" action="{{ action }}" method="get" data-module="evn-autosubmit">
+        {{ ui.hidden_params(h.evn_hidden_params('sort')) }}
+        <label for="evn-sort">{{ _('Sort by') }}</label>
+        <select class="evn-select evn-select--sm" id="evn-sort" name="sort">
+          {% for option in h.evn_sort_options(sort_selected) %}
+            <option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>
+          {% endfor %}
+        </select>
+        <noscript><button class="evn-btn evn-btn--outline evn-btn--sm" type="submit">{{ _('Apply') }}</button></noscript>
+      </form>
+      <div class="evn-segmented" role="group" aria-label="{{ _('Layout') }}" data-module="evn-view-toggle"
+           data-module-target="#evn-results-list" hidden>
+        <button class="evn-segmented__item" type="button" data-view="list" aria-pressed="true">{{ ui.icon('list') }}{{ _('List') }}</button>
+        <button class="evn-segmented__item" type="button" data-view="grid" aria-pressed="false">{{ ui.icon('grid') }}{{ _('Grid') }}</button>
+      </div>
+    </div>
+  </div>
+
+  {% if query_error %}
+    {{ ui.error(_('There was an error while searching. Please try again, or simplify the query.')) }}
+  {% elif page.items %}
+    {% snippet 'snippets/package_list.html', packages=page.items, show_frequency=true, list_id='evn-results-list' %}
+    {% set range = h.evn_result_range(page) %}
+    <div class="evn-pager">
+      <p class="evn-pager__range">
+        {{ _('Showing {first}–{last} of {total} results').format(
+             first=h.evn_number(range.first), last=h.evn_number(range.last), total=h.evn_number(range.total)) }}
+      </p>
+      {{ page.pager(q=query) }}
+    </div>
+  {% else %}
+    {{ ui.empty(_('No dataset matches this search. Try other words or remove some filters.'),
+                clear_url if request.args else none, _('Clear all filters')) }}
+  {% endif %}
+</section>

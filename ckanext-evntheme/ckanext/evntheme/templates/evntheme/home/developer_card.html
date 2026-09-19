@@ -1,0 +1,17 @@
+{% set apis = h.evn_counts().apis %}
+{% set metrics = h.evn_api_metrics() %}
+{% set docs = h.evn_links().api_docs_url %}
+<section class="evn-devcard" aria-labelledby="evn-devcard-title">
+  <p class="evn-devcard__eyebrow">{{ _('For developers') }}</p>
+  <h2 class="evn-devcard__title" id="evn-devcard-title">
+    {{ ungettext('{n} API ready to connect to your systems', '{n} APIs ready to connect to your systems', apis).format(n=h.evn_number(apis)) }}
+  </h2>
+  {% if metrics %}
+    <dl class="evn-devcard__metrics">
+      {% for metric in metrics %}
+        <div><dt>{{ metric.label }}</dt><dd{% if metric.tone == 'good' %} class="is-good"{% endif %}>{{ metric.value }}</dd></div>
+      {% endfor %}
+    </dl>
+  {% endif %}
+  {% if docs %}<a class="evn-btn evn-btn--cta evn-btn--block" href="{{ docs }}">{{ _('Open the API documentation') }}</a>{% endif %}
+</section>

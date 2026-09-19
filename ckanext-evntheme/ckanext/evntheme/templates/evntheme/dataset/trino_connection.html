@@ -1,0 +1,35 @@
+{#- "How to connect" box for jdbc:trino:// resources. Expects `trino` from h.evn_trino_connection.
+    Literal text in a {% set %} block is not escaped, so placeholders like <user> go through {{ }}. -#}
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set user = '<user>' %}
+{% set cli %}trino --server {{ trino.server }}{% if trino.catalog %} --catalog {{ trino.catalog }}{% endif %}{% if trino.schema %} --schema {{ trino.schema }}{% endif %} --user {{ user }}{% endset %}
+{% set python %}from trino.dbapi import connect
+
+conn = connect(
+    host="{{ trino.host }}", port={{ trino.port }}, user="{{ user }}",{% if trino.ssl %} http_scheme="https",{% endif %}
+    {% if trino.catalog %}catalog="{{ trino.catalog }}", {% endif %}{% if trino.schema %}schema="{{ trino.schema }}",{% endif %}
+)
+cur = conn.cursor()
+cur.execute("SHOW TABLES")
+print(cur.fetchall()){% endset %}
+
+<section class="evn-connect" id="connect" aria-labelledby="evn-connect-title">
+  <h2 class="evn-card__title" id="evn-connect-title">{{ ui.icon('plug') }} {{ _('How to connect') }}</h2>
+  <p>{{ _('This resource is a table in the Lakehouse. Query it directly with Trino instead of downloading a copy.') }}</p>
+  <dl class="evn-connect__facts">
+    <div><dt>Server</dt><dd><code>{{ trino.server }}</code></dd></div>
+    {% if trino.catalog %}<div><dt>Catalog</dt><dd><code>{{ trino.catalog }}</code></dd></div>{% endif %}
+    {% if trino.schema %}<div><dt>Schema</dt><dd><code>{{ trino.schema }}</code></dd></div>{% endif %}
+  </dl>
+  {% for label, code in [('JDBC URL', trino.jdbc_url), ('Trino CLI', cli), ('Python (trino)', python)] %}
+    <div class="evn-code evn-code--light">
+      <div class="evn-code__head">
+        <span>{{ label }}</span>
+        <button class="evn-code__copy" type="button" hidden data-module="evn-copy" data-module-target="#evn-connect-{{ loop.index }}"
+                data-module-done="{{ _('Copied') }}">{{ ui.icon('copy') }}<span>{{ _('Copy') }}</span></button>
+      </div>
+      <pre class="evn-code__pre" id="evn-connect-{{ loop.index }}"><code>{{ code }}</code></pre>
+    </div>
+  {% endfor %}
+  <p class="evn-muted">{{ _('In DBeaver or DataGrip, create a Trino connection and paste the JDBC URL. Sign in with your Lakehouse account.') }}</p>
+</section>

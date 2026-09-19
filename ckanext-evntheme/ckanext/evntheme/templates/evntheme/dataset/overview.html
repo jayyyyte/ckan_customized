@@ -1,0 +1,40 @@
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set kpis = h.evn_kpis(pkg) %}
+{% set resources = pkg.resources or [] %}
+{% set on_datastore = h.evn_datastore_resources(pkg)|length %}
+
+<article class="evn-card evn-card--pad-lg">
+  <h2 class="evn-card__title evn-card__title--lg">{{ _('What is this dataset?') }}</h2>
+  {% if pkg.notes %}
+    <div class="evn-prose">{{ h.render_markdown(h.get_translated(pkg, 'notes')) }}</div>
+  {% else %}
+    <p class="evn-muted">{{ _('The publisher has not described this dataset yet.') }}</p>
+  {% endif %}
+  {% if kpis %}
+    <dl class="evn-kpis">
+      {% for kpi in kpis %}{{ ui.stat(kpi.value, kpi.label, 'blue', 'evn-kpi') }}{% endfor %}
+    </dl>
+  {% endif %}
+</article>
+
+<section class="evn-card" id="files" aria-labelledby="evn-files-title">
+  <header class="evn-card__head">
+    <h2 class="evn-card__title evn-card__title--lg" id="evn-files-title">{{ _('Files and links') }}</h2>
+    <span class="evn-card__meta">
+      {{ ungettext('{n} file', '{n} files', resources|length).format(n=resources|length) }}
+      {%- if on_datastore %} · {{ ungettext('{n} on the DataStore', '{n} on the DataStore', on_datastore).format(n=on_datastore) }}{% endif %}
+    </span>
+  </header>
+  {% if resources %}
+    <ul class="evn-files">
+      {% for res in resources %}
+        {% snippet 'evntheme/dataset/resource_row.html', pkg=pkg, res=res %}
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="evn-card__body">
+      {{ ui.empty(_('This dataset has no files yet.'),
+                  h.url_for(pkg.type ~ '_resource.new', id=pkg.name) if can_edit else none, _('Add a file')) }}
+    </div>
+  {% endif %}
+</section>

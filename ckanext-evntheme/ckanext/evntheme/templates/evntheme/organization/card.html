@@ -1,0 +1,21 @@
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set stats = h.evn_org_stats(org) %}
+{% set type = h.evn_org_type(org) %}
+{% set domain = h.evn_org_domain(org) %}
+<li>
+  <article class="evn-org-card">
+    <div class="evn-org-card__top">
+      {{ ui.avatar(org, 'md') }}
+      <span class="evn-org-card__type">{{ _(type.label) }}</span>
+    </div>
+    <div>
+      <h2 class="evn-org-card__name"><a class="evn-stretched" href="{{ h.url_for(org.type ~ '.read', id=org.name) }}">{{ org.display_name }}</a></h2>
+      {% if domain %}<p class="evn-org-card__domain">{{ domain }}</p>{% endif %}
+    </div>
+    <p class="evn-org-card__stats">
+      <span>{% trans count=stats.datasets, n=h.evn_number(stats.datasets) %}<strong>{{ n }}</strong> dataset{% pluralize %}<strong>{{ n }}</strong> datasets{% endtrans %}</span>
+      <span><strong>{{ h.evn_number(stats.apis) }}</strong> API</span>
+      {% if stats.freshness %}<span class="evn-fresh evn-fresh--{{ stats.freshness.tone }}">{{ stats.freshness.label }}</span>{% endif %}
+    </p>
+  </article>
+</li>

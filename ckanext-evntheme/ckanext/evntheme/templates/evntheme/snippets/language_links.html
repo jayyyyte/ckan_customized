@@ -1,0 +1,14 @@
+{#- Plain links instead of the core <select>: two languages fit inline and need no JS. -#}
+{% set locales = h.get_available_locales() %}
+{% if locales|length > 1 %}
+  {% set current = request.environ.CKAN_LANG %}
+  <nav class="evn-lang" aria-label="{{ _('Language') }}">
+    {% for locale in locales %}
+      {% if locale.short_name == current %}
+        <span aria-current="true" lang="{{ locale.short_name.replace('_', '-') }}">{{ locale.display_name or locale.english_name }}</span>
+      {% else %}
+        <a href="{% url_for h.current_url(), locale=locale.short_name %}" lang="{{ locale.short_name.replace('_', '-') }}" hreflang="{{ locale.short_name.replace('_', '-') }}">{{ locale.display_name or locale.english_name }}</a>
+      {% endif %}
+    {% endfor %}
+  </nav>
+{% endif %}

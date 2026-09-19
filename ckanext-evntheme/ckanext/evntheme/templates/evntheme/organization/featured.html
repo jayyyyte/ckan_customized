@@ -1,0 +1,24 @@
+{#- "Đơn vị nổi bật tháng này": publisher with the most datasets updated in the last 30 days. -#}
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set org = featured.org %}
+{% set stats = featured.stats %}
+<section class="evn-featured" aria-labelledby="evn-featured-title">
+  <div class="evn-featured__main">
+    {{ ui.avatar(org, 'xl') }}
+    <div>
+      <p class="evn-featured__label">{{ _('Featured publisher this month') }}</p>
+      <h2 class="evn-featured__name" id="evn-featured-title"><a href="{{ h.url_for(org.type ~ '.read', id=org.name) }}">{{ org.display_name }}</a></h2>
+      <p class="evn-featured__meta">
+        {{ ungettext('{n} dataset', '{n} datasets', stats.datasets).format(n=h.evn_number(stats.datasets)) }}
+        · {{ h.evn_number(stats.apis) }} API
+        {%- if stats.freshness %} · {{ _('last update {label}').format(label=stats.freshness.label) }}{% endif %}
+      </p>
+    </div>
+  </div>
+  {% if stats.on_time is not none or featured.downloads is not none %}
+    <dl class="evn-featured__stats">
+      {% if stats.on_time is not none %}{{ ui.stat(h.evn_percent(stats.on_time), _('Published on time'), 'green', 'evn-figure') }}{% endif %}
+      {% if featured.downloads is not none %}{{ ui.stat(h.evn_number(featured.downloads), _('Downloads'), 'blue', 'evn-figure') }}{% endif %}
+    </dl>
+  {% endif %}
+</section>

@@ -1,0 +1,38 @@
+{#- Dataset card, used by every dataset list (home, search, organisation, group, user).
+
+    package        - dataset dict (package_search result)
+    show_frequency - also show "Chu kỳ: ..." in the meta row -#}
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set title = h.dataset_display_name(package) %}
+{% set kind = h.evn_data_type(package) %}
+{% set notes = h.markdown_extract(h.get_translated(package, 'notes'), extract_length=220) %}
+{% set downloads = h.evn_downloads(package) %}
+{% set frequency = h.evn_frequency(package) if show_frequency else none %}
+{% set formats = h.evn_format_badges(package) %}
+<article class="evn-dataset{% if kind %} evn-dataset--{{ kind.code }}{% endif %}">
+  <div class="evn-dataset__head">
+    <h3 class="evn-dataset__title">
+      <a class="evn-stretched" href="{{ h.url_for(package.type ~ '.read', id=package.name) }}">{{ title }}</a>
+    </h3>
+    <div class="evn-dataset__flags">
+      {% if package.private %}<span class="evn-flag">{{ ui.icon('lock') }}{{ _('Private') }}</span>{% endif %}
+      {% if package.state and package.state.startswith('draft') %}<span class="evn-flag">{{ _('Draft') }}</span>{% endif %}
+      {% if package.state == 'deleted' %}<span class="evn-flag evn-flag--danger">{{ _('Deleted') }}</span>{% endif %}
+      {{ ui.kind_badge(kind) }}
+    </div>
+  </div>
+  {% if notes %}<p class="evn-dataset__notes">{{ notes }}</p>{% endif %}
+  <div class="evn-dataset__meta">
+    {% if package.organization %}
+      <span class="evn-dataset__org"><span class="evn-dot" aria-hidden="true"></span>{{ package.organization.title or package.organization.name }}</span>
+    {% endif %}
+    <span>{{ _('Updated {ago}').format(ago=h.evn_time_ago(package.metadata_modified)) }}</span>
+    {% if downloads is not none %}
+      <span>{{ ungettext('{n} download', '{n} downloads', downloads).format(n=h.evn_number(downloads)) }}</span>
+    {% endif %}
+    {% if frequency %}<span>{{ _('Frequency: {frequency}').format(frequency=_(frequency.label)) }}</span>{% endif %}
+    {% if formats %}
+      <span class="evn-formats">{% for badge in formats %}{{ ui.format_badge(badge) }}{% endfor %}</span>
+    {% endif %}
+  </div>
+</article>

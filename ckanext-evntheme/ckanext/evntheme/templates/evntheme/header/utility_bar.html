@@ -1,0 +1,11 @@
+{% set links = h.evn_links() %}
+<div class="evn-utility">
+  <div class="evn-container evn-utility__inner">
+    <span>{{ links.owner_name }}{% if links.platform_name %} · {{ links.platform_name }}{% endif %}</span>
+    <nav class="evn-utility__links" aria-label="{{ _('Help') }}">
+      {% if links.guide_url %}<a href="{{ links.guide_url }}">{{ _('User guide') }}</a>{% endif %}
+      {% if links.api_docs_url %}<a href="{{ links.api_docs_url }}">{{ _('API documentation') }}</a>{% endif %}
+      {% if links.support_url %}<a href="{{ links.support_url }}">{{ _('Support') }}</a>{% endif %}
+    </nav>
+  </div>
+</div>

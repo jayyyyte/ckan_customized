@@ -1,0 +1,155 @@
+{% extends "page.html" %}
+{% import 'evntheme/macros/ui.html' as ui %}
+
+{#- Danh mục chuẩn (MDS). Rendered by mds/views.py with:
+    page    - service.CatalogPage of the selected catalog, or None
+    tree    - [TreeGroup] for the left navigation
+    summary - service.Summary for the hero counters -#}
+
+{% block subtitle %}{{ page.catalog.name ~ ' ' ~ g.template_title_delimiter ~ ' ' if page else '' }}{{ _('Code lists') }}{% endblock %}
+
+{% block content %}
+  {% set catalog = page.catalog if page else none %}
+  <div class="evn-page evn-mds">
+    <section class="evn-page-hero">
+      <div class="evn-container evn-page-hero__grid">
+        <div>
+          {{ ui.breadcrumb([(_('Home'), h.url_for('home.index')), (_('Code lists'), none)]) }}
+          <h1 class="evn-page-hero__title">{{ _('Shared code lists') }}</h1>
+          <p class="evn-page-hero__lead">
+            {{ ungettext('{n} code list issued. Internal systems reference it instead of creating their own codes, so figures match across units.',
+                         '{n} code lists issued. Internal systems reference them instead of creating their own codes, so figures match across units.',
+                         summary.catalogs).format(n=h.evn_number(summary.catalogs)) }}
+          </p>
+        </div>
+        <dl class="evn-hero-cards">
+          {{ ui.stat(h.evn_number(summary.catalogs), _('Code lists issued'), 'navy', 'evn-hero-card') }}
+          {{ ui.stat(h.evn_number(summary.active_codes), _('Codes in force'), 'blue', 'evn-hero-card') }}
+          {{ ui.stat(h.evn_number(summary.consumer_systems), _('Referencing systems'), 'green', 'evn-hero-card') }}
+        </dl>
+      </div>
+    </section>
+    <div class="evn-container evn-flash">{{ self.flash() }}</div>
+
+    {% if not tree %}
+      <div class="evn-container evn-section">{{ ui.empty(_('No code list has been published yet.')) }}</div>
+    {% else %}
+      <div class="evn-container evn-split evn-split--mds">
+        <nav class="evn-card evn-tree" aria-label="{{ _('Code lists') }}">
+          {% for group in tree %}
+            <div class="evn-tree__group">
+              <h2 class="evn-tree__title">{{ group.name or _('Other') }}<span class="evn-tree__count">{{ group['items']|length }}</span></h2>
+              <ul>
+                {% for item in group['items'] %}
+                  <li>
+                    <a class="evn-tree__item{% if catalog and item.code == catalog.code %} is-active{% endif %}"
+                       href="{{ h.url_for('evntheme_mds.read', code=item.code) }}"{% if catalog and item.code == catalog.code %} aria-current="page"{% endif %}>
+                      <span class="evn-tree__name">{{ item.name }}</span>
+                      <span class="evn-tree__count">{{ h.evn_number(item.code_count) }}</span>
+                    </a>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endfor %}
+        </nav>
+
+        <div class="evn-split__main evn-stack">
+          {% if catalog %}
+            <section class="evn-card evn-card--pad-lg" aria-labelledby="evn-catalog-title">
+              <div class="evn-catalog-head">
+                <div>
+                  <p class="evn-catalog-head__meta">
+                    {{ _('Code list: {code}').format(code=catalog.code) }}
+                    {%- if catalog.version %} · {{ _('Version {version}').format(version=catalog.version) }}{% endif %}
+                    {%- if catalog.effective_from %} · {{ _('In force from {date}').format(date=h.evn_date(catalog.effective_from)) }}{% endif %}
+                  </p>
+                  <h2 class="evn-catalog-head__title" id="evn-catalog-title">{{ catalog.name }}</h2>
+                </div>
+                <div class="evn-catalog-head__actions">
+                  {% set status = h.evn_mds_status(catalog.status, 'catalog') %}
+                  <span class="evn-status evn-status--{{ status.tone }}">{{ _(status.label) }}</span>
+                  <a class="evn-btn evn-btn--outline evn-btn--sm" href="{{ h.url_for('evntheme_mds.download', code=catalog.code, fmt='csv') }}">{{ ui.icon('download') }}{{ _('Download CSV') }}</a>
+                  <a class="evn-btn evn-btn--outline evn-btn--sm" href="{{ h.url_for('evntheme_mds.download', code=catalog.code, fmt='json') }}">{{ ui.icon('download') }}{{ _('Download JSON') }}</a>
+                </div>
+              </div>
+              {% if catalog.description %}<p class="evn-card__text">{{ catalog.description }}</p>{% endif %}
+              <dl class="evn-kpis">
+                {{ ui.stat(h.evn_number(page.rows|length), _('Codes'), 'ink', 'evn-kpi') }}
+                {% if page.levels %}{{ ui.stat(ungettext('{n} level', '{n} levels', page.levels).format(n=page.levels), _('Hierarchy'), 'ink', 'evn-kpi') }}{% endif %}
+                {% if catalog.issuer %}{{ ui.stat(catalog.issuer, _('Issued by'), 'ink', 'evn-kpi') }}{% endif %}
+                {% if catalog.sync_note %}{{ ui.stat(catalog.sync_note, _('Sync'), 'ink', 'evn-kpi') }}{% endif %}
+              </dl>
+            </section>
+
+            <section class="evn-card" aria-label="{{ _('Codes') }}">
+              <div class="evn-table-wrap" tabindex="0" role="region" aria-label="{{ catalog.name }}">
+                <table class="evn-table evn-table--codes">
+                  <thead>
+                    <tr>
+                      <th scope="col">{{ _('Code') }}</th>
+                      <th scope="col">{{ catalog.name_label or _('Name') }}</th>
+                      <th scope="col">{{ _('Parent code') }}</th>
+                      {% if page.has_counts %}<th scope="col">{{ catalog.count_label or _('Items') }}</th>{% endif %}
+                      <th scope="col">{{ _('Status') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for row in page.rows %}
+                      <tr>
+                        <td class="evn-table__code evn-level-{{ [row.level, 4]|min }}">{{ row.code.code }}</td>
+                        <td class="evn-table__strong">{{ row.code.name }}</td>
+                        <td>{{ row.code.parent_code or '—' }}</td>
+                        {% if page.has_counts %}<td>{{ h.evn_number(row.code.item_count) if row.code.item_count is not none else '—' }}</td>{% endif %}
+                        {% set status = h.evn_mds_status(row.code.status) %}
+                        <td><span class="evn-status evn-status--{{ status.tone }}">{{ _(status.label) }}</span></td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {% if catalog.versions or catalog.consumers %}
+              <div class="evn-duo">
+                {% if catalog.versions %}
+                  <section class="evn-card evn-card--pad" aria-labelledby="evn-versions-title">
+                    <h2 class="evn-card__title" id="evn-versions-title">{{ _('Version history') }}</h2>
+                    <ol class="evn-versions">
+                      {% for version in catalog.versions %}
+                        <li class="evn-versions__item{% if loop.first %} is-current{% endif %}">
+                          <span class="evn-versions__number">{{ version.version }}</span>
+                          <div>
+                            <p class="evn-versions__note">{{ version.note }}</p>
+                            {% if version.released_on %}<p class="evn-versions__date">{{ h.evn_date(version.released_on) }}</p>{% endif %}
+                          </div>
+                        </li>
+                      {% endfor %}
+                    </ol>
+                  </section>
+                {% endif %}
+                {% if catalog.consumers %}
+                  <section class="evn-card evn-card--pad" aria-labelledby="evn-consumers-title">
+                    <h2 class="evn-card__title" id="evn-consumers-title">{{ _('Systems referencing it') }}</h2>
+                    <ul class="evn-consumers">
+                      {% for consumer in catalog.consumers %}
+                        <li class="evn-consumers__item">
+                          {% set status = h.evn_mds_status(consumer.status, 'consumer') %}
+                          <span class="evn-status-dot evn-status-dot--{{ status.tone }}" role="img" aria-label="{{ _(status.label) }}"></span>
+                          <span class="evn-consumers__name">{{ consumer.system_name }}</span>
+                          <span class="evn-consumers__sync evn-consumers__sync--{{ status.tone }}">{{ consumer.sync_note }}</span>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  </section>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% else %}
+            {{ ui.empty(_('Choose a code list on the left.')) }}
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

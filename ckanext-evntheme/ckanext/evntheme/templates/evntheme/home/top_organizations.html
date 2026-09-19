@@ -1,0 +1,21 @@
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set organizations = h.evn_top_organizations(5) %}
+{% if organizations %}
+  <section class="evn-card evn-card--pad" aria-labelledby="evn-top-orgs-title">
+    <h2 class="evn-card__title" id="evn-top-orgs-title">{{ _('Top contributing publishers') }}</h2>
+    <ul class="evn-rank">
+      {% for org in organizations %}
+        <li>
+          <a class="evn-rank__item" href="{{ h.url_for(org.type ~ '.read', id=org.name) }}">
+            {{ ui.avatar(org, 'sm') }}
+            <span class="evn-rank__name">{{ org.display_name }}</span>
+            <span class="evn-rank__count">
+              {{- h.evn_number(org.package_count) -}}
+              <span class="visually-hidden"> {{ ungettext('dataset', 'datasets', org.package_count) }}</span>
+            </span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}

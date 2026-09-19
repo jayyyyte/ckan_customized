@@ -1,0 +1,81 @@
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set title = h.dataset_display_name(pkg) %}
+{% set org = pkg.organization %}
+{% set downloads = h.evn_downloads(pkg) %}
+{% set rating = h.evn_rating(pkg) %}
+{% set download = h.evn_download_all(pkg) %}
+{% set following = h.evn_am_following(pkg) %}
+{% set dataset_url = h.url_for(pkg.type ~ '.read', id=pkg.name, qualified=true) %}
+<section class="evn-detail-hero">
+  <div class="evn-container">
+    {{ ui.breadcrumb([
+         (_('Home'), h.url_for('home.index')),
+         (h.humanize_entity_type('package', pkg.type, 'page title') or _('Datasets'), h.url_for(pkg.type ~ '.search')),
+         (title|truncate(60), none)]) }}
+
+    <div class="evn-detail-hero__grid">
+      <div class="evn-detail-hero__main">
+        <div class="evn-badges">
+          {% for badge in h.evn_hero_badges(pkg) %}<span class="evn-badge evn-badge--{{ badge.style }}">{{ badge.label }}</span>{% endfor %}
+          {% if pkg.private %}<span class="evn-badge evn-badge--outline">{{ ui.icon('lock') }}{{ _('Private') }}</span>{% endif %}
+          {% if pkg.state.startswith('draft') %}<span class="evn-badge evn-badge--outline">{{ _('Draft') }}</span>{% endif %}
+          {% if pkg.state == 'deleted' %}<span class="evn-badge evn-badge--danger">{{ _('Deleted') }}</span>{% endif %}
+        </div>
+        <h1 class="evn-detail-hero__title">{{ title }}</h1>
+        <div class="evn-detail-hero__meta">
+          {% if org %}
+            <a class="evn-detail-hero__org" href="{{ h.url_for(org.type ~ '.read', id=org.name) }}">{{ ui.avatar(org, 'xs') }}{{ org.title or org.name }}</a>
+          {% endif %}
+          {% if downloads is not none %}
+            <span>{{ ungettext('{n} download', '{n} downloads', downloads).format(n=h.evn_number(downloads)) }}</span>
+          {% endif %}
+          {% if rating %}
+            <span class="evn-rating">{{ ui.icon('star', class='is-filled') }}{{ _('{average} ({count} reviews)').format(average=rating.average, count=rating.count) }}</span>
+          {% endif %}
+          <span>{{ _('Updated {ago}').format(ago=h.evn_time_ago(pkg.metadata_modified)) }}</span>
+        </div>
+      </div>
+
+      <div class="evn-detail-hero__actions">
+        {% if download %}
+          <a class="evn-btn evn-btn--cta{% if download.count == 1 %} resource-url-analytics{% endif %}" href="{{ download.url }}">
+            {{ ui.icon('download') }}
+            {%- if download.count > 1 %}{{ _('Download all ({n} files)').format(n=download.count) }}{% else %}{{ _('Download') }}{% endif -%}
+          </a>
+        {% endif %}
+        {% if following is none %}
+          <a class="evn-btn evn-btn--outline" href="{{ h.url_for('user.login', came_from=h.url_for(pkg.type ~ '.read', id=pkg.name)) }}">
+            {{ ui.icon('star') }}{{ _('Follow') }}
+          </a>
+        {% else %}
+          <button class="evn-btn evn-btn--outline evn-follow" type="button" aria-pressed="{{ 'true' if following else 'false' }}"
+                  data-module="evn-follow"
+                  data-module-follow-url="{{ h.url_for(pkg.type ~ '.follow', id=pkg.id) }}"
+                  data-module-unfollow-url="{{ h.url_for(pkg.type ~ '.unfollow', id=pkg.id) }}"
+                  data-module-label-follow="{{ _('Follow') }}" data-module-label-following="{{ _('Following') }}"
+                  data-module-error="{{ _('Could not update, please try again.') }}">
+            {{ ui.icon('star', class='evn-follow__icon') }}<span class="evn-follow__label">{{ _('Following') if following else _('Follow') }}</span>
+          </button>
+        {% endif %}
+        <button class="evn-btn evn-btn--outline" type="button" hidden data-module="evn-share"
+                data-module-url="{{ dataset_url }}" data-module-title="{{ title }}" data-module-done="{{ _('Link copied') }}">
+          {{ ui.icon('share') }}<span>{{ _('Share') }}</span>
+        </button>
+        {% if can_edit %}
+          <a class="evn-btn evn-btn--outline" href="{{ h.url_for(pkg.type ~ '.edit', id=pkg.name) }}">{{ ui.icon('edit') }}{{ _('Manage') }}</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <nav class="evn-tabs" aria-label="{{ _('Dataset sections') }}">
+      <ul class="evn-tabs__list" role="tablist">
+        {% for tab in h.evn_tabs(pkg) %}
+          <li role="presentation">
+            <a class="evn-tabs__tab" id="tab-{{ tab.code }}-link" href="{{ tab.url }}" role="tab" data-tab="{{ tab.code }}"
+               aria-controls="tab-{{ tab.code }}" aria-selected="{{ 'true' if tab.active else 'false' }}">{{ tab.label }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    </nav>
+  </div>
+</section>

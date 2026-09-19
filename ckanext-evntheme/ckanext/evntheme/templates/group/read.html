@@ -1,0 +1,25 @@
+{% ckan_extends %}
+
+{#- A data domain (CKAN group) reuses the dataset search layout. -#}
+{% block content %}
+  {% set read_url = h.url_for(group_type ~ '.read', id=group_dict.name) %}
+  {% set header %}{% snippet 'evntheme/search/group_header.html', group_dict=group_dict, is_org=false %}{% endset %}
+  <div class="evn-page evn-search">
+    {% snippet 'evntheme/search/band.html',
+               breadcrumb=[(_('Home'), h.url_for('home.index')),
+                           (_('Data domains'), h.url_for(group_type ~ '.index')),
+                           (group_dict.display_name|truncate(50), none)],
+               header=header, action=read_url, query=q,
+               placeholder=_('Search datasets...'),
+               fields_grouped=fields_grouped, search_facets=search_facets, remove_field=remove_field,
+               clear_url=h.url_for(group_type ~ '.read', id=group_dict.name, q=q or none) %}
+    <div class="evn-container evn-flash">{{ self.flash() }}</div>
+    <div class="evn-container evn-search__layout">
+      {% snippet 'evntheme/search/facets.html', facet_titles=facet_titles, search_facets=search_facets,
+                 action=read_url, skip=('groups',), extras={'id': group_dict.id} %}
+      {% snippet 'evntheme/search/results.html', page=page, query=q, query_error=query_error,
+                 sort_selected=sort_by_selected, action=read_url,
+                 clear_url=h.url_for(group_type ~ '.read', id=group_dict.name, q=q or none) %}
+    </div>
+  </div>
+{% endblock %}

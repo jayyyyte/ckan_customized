@@ -1,0 +1,35 @@
+{% ckan_extends %}
+{% import 'evntheme/macros/ui.html' as ui %}
+
+{% block page_primary_action %}
+  {% if h.check_access('package_create') %}
+    <a class="evn-btn evn-btn--primary" href="{{ h.url_for(dataset_type ~ '.new') }}">
+      {{ ui.icon('plus') }}{{ h.humanize_entity_type('package', dataset_type, 'add link') or _('Add Dataset') }}
+    </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  {% set search_url = h.url_for(dataset_type ~ '.search') %}
+  {% set title = h.humanize_entity_type('package', dataset_type, 'page title') or _('Datasets') %}
+  <div class="evn-page evn-search">
+    {% snippet 'evntheme/search/band.html',
+               breadcrumb=[(_('Home'), h.url_for('home.index')), (title, none)],
+               action=search_url, query=q,
+               placeholder=h.humanize_entity_type('package', dataset_type, 'search placeholder') or _('Search datasets...'),
+               primary_action=self.page_primary_action(),
+               fields_grouped=fields_grouped, search_facets=search_facets, remove_field=remove_field,
+               clear_url=h.url_for(dataset_type ~ '.search', q=q or none) %}
+    <div class="evn-container evn-flash">{{ self.flash() }}</div>
+    <div class="evn-container evn-search__layout">
+      {% block secondary_content %}
+        {% snippet 'evntheme/search/facets.html', facet_titles=facet_titles, search_facets=search_facets, action=search_url %}
+      {% endblock %}
+      {% block primary_content %}
+        {% snippet 'evntheme/search/results.html', page=page, query=q, query_error=query_error,
+                   sort_selected=sort_by_selected, action=search_url,
+                   clear_url=h.url_for(dataset_type ~ '.search', q=q or none) %}
+      {% endblock %}
+    </div>
+  </div>
+{% endblock %}

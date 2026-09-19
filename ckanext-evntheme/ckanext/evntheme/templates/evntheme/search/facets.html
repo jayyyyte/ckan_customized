@@ -1,0 +1,27 @@
+{#- Facet sidebar as one GET form of checkboxes.
+
+    With JS (evn-facets) ticking a box navigates to its `data-href` right away;
+    without JS the "Apply" button submits the form.
+
+    facet_titles, search_facets - from the CKAN search view
+    action          - URL of the search page
+    skip            - facet names to leave out (e.g. 'organization' on an organisation page)
+    extras, alternative_url - passed to CKAN's URL helpers, as in core facet_list.html -#}
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set facets = h.evn_sidebar_facets(facet_titles, skip=skip or ()) %}
+{% if facets %}
+  <aside class="evn-facets" aria-label="{{ _('Filters') }}">
+    <details class="evn-facets__wrap" open data-module="evn-facets">
+      <summary class="evn-facets__toggle">{{ ui.icon('filter') }}<span>{{ _('Filters') }}</span>{{ ui.icon('chevron-down', class='evn-chevron') }}</summary>
+      <form class="evn-facets__form" action="{{ action }}" method="get">
+        {#- Keep every parameter the checkboxes below do not represent. -#}
+        {{ ui.hidden_params(h.evn_hidden_params(*(facets|map('first')|list))) }}
+        {% for name, title in facets %}
+          {% snippet 'snippets/facet_list.html', name=name, title=title, search_facets=search_facets,
+                     extras=extras or none, alternative_url=alternative_url or none %}
+        {% endfor %}
+        <noscript><button class="evn-btn evn-btn--primary evn-btn--block" type="submit">{{ _('Apply') }}</button></noscript>
+      </form>
+    </details>
+  </aside>
+{% endif %}

@@ -1,0 +1,41 @@
+{#- "Thử API": the request shown is real and its response is rendered on the server;
+    evn-api-console lets the user edit the endpoint and send it again. -#}
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set console = h.evn_api_console(pkg) %}
+{% set rate_limit = h.evn_config('api_rate_limit') %}
+<section class="evn-card evn-card--pad-lg" aria-labelledby="evn-api-title">
+  <h2 class="evn-card__title evn-card__title--lg" id="evn-api-title">{{ _('Try the API right here') }}</h2>
+  <p class="evn-card__text">
+    {%- if console.datastore -%}
+      {{ _('Query the DataStore directly to pull the data into your own systems.') }}
+    {%- else -%}
+      {{ _("Read this dataset's metadata with the CKAN Action API. Row-level queries become available once a file is loaded into the DataStore.") }}
+    {%- endif -%}
+  </p>
+
+  <form class="evn-api" data-module="evn-api-console" data-module-error="{{ _('The request failed.') }}"
+        data-module-invalid="{{ _('Enter a path of this portal starting with /api/.') }}">
+    <span class="evn-api__method">GET</span>
+    <label class="visually-hidden" for="evn-api-endpoint">{{ _('Endpoint') }}</label>
+    <input class="evn-input evn-api__endpoint" id="evn-api-endpoint" type="text" value="{{ console.endpoint }}" spellcheck="false" autocomplete="off">
+    <button class="evn-btn evn-btn--primary" type="submit" hidden>{{ _('Send') }}</button>
+    <noscript><a class="evn-btn evn-btn--primary" href="{{ console.endpoint }}" target="_blank" rel="noopener">{{ _('Open') }}</a></noscript>
+  </form>
+
+  <div class="evn-code">
+    <button class="evn-code__copy" type="button" hidden data-module="evn-copy" data-module-target="#evn-api-response"
+            data-module-done="{{ _('Copied') }}">{{ ui.icon('copy') }}<span>{{ _('Copy') }}</span></button>
+    <pre class="evn-code__pre" id="evn-api-response" tabindex="0" aria-live="polite" aria-label="{{ _('API response') }}"><code>{{ console.response }}</code></pre>
+  </div>
+
+  <dl class="evn-kpis evn-kpis--compact">
+    {% if rate_limit %}{{ ui.stat(rate_limit, _('Rate limit'), 'ink', 'evn-kpi') }}{% endif %}
+    {{ ui.stat(_('API token') if pkg.private else _('Not needed for public data'), _('Authentication'), 'ink', 'evn-kpi') }}
+    {{ ui.stat('JSON · CSV' if console.datastore else 'JSON', _('Response format'), 'ink', 'evn-kpi') }}
+  </dl>
+  {% if console.csv_url %}
+    <p class="evn-card__text evn-card__text--sm">
+      {{ _('Need the whole table?') }} <a href="{{ console.csv_url }}">{{ _('Download it as CSV from the DataStore') }}</a>
+    </p>
+  {% endif %}
+</section>

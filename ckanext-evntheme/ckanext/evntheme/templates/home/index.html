@@ -1,0 +1,25 @@
+{% ckan_extends %}
+
+{#- Each section is a snippet inside its own block: reorder, drop or replace a
+    section by overriding one block. -#}
+{% block content %}
+  <div class="evn-page evn-home">
+    {% block evn_home_hero %}{% snippet 'evntheme/home/hero.html' %}{% endblock %}
+    <div class="evn-container evn-flash">{{ self.flash() }}</div>
+    {% block evn_home_domains %}{% snippet 'evntheme/home/domains.html' %}{% endblock %}
+    <div class="evn-container evn-home__main">
+      <div class="evn-split evn-split--home">
+        <div class="evn-split__main">
+          {% block evn_home_latest %}{% snippet 'evntheme/home/latest.html' %}{% endblock %}
+        </div>
+        <aside class="evn-split__aside evn-stack" aria-label="{{ _('Highlights') }}">
+          {% block evn_home_aside %}
+            {% snippet 'evntheme/home/developer_card.html' %}
+            {% snippet 'evntheme/home/top_organizations.html' %}
+            {% snippet 'evntheme/home/code_lists_card.html' %}
+          {% endblock %}
+        </aside>
+      </div>
+    </div>
+  </div>
+{% endblock %}

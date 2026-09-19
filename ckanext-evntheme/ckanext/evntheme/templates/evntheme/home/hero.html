@@ -1,0 +1,45 @@
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set counts = h.evn_counts() %}
+{% set dataset_type = h.default_package_type() %}
+{% set domains = h.evn_domains() %}
+{% set hot = h.evn_hot_searches() %}
+<section class="evn-hero" aria-labelledby="evn-hero-title">
+  <div class="evn-container evn-hero__inner">
+    <p class="evn-eyebrow">{{ _('“Accurate · Complete · Clean · Live” data of the Group') }}</p>
+    <h1 class="evn-hero__title" id="evn-hero-title">{{ _('Unlock the value of EVN data') }}</h1>
+    <p class="evn-hero__lead">{{ _("Find the dataset you need, preview it right in your browser and connect it to your unit's systems with a single API key.") }}</p>
+
+    <form class="evn-hero-search" action="{{ h.url_for(dataset_type ~ '.search') }}" method="get" role="search">
+      <label class="evn-hero-search__field">
+        {{ ui.icon('search') }}
+        <span class="visually-hidden">{{ _('Search datasets') }}</span>
+        <input type="search" name="q" autocomplete="off"
+               placeholder="{{ _('What data are you looking for? E.g. {example}').format(example=hot[0]) if hot else _('What data are you looking for?') }}">
+      </label>
+      {% if domains %}
+        <label class="visually-hidden" for="evn-hero-domain">{{ _('Data domain') }}</label>
+        <select class="evn-select evn-hero-search__domain" id="evn-hero-domain" name="groups">
+          <option value="">{{ _('All data domains') }}</option>
+          {% for domain in domains %}<option value="{{ domain.name }}">{{ domain.title }}</option>{% endfor %}
+        </select>
+      {% endif %}
+      <button class="evn-btn evn-btn--cta evn-hero-search__submit" type="submit">{{ _('Search') }}</button>
+    </form>
+
+    {% if hot %}
+      <div class="evn-hot">
+        <span class="evn-hot__label">{{ _('People are searching for:') }}</span>
+        {% for term in hot %}
+          <a class="evn-pill-link" href="{{ h.url_for(dataset_type ~ '.search', q=term) }}">{{ term }}</a>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <dl class="evn-hero__stats">
+      {{ ui.stat(h.evn_number(counts.datasets), _('Datasets'), 'navy') }}
+      {{ ui.stat(h.evn_number(counts.organizations), _('Publishers'), 'blue') }}
+      {{ ui.stat(h.evn_number(counts.apis), _('APIs available'), 'green') }}
+      {{ ui.stat(h.evn_number(counts.catalogs), _('Code lists'), 'orange') }}
+    </dl>
+  </div>
+</section>

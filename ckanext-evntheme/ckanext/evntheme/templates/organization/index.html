@@ -1,0 +1,72 @@
+{% ckan_extends %}
+{% import 'evntheme/macros/ui.html' as ui %}
+
+{#- Directory of publishers. Built from h.evn_org_directory (every organisation,
+    filtered by ?type= and ?q=) rather than the paged core list, so the type tabs
+    can show counts. -#}
+{% block content %}
+  {% set directory = h.evn_org_directory() %}
+  {% set counts = h.evn_counts() %}
+  {% set on_time = h.evn_portal_on_time() %}
+  {% set title = h.humanize_entity_type('organization', group_type, 'page title') or _('Organizations') %}
+  <div class="evn-page evn-orgs">
+    <section class="evn-page-hero">
+      <div class="evn-container evn-page-hero__grid">
+        <div>
+          {{ ui.breadcrumb([(_('Home'), h.url_for('home.index')), (title, none)]) }}
+          <h1 class="evn-page-hero__title">{{ _('Data publishers') }}</h1>
+          <p class="evn-page-hero__lead">
+            {{ ungettext('{n} department or unit, each responsible for the quality of the data in its scope.',
+                         '{n} departments and units, each responsible for the quality of the data in its scope.',
+                         counts.organizations).format(n=h.evn_number(counts.organizations)) }}
+          </p>
+        </div>
+        <dl class="evn-hero-cards">
+          {{ ui.stat(h.evn_number(counts.organizations), _('Publishers'), 'navy', 'evn-hero-card') }}
+          {{ ui.stat(h.evn_number(counts.datasets), _('Datasets'), 'blue', 'evn-hero-card') }}
+          {% if on_time is not none %}{{ ui.stat(h.evn_percent(on_time), _('Published on time'), 'green', 'evn-hero-card') }}{% endif %}
+        </dl>
+      </div>
+    </section>
+    <div class="evn-container evn-flash">{{ self.flash() }}</div>
+
+    <div class="evn-container evn-orgs__body">
+      <div class="evn-toolbar">
+        <nav class="evn-segmented evn-segmented--lg" aria-label="{{ _('Filter by unit type') }}">
+          {% for tab in directory.tabs %}
+            <a class="evn-segmented__item{% if tab.active %} is-active{% endif %}" href="{{ tab.url }}"{% if tab.active %} aria-current="true"{% endif %}>{{ tab.label }} ({{ tab.count }})</a>
+          {% endfor %}
+        </nav>
+        <div class="evn-toolbar__end">
+          <form class="evn-searchpill" method="get" role="search">
+            {% if directory.type != 'all' %}<input type="hidden" name="type" value="{{ directory.type }}">{% endif %}
+            <label>
+              {{ ui.icon('search') }}
+              <span class="visually-hidden">{{ _('Find a unit') }}</span>
+              <input type="search" name="q" value="{{ directory.query }}" placeholder="{{ _('Find a unit…') }}">
+            </label>
+          </form>
+          {% if h.check_access('organization_create') %}
+            <a class="evn-btn evn-btn--primary" href="{{ h.url_for(group_type ~ '.new') }}">{{ ui.icon('plus') }}{{ h.humanize_entity_type('organization', group_type, 'add link') or _('Add Organization') }}</a>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if directory.type == 'all' and not directory.query %}
+        {% set featured = h.evn_featured_org() %}
+        {% if featured %}{% snippet 'evntheme/organization/featured.html', featured=featured %}{% endif %}
+      {% endif %}
+
+      {% if directory.organizations %}
+        <ul class="evn-org-grid">
+          {% for org in directory.organizations %}
+            {% snippet 'evntheme/organization/card.html', org=org %}
+          {% endfor %}
+        </ul>
+      {% else %}
+        {{ ui.empty(_('No unit matches your search.') if directory.query or directory.type != 'all' else _('There are no publishers yet.'),
+                    h.url_for(group_type ~ '.index') if directory.query or directory.type != 'all' else none, _('Show all units')) }}
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

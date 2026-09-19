@@ -1,0 +1,129 @@
+{#- "Xem trước dữ liệu": table from the DataStore (server-rendered, paged with ?page=),
+    chart of the same resource and map of GeoJSON resources (both drawn by evn-viz). -#}
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set preview = h.evn_preview(pkg) %}
+{% set datastore = h.evn_datastore_resources(pkg) %}
+{% set maps = h.evn_map_resources(pkg) %}
+{% set has_table = preview and not preview.error %}
+{% set has_chart = has_table and preview.numeric_fields %}
+{% set quality = h.evn_quality(pkg) %}
+
+<section class="evn-card evn-viz" aria-labelledby="evn-preview-title"
+         data-module="evn-viz"
+         data-module-chart-src="{{ h.url_for_static('/evntheme/vendor/chartjs/chart.umd.js') }}"
+         data-module-leaflet-src="{{ h.url_for_static('/evntheme/vendor/leaflet/leaflet.js') }}"
+         data-module-leaflet-css="{{ h.url_for_static('/evntheme/vendor/leaflet/leaflet.css') }}"
+         {%- if h.evn_config('map_tile_url') %} data-module-tiles="{{ h.evn_config('map_tile_url') }}"{% endif %}
+         data-module-api="{{ h.url_for('api.action', ver=3, logic_function='datastore_search') }}"
+         data-module-error="{{ _('Could not load the data for this view.') }}">
+  <header class="evn-card__head">
+    <h2 class="visually-hidden" id="evn-preview-title">{{ _('Data preview') }}</h2>
+    {% if has_table or maps %}
+      <div class="evn-segmented" role="tablist" aria-label="{{ _('Preview type') }}">
+        {% if has_table %}<button class="evn-segmented__item" type="button" role="tab" data-viz="table" aria-selected="true">{{ ui.icon('table') }}{{ _('Table') }}</button>{% endif %}
+        {% if has_chart %}<button class="evn-segmented__item" type="button" role="tab" data-viz="chart" aria-selected="false" hidden>{{ ui.icon('bar-chart') }}{{ _('Chart') }}</button>{% endif %}
+        {% if maps %}<button class="evn-segmented__item" type="button" role="tab" data-viz="map" aria-selected="{{ 'false' if has_table else 'true' }}" hidden>{{ ui.icon('map') }}{{ _('Map') }}</button>{% endif %}
+      </div>
+    {% endif %}
+    {% if has_table %}
+      <span class="evn-card__meta">
+        {{ ungettext('{n} row', '{n} rows', preview.total).format(n=h.evn_number(preview.total)) }} ·
+        {{ ungettext('{n} column', '{n} columns', preview.fields|length).format(n=preview.fields|length) }}
+      </span>
+    {% endif %}
+    {% if datastore|length > 1 %}
+      <form class="evn-sort" method="get" data-module="evn-autosubmit">
+        <input type="hidden" name="tab" value="preview">
+        <label for="evn-preview-resource">{{ _('File') }}</label>
+        <select class="evn-select evn-select--sm" id="evn-preview-resource" name="resource_id">
+          {% for res in datastore %}<option value="{{ res.id }}"{% if preview and res.id == preview.resource.id %} selected{% endif %}>{{ h.resource_display_name(res) }}</option>{% endfor %}
+        </select>
+        <noscript><button class="evn-btn evn-btn--outline evn-btn--sm" type="submit">{{ _('Show') }}</button></noscript>
+      </form>
+    {% endif %}
+  </header>
+
+  {% if not preview and not maps %}
+    <div class="evn-card__body">
+      {% if not h.plugin_loaded('datastore') %}
+        {{ ui.empty(_('Data preview is not enabled on this portal yet. Download the files from the Overview tab.')) }}
+      {% else %}
+        {{ ui.empty(_('None of the files of this dataset has been loaded into the DataStore, so it cannot be previewed.')) }}
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if preview and preview.error %}
+    <div class="evn-card__body">{{ ui.error(_('The data preview is unavailable right now. Please try again later.')) }}</div>
+  {% endif %}
+
+  {% if has_table %}
+    <div class="evn-viz__panel" data-viz-panel="table">
+      <div class="evn-table-wrap" tabindex="0" role="region" aria-label="{{ h.resource_display_name(preview.resource) }}">
+        <table class="evn-table evn-table--wide">
+          <thead><tr>{% for field in preview.fields %}<th scope="col">{{ field.id }}</th>{% endfor %}</tr></thead>
+          <tbody>
+            {% for record in preview.records %}
+              <tr>{% for field in preview.fields %}<td>{{ record[field.id] }}</td>{% endfor %}</tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if preview.pages > 1 %}
+        <div class="evn-card__foot">
+          <span class="evn-card__meta">{{ _('Page {page} / {pages}').format(page=h.evn_number(preview.page), pages=h.evn_number(preview.pages)) }}</span>
+          <nav class="evn-mini-pager" aria-label="{{ _('Preview pages') }}">
+            {% set first = [preview.page - 1, 1]|max %}
+            {% set last = [first + 2, preview.pages]|min %}
+            {% if preview.page > 1 %}
+              <a href="{{ h.url_for(pkg.type ~ '.read', id=pkg.name, tab='preview', resource_id=preview.resource.id, page=preview.page - 1) }}" aria-label="{{ _('Previous page') }}">{{ ui.icon('chevron-left') }}</a>
+            {% endif %}
+            {% for n in range(first, last + 1) %}
+              <a href="{{ h.url_for(pkg.type ~ '.read', id=pkg.name, tab='preview', resource_id=preview.resource.id, page=n) }}"{% if n == preview.page %} aria-current="page"{% endif %}>{{ n }}</a>
+            {% endfor %}
+            {% if preview.page < preview.pages %}
+              <a href="{{ h.url_for(pkg.type ~ '.read', id=pkg.name, tab='preview', resource_id=preview.resource.id, page=preview.page + 1) }}" aria-label="{{ _('Next page') }}">{{ ui.icon('chevron-right') }}</a>
+            {% endif %}
+          </nav>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if has_chart %}
+    <div class="evn-viz__panel" data-viz-panel="chart" hidden
+         data-resource-id="{{ preview.resource.id }}"
+         data-fields="{{ h.dump_json(preview.fields|map(attribute='id')|list) }}"
+         data-numeric="{{ h.dump_json(preview.numeric_fields) }}">
+      <div class="evn-viz__controls">
+        <label>{{ _('Group by') }} <select class="evn-select evn-select--sm" data-chart-x></select></label>
+        <label>{{ _('Sum of') }} <select class="evn-select evn-select--sm" data-chart-y></select></label>
+      </div>
+      <div class="evn-viz__canvas"><canvas role="img" aria-label="{{ _('Chart of the data preview') }}"></canvas></div>
+      <p class="evn-viz__note">{{ _('Built from the first 500 rows.') }}</p>
+    </div>
+  {% endif %}
+
+  {% if maps %}
+    <div class="evn-viz__panel" data-viz-panel="map"{% if has_table %} hidden{% endif %}
+         data-geojson="{{ h.dump_json(maps|map(attribute='url')|list) }}">
+      <div class="evn-viz__map" role="img" aria-label="{{ _('Map of the dataset features') }}"></div>
+      <noscript><p class="evn-viz__note">{{ _('The map needs JavaScript.') }}</p></noscript>
+    </div>
+  {% endif %}
+</section>
+
+{% if quality %}
+  <section class="evn-card evn-card--pad-lg" aria-labelledby="evn-quality-title">
+    <h2 class="evn-card__title" id="evn-quality-title">{{ _('Data quality') }}</h2>
+    <ul class="evn-quality">
+      {% for bar in quality %}
+        <li class="evn-quality__item">
+          <span class="evn-quality__label">{{ bar.label }}</span>
+          <span class="evn-quality__value">{{ bar.text }}</span>
+          <progress class="evn-progress evn-progress--{{ bar.tone }}" max="100" value="{{ bar.value }}">{{ bar.text }}</progress>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}

@@ -1,0 +1,44 @@
+{#- Title band of a dataset search: breadcrumb, optional header, search box and active filter chips.
+
+    breadcrumb     - [(label, url)] for ui.breadcrumb
+    header         - optional HTML rendered above the search box (organisation/domain heading)
+    action         - URL the search form submits to
+    query          - current q
+    placeholder    - search box placeholder
+    primary_action - optional HTML next to the search box (e.g. "Add dataset")
+    fields_grouped, search_facets, remove_field - from the CKAN search view, for the chips
+    clear_url      - URL that drops every filter but keeps q -#}
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set chips = h.evn_filter_chips(fields_grouped, search_facets, remove_field) %}
+<div class="evn-band">
+  <div class="evn-container">
+    {{ ui.breadcrumb(breadcrumb) }}
+    {% if header %}{{ header }}{% endif %}
+    <div class="evn-band__row">
+      <form class="evn-searchbar" action="{{ action }}" method="get" role="search">
+        {{ ui.hidden_params(h.evn_hidden_params('q')) }}
+        <label class="evn-searchbar__field">
+          {{ ui.icon('search') }}
+          <span class="visually-hidden">{{ placeholder }}</span>
+          <input type="search" name="q" value="{{ query }}" placeholder="{{ placeholder }}" autocomplete="off">
+        </label>
+        <button class="evn-btn evn-btn--cta" type="submit">{{ _('Search') }}</button>
+      </form>
+      {% if primary_action and primary_action|trim %}<div class="evn-band__action">{{ primary_action }}</div>{% endif %}
+    </div>
+    {% if chips %}
+      <div class="evn-active-filters">
+        <span class="evn-active-filters__label">{{ _('Filtering by:') }}</span>
+        <ul class="evn-chips">
+          {% for chip in chips %}
+            <li class="evn-chip">
+              {{ chip.label }}
+              <a class="evn-chip__remove" href="{{ chip.remove_url }}" aria-label="{{ _('Remove filter: {label}').format(label=chip.label) }}">{{ ui.icon('x') }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+        <a class="evn-link-accent" href="{{ clear_url }}">{{ _('Clear all') }}</a>
+      </div>
+    {% endif %}
+  </div>
+</div>

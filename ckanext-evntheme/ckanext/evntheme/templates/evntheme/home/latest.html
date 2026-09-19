@@ -1,0 +1,27 @@
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set sort = request.args.get('sort') %}
+{% set datasets = h.evn_recent_datasets(sort) %}
+{% set options = h.evn_home_sort_options() %}
+{% set total = h.evn_counts().datasets %}
+<section id="latest" aria-labelledby="evn-latest-title">
+  <div class="evn-section__head evn-section__head--tight">
+    <h2 class="evn-section__title" id="evn-latest-title">{{ _('Recently updated') }}</h2>
+    {% if options|length > 1 %}
+      <form class="evn-sort" action="{{ h.url_for('home.index') }}#latest" method="get" data-module="evn-autosubmit">
+        <label for="evn-home-sort">{{ _('Sort by') }}</label>
+        <select class="evn-select evn-select--sm" id="evn-home-sort" name="sort">
+          {% for option in options %}<option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>{% endfor %}
+        </select>
+        <noscript><button class="evn-btn evn-btn--outline evn-btn--sm" type="submit">{{ _('Apply') }}</button></noscript>
+      </form>
+    {% endif %}
+  </div>
+  {% if datasets %}
+    {% snippet 'snippets/package_list.html', packages=datasets %}
+    <a class="evn-btn evn-btn--outline evn-btn--lg evn-home__all" href="{{ h.url_for(h.default_package_type() ~ '.search') }}">
+      {{ ungettext('View all {n} dataset', 'View all {n} datasets', total).format(n=h.evn_number(total)) }}
+    </a>
+  {% else %}
+    {{ ui.empty(_('No datasets have been published yet.')) }}
+  {% endif %}
+</section>
