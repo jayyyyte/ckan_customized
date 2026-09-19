@@ -35,6 +35,8 @@
             <ul>
               <li><a href="{{ h.url_for('api.get_api', ver=3) }}">{{ _('API gateway') }}</a></li>
               {% if links.api_docs_url %}<li><a href="{{ links.api_docs_url }}">{{ _('Technical documentation') }}</a></li>{% endif %}
+              {% if links.openmetadata_url %}<li><a href="{{ links.openmetadata_url }}">{{ _('Technical catalog (OpenMetadata)') }}</a></li>{% endif %}
+              {% if links.trino_docs_url %}<li><a href="{{ links.trino_docs_url }}">{{ _('Connecting with Trino JDBC') }}</a></li>{% endif %}
               {% if links.terms_url %}<li><a href="{{ links.terms_url }}">{{ _('Terms of use') }}</a></li>{% endif %}
               <li><a href="{{ h.url_for('home.about') }}">{{ _('About {0}').format(g.site_title) }}</a></li>
             </ul>

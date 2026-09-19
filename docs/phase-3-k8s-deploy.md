@@ -93,7 +93,7 @@ Raw YAML + kustomize, đúng phong cách của cluster.
 ```
 k8s/
 ├── kustomization.yaml     # namespace: lakehouse, commonLabels app.kubernetes.io/part-of: ckan
-├── ckan-configmap.yaml    # CKAN_SITE_URL, CKAN_SOLR_URL, CKAN_REDIS_URL, CKAN__PLUGINS, locale...
+├── ckan-configmap.yaml    # CKAN_SITE_URL, CKAN_SOLR_URL, CKAN_REDIS_URL, CKAN__PLUGINS, locale, CKANEXT__EVNTHEME__OPENMETADATA_URL (URL OpenMetadata trong cụm)...
 ├── secrets.env.example    # tên key, không có giá trị thật; secrets.env thật KHÔNG commit
 ├── solr.yaml              # PVC ckan-solr-data + Deployment ckan-solr + Service ClusterIP
 ├── redis.yaml             # Deployment ckan-redis + Service ClusterIP

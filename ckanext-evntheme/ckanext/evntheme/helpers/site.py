@@ -83,7 +83,7 @@ def links() -> dict[str, str]:
     """Identity texts and outbound links, all from config."""
     names = (
         "owner_name", "platform_name", "operator", "contact_email", "contact_address",
-        "guide_url", "api_docs_url", "terms_url",
+        "guide_url", "api_docs_url", "terms_url", "openmetadata_url", "trino_docs_url",
     )
     values = {name: config.get(name) for name in names}
     values["support_url"] = config.support_url()

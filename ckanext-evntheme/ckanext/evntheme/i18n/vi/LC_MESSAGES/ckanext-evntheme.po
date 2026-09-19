@@ -74,6 +74,12 @@ msgstr "Cổng API"
 msgid "Technical documentation"
 msgstr "Tài liệu kỹ thuật"
 
+msgid "Technical catalog (OpenMetadata)"
+msgstr "Danh mục kỹ thuật (OpenMetadata)"
+
+msgid "Connecting with Trino JDBC"
+msgstr "Kết nối bằng Trino JDBC"
+
 msgid "Terms of use"
 msgstr "Quy định sử dụng"
 

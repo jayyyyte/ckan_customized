@@ -185,6 +185,7 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 | 2026-09-19 | i18n: **msgid tiếng Anh**, bản dịch vi trong `.po` | Giữ được locale `en` (`ckan.locales_offered = vi en`), đúng quy ước CKAN |
 | 2026-09-19 | **Logo = `ckan.site_logo` của core**, bỏ key `ckanext.evntheme.logo_url`. Sysadmin upload PNG/JPEG/GIF/WebP ở `/ckan-admin/config` (theme khai báo bù `ckan.upload.admin.*`, gotchas 6ai), hoặc trỏ path/URL trong ini/env (dùng được cả SVG). Khi vẫn là mặc định của CKAN thì dùng placeholder của theme | User muốn nhận PNG/JPG hoặc mọi định dạng. Chỉ một key, đổi logo không phải build lại image. File upload nằm trên PVC storage |
 | 2026-09-20 | **Xóa `ckanext-lakehouse_theme`**. Hai link footer của nó (OpenMetadata, hướng dẫn Trino JDBC) chưa chuyển sang evntheme vì mockup không có, chờ user quyết | User đồng ý xóa. Theme đã tắt từ 2026-09-19 và evntheme không phụ thuộc vào nó |
+| 2026-09-20 | Hai link đó vào cột "Nhà phát triển" của footer evntheme, sau "Tài liệu kỹ thuật": key `ckanext.evntheme.openmetadata_url` (mặc định trống, vì IP khác theo môi trường) và `trino_docs_url` (mặc định docs Trino JDBC). Để trống thì ẩn | User chọn. Giữ nguyên cách làm của theme cũ: link là config, đổi bằng env var trên K8s |
 | 2026-09-19 | Khung logo **cao cố định (44px header / 40px footer), rộng theo file**, tối đa 176px (88px trên mobile), token `--evn-logo-*`. Lệch mockup (ô vuông 44×44) chỉ khi logo không vuông | Logo ngang trong ô vuông co còn 44×18px, không đọc được. Logo vuông vẫn giống hệt mockup |
 
 ## Câu hỏi còn mở

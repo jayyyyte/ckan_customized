@@ -29,6 +29,11 @@ OPTIONS: dict[str, tuple[Any, str]] = {
     "api_docs_url": ("https://docs.ckan.org/en/2.11/api/", "API documentation link."),
     "support_url": ("", "'Support' link. Empty: mailto: contact_email."),
     "terms_url": ("", "'Terms of use' link in the footer. Empty hides it."),
+    "openmetadata_url": ("", "Technical catalog (OpenMetadata) link in the footer. Empty hides it."),
+    "trino_docs_url": (
+        "https://trino.io/docs/current/client/jdbc.html",
+        "'Connecting with Trino JDBC' link in the footer. Empty hides it.",
+    ),
     # Home page
     "hot_searches": (
         "danh mục vật tư; tổn thất lưới điện; sản lượng thương phẩm; trạm biến áp 110kV",

@@ -114,6 +114,14 @@ def test_sysadmin_uploads_a_raster_logo(storage, app):
     assert app.get(logo).status_code == 200
 
 
+@pytest.mark.ckan_config("ckanext.evntheme.openmetadata_url", "http://openmetadata.test")
+@pytest.mark.ckan_config("ckanext.evntheme.trino_docs_url", "")
+def test_footer_developer_links_follow_config(app):
+    body = _text(app.get("/"))
+    assert '<a href="http://openmetadata.test">Danh mục kỹ thuật (OpenMetadata)</a>' in body
+    assert "Kết nối bằng Trino JDBC" not in body
+
+
 @pytest.mark.parametrize("url", ["/", "/dataset/", "/organization/", "/group/", "/mds/", "/about"])
 def test_pages_render_with_the_theme(app, dataset, url):
     response = app.get(url)

@@ -69,6 +69,7 @@ Xem đầy đủ bằng `ckan config declaration evntheme`. Trên K8s, mỗi key
 | `operator` | EVNICT | "Vận hành bởi …" ở footer |
 | `contact_email`, `contact_address` | data@evn.com.vn, 11 Cửa Bắc… | Cột Liên hệ. Để trống thì ẩn |
 | `guide_url`, `api_docs_url`, `support_url`, `terms_url` | `/about`, docs CKAN API, (mailto), (trống) | Link utility bar và footer |
+| `openmetadata_url`, `trino_docs_url` | (trống), docs Trino JDBC | Cột "Nhà phát triển" ở footer: Danh mục kỹ thuật (OpenMetadata), Kết nối bằng Trino JDBC. Để trống thì ẩn |
 | `hot_searches` | 4 cụm từ, cách nhau bằng `;` | Chip "Mọi người đang tìm" |
 | `domain_groups` | (tất cả group) | Tên các group là "miền dữ liệu", đúng thứ tự hiển thị |
 | `home_datasets` | 4 | Số bộ dữ liệu trong "Mới cập nhật" |
