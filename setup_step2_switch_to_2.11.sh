@@ -16,7 +16,7 @@ SOLR_IMAGE=ckan/ckan-solr:2.11-solr9
 VENV=$HOME/ckan/default
 INI=$HOME/ckan/etc/ckan.ini
 BACKUP_DIR=$HOME/ckan/backup
-THEME=/mnt/c/Users/Tlinh/ckan_customized/ckanext-lakehouse_theme
+THEME=/mnt/c/Users/Tlinh/ckan_customized/ckanext-evntheme   # theme since 2026-09-19 (was ckanext-lakehouse_theme)
 SAMPLE_DB_URL=postgresql://ckan_default:pass@localhost/ckan_default   # what `ckan generate config` writes
 STAMP=$(date +%Y%m%d-%H%M%S)
 
@@ -60,7 +60,7 @@ pip install -e "$VENV/src/ckan[requirements]"
 pip install -r "$VENV/src/ckan/dev-requirements.txt"   # debug = true needs flask-debugtoolbar
 pip install -e "$THEME"
 pip check || echo "WARNING: pip check reported the problems above"
-pybabel compile -d "$THEME/ckanext/lakehouse_theme/i18n" -D ckanext-lakehouse_theme
+pybabel compile -d "$THEME/ckanext/evntheme/i18n" -D ckanext-evntheme
 
 say "2. $INI"
 if [ ! -f "$INI" ] || [ "$(db_url)" = "$SAMPLE_DB_URL" ]; then
@@ -75,15 +75,15 @@ ckan config-tool "$INI" \
   "solr_url = http://127.0.0.1:8983/solr/ckan" \
   "ckan.redis.url = redis://localhost:6379/0" \
   "ckan.storage_path = $HOME/ckan/storage" \
-  "ckan.plugins = lakehouse_theme activity text_view image_view" \
+  "ckan.plugins = evntheme activity tracking text_view image_view" \
   "ckan.base_templates_folder = templates" \
   "ckan.base_public_folder = public" \
   "ckan.locale_default = vi" \
   "ckan.locales_offered = vi en" \
-  "ckan.site_title = Lakehouse Data Portal" \
-  "ckan.site_description = Curated data from the Lakehouse platform" \
-  "ckan.favicon = /lakehouse_theme/images/favicon.svg" \
-  "ckanext.lakehouse_theme.openmetadata_url = http://10.1.117.91:30858"
+  "ckan.site_title = Cổng dữ liệu EVN" \
+  "ckan.site_description = Chia sẻ dữ liệu dùng chung toàn Tập đoàn" \
+  "ckan.favicon = /evntheme/images/favicon.svg" \
+  "ckanext.evntheme.domain_groups = kinh-doanh-dvkh ky-thuat-an-toan dau-tu-xay-dung tai-chinh-vat-tu to-chuc-nhan-su"
 ckan config-tool "$INI" -s DEFAULT "debug = true"
 chmod 600 "$INI"
 if [ "$(db_url)" = "$SAMPLE_DB_URL" ]; then
@@ -124,7 +124,9 @@ if [ "$(psql "$URL" -tAc "select to_regclass('public.file_owner') is not null")"
   fi
 fi
 ckan -c "$INI" db init
-ckan -c "$INI" db upgrade -p activity   # db init does not migrate plugin tables
+for plugin in activity tracking evntheme; do   # db init does not migrate plugin tables
+  ckan -c "$INI" db upgrade -p "$plugin"
+done
 ckan -c "$INI" db pending-migrations
 ckan -c "$INI" search-index rebuild
 
@@ -137,4 +139,4 @@ fi
 
 say "Done: CKAN $(installed_version) + $SOLR_IMAGE"
 echo "Start the portal with:  ckan -c $INI run   (then open http://localhost:5000)"
-echo "Tell Claude it is done: it will recreate the demo data and check the theme."
+echo "Demo content (optional):  ckan -c $INI evntheme seed-demo"

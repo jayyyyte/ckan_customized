@@ -1,0 +1,60 @@
+# CI of ckanext-evntheme. Lives at the repository root: GitHub ignores workflow
+# files inside sub-directories such as ckanext-*/.github/.
+name: ckanext-evntheme
+on:
+  push:
+    paths: ["ckanext-evntheme/**", ".github/workflows/evntheme.yml"]
+  pull_request:
+    paths: ["ckanext-evntheme/**", ".github/workflows/evntheme.yml"]
+
+defaults:
+  run:
+    working-directory: ckanext-evntheme
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3
+        with:
+          src: ckanext-evntheme
+
+  test:
+    runs-on: ubuntu-latest
+    container:
+      # Keep the tags of the three images on the CKAN version of the portal (2.11).
+      image: ckan/ckan-dev:2.11
+    services:
+      solr:
+        image: ckan/ckan-solr:2.11-solr9
+      postgres:
+        image: ckan/ckan-postgres-dev:2.11
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      redis:
+        image: redis:7
+    env:
+      CKAN_SQLALCHEMY_URL: postgresql://ckan_default:pass@postgres/ckan_test
+      CKAN_DATASTORE_WRITE_URL: postgresql://datastore_write:pass@postgres/datastore_test
+      CKAN_DATASTORE_READ_URL: postgresql://datastore_read:pass@postgres/datastore_test
+      CKAN_SOLR_URL: http://solr:8983/solr/ckan
+      CKAN_REDIS_URL: redis://redis:6379/1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install
+        run: |
+          pip install -r requirements.txt -r dev-requirements.txt
+          pip install -e .
+      - name: Set up CKAN
+        run: |
+          sed -i -e 's#use = config:.*#use = config:/srv/app/src/ckan/test-core.ini#' test.ini
+          pybabel compile -d ckanext/evntheme/i18n -D ckanext-evntheme
+          ckan -c test.ini db init
+      - name: Unit tests
+        run: python -m pytest -o addopts="" -p no:ckan -p no:ckan_fixtures ckanext/evntheme/tests/test_units.py
+      - name: App tests
+        run: pytest --ckan-ini=test.ini --cov=ckanext.evntheme --disable-warnings ckanext/evntheme/tests/test_app.py

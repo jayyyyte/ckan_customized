@@ -1,2 +1,4 @@
 /.claude
 /CLAUDE.md
+# Playwright MCP screenshots and logs (local UI checks)
+.playwright-mcp/
