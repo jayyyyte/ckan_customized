@@ -1,0 +1,16 @@
+{% ckan_extends %}
+
+{#- Same contract as core (packages, list_class, item_class, hide_resources) plus
+    show_frequency and list_id, used by the search page. -#}
+{% block package_list %}
+  {% if packages %}
+    <ul class="evn-dataset-list{% if list_class %} {{ list_class }}{% endif %}"{% if list_id %} id="{{ list_id }}"{% endif %}>
+      {% block package_list_inner %}
+        {% for package in packages %}
+          {% snippet 'snippets/package_item.html', package=package, item_class=item_class,
+                     hide_resources=hide_resources, show_frequency=show_frequency %}
+        {% endfor %}
+      {% endblock %}
+    </ul>
+  {% endif %}
+{% endblock %}

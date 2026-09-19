@@ -1,0 +1,39 @@
+{% ckan_extends %}
+
+{#- One facet as a collapsible card of checkboxes. The inputs belong to the
+    surrounding form (evntheme/search/facets.html); each also carries the CKAN URL
+    that adds/removes the filter, used by the evn-facets module. -#}
+{% block facet_list %}
+  {% import 'evntheme/macros/ui.html' as ui %}
+  {% set data = h.evn_facet_items(name, search_facets, extras=extras or none, alternative_url=alternative_url or none) %}
+  {% if data['values'] or not hide_empty %}
+    <details class="evn-facet" open>
+      <summary class="evn-facet__head">
+        <span class="evn-facet__title">{{ title }}</span>
+        {{ ui.icon('chevron-down', class='evn-chevron') }}
+      </summary>
+      {% if data['values'] %}
+        <ul class="evn-facet__list">
+          {% for item in data['values'] %}
+            <li>
+              <label class="evn-check">
+                <input class="evn-check__input" type="checkbox" name="{{ name }}" value="{{ item.value }}"
+                       data-href="{{ item.href }}"{% if item.active %} checked{% endif %}>
+                <span class="evn-check__box" aria-hidden="true">{{ ui.icon('check') }}</span>
+                <span class="evn-check__label" title="{{ item.label }}">{{ item.label }}</span>
+                <span class="evn-check__count">{{ h.evn_number(item.count) }}</span>
+              </label>
+            </li>
+          {% endfor %}
+        </ul>
+        {% if data.toggle %}
+          <a class="evn-facet__more" href="{{ data.toggle.href }}">
+            {%- if data.toggle.more %}{{ _('Show {n} more').format(n=data.toggle.more) }}{% else %}{{ _('Show less') }}{% endif -%}
+          </a>
+        {% endif %}
+      {% else %}
+        <p class="evn-facet__empty">{{ _('Nothing to filter by in these results.') }}</p>
+      {% endif %}
+    </details>
+  {% endif %}
+{% endblock %}

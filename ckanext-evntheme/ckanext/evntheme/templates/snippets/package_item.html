@@ -1,0 +1,7 @@
+{% ckan_extends %}
+
+{% block package_item %}
+  <li class="{{ item_class or 'evn-dataset-list__item' }}">
+    {% snippet 'evntheme/dataset/card.html', package=package, show_frequency=show_frequency %}
+  </li>
+{% endblock %}
