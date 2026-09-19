@@ -32,7 +32,7 @@ Có hai cách cấu hình bằng biến môi trường:
 
 ```
 ckan_customized/
-├── ckanext-lakehouse_theme/    # từ GĐ1
+├── ckanext-evntheme/           # theme (từ 2026-09-19; ckanext-lakehouse_theme cũ đã xóa 2026-09-20)
 ├── docker/
 │   ├── Dockerfile
 │   ├── compose.yaml
@@ -51,13 +51,14 @@ FROM ckan/ckan-base:2.11.6
 # /usr/local (site-packages) thuộc ckan-sys, user mặc định là ckan → cài bằng root cho gọn
 # (ckan-sys cũng được). Source extension để trong SRC_DIR, chủ ckan-sys như phần còn lại của /srv/app.
 USER root
-COPY --chown=ckan-sys:ckan-sys ckanext-lakehouse_theme ${SRC_DIR}/ckanext-lakehouse_theme
+COPY --chown=ckan-sys:ckan-sys ckanext-evntheme ${SRC_DIR}/ckanext-evntheme
 # Cài -e (giống cách ckan-docker làm): template/asset đọc thẳng từ source,
 # không phụ thuộc vào việc MANIFEST.in/package_data khai báo đủ hay chưa.
 # .mo không commit (decision log 2026-09-14) → biên dịch từ .po ngay khi build.
-RUN pip3 install --no-cache-dir -e ${SRC_DIR}/ckanext-lakehouse_theme && \
-    pybabel compile -d ${SRC_DIR}/ckanext-lakehouse_theme/ckanext/lakehouse_theme/i18n -D ckanext-lakehouse_theme && \
-    chown -R ckan-sys:ckan-sys ${SRC_DIR}/ckanext-lakehouse_theme
+# CSS đã biên dịch sẵn và có commit (assets/css/evn-theme.css) → image không cần Node/sass.
+RUN pip3 install --no-cache-dir -e ${SRC_DIR}/ckanext-evntheme && \
+    pybabel compile -d ${SRC_DIR}/ckanext-evntheme/ckanext/evntheme/i18n -D ckanext-evntheme && \
+    chown -R ckan-sys:ckan-sys ${SRC_DIR}/ckanext-evntheme
 # Extension khác (sau khi chốt Q4/Q5/Q10). Image 2.11 có git/g++ nên cài từ git được,
 # nhưng vẫn nên ghim tag, ví dụ:
 # RUN pip3 install --no-cache-dir -e 'git+https://github.com/ckan/ckanext-xloader.git@<tag>#egg=ckanext-xloader'
@@ -66,8 +67,11 @@ COPY --chown=ckan-sys:ckan-sys docker/docker-entrypoint.d/ /docker-entrypoint.d/
 
 USER ckan
 # Giống local; datatables_view cần DataStore nên chỉ thêm khi chốt Q4.
-ENV CKAN__PLUGINS="lakehouse_theme activity text_view image_view envvars"
+ENV CKAN__PLUGINS="evntheme activity tracking text_view image_view envvars"
 ```
+
+- Migration của plugin: `prerun.py` của ckan-base chỉ chạy `db init` (gotchas 6h), nên phải chạy thêm `ckan db upgrade -p activity`, `-p tracking` và `-p evntheme`. Đặt các lệnh này trong `docker-entrypoint.d/`, hoặc chạy tay một lần sau khi DB lên.
+- `tracking` cần chạy `ckan tracking update` hằng đêm (CronJob ở GĐ3).
 
 - Build context là **gốc repo**: `docker build -f docker/Dockerfile -t ckan-lakehouse:0.1.0 .`
 - Tag luôn theo phiên bản (`0.1.0`, `0.1.1`…), **không dùng `latest`** (xem gotchas về pull policy).
@@ -149,21 +153,22 @@ Ghi kết quả vào gotchas.
 | `ckan.redis.url` | `redis://localhost:6379/0` | `CKAN_REDIS_URL` | `redis://ckan-redis:6379/0` | |
 | `ckan.site_url` | `http://localhost:5000` | `CKAN_SITE_URL` | `http://10.1.117.91:30500` | |
 | `ckan.storage_path` | `/home/tlinh/ckan/storage` | `CKAN_STORAGE_PATH` | `/var/lib/ckan` | |
-| `ckan.plugins` | `lakehouse_theme activity text_view image_view` | `CKAN__PLUGINS` | giống local, `envvars` ở cuối | |
+| `ckan.plugins` | `evntheme activity tracking text_view image_view` | `CKAN__PLUGINS` | giống local, `envvars` ở cuối (thêm `datastore xloader datatables_view` khi chốt Q4) | |
 | `ckan.base_templates_folder` / `ckan.base_public_folder` | `templates` / `public` (mặc định; 2.11 chỉ nhận hai giá trị này) | *(không đặt)* | mặc định | |
 | `ckan.locale_default` | `vi` | `CKAN__LOCALE_DEFAULT` | `vi` | |
 | `ckan.locales_offered` | `vi en` | `CKAN__LOCALES_OFFERED` | `vi en` | |
-| `ckan.site_title` | `Lakehouse Data Portal` | `CKAN__SITE_TITLE` | giống local | |
-| `ckan.site_description` | `Curated data from the Lakehouse platform` | `CKAN__SITE_DESCRIPTION` | giống local | |
-| `ckan.favicon` | `/lakehouse_theme/images/favicon.svg` | `CKAN__FAVICON` | giống local | |
-| `ckanext.lakehouse_theme.openmetadata_url` | `http://10.1.117.91:30858` | `CKANEXT__LAKEHOUSE_THEME__OPENMETADATA_URL` | giống local | |
-| `ckanext.lakehouse_theme.organization_name` / `contact_email` / `trino_docs_url` | mặc định trong plugin (`Lakehouse Data Platform` / trống / docs Trino JDBC) | `CKANEXT__LAKEHOUSE_THEME__…` | đặt khi có thông tin thật (Q2) | |
+| `ckan.site_title` | `Cổng dữ liệu EVN` | `CKAN__SITE_TITLE` | giống local | |
+| `ckan.site_description` | `Chia sẻ dữ liệu dùng chung toàn Tập đoàn` | `CKAN__SITE_DESCRIPTION` | giống local | |
+| `ckan.favicon` | `/evntheme/images/favicon.svg` | `CKAN__FAVICON` | giống local | |
+| `ckanext.evntheme.domain_groups` | `kinh-doanh-dvkh ky-thuat-an-toan dau-tu-xay-dung tai-chinh-vat-tu to-chuc-nhan-su` | `CKANEXT__EVNTHEME__DOMAIN_GROUPS` | tên group thật trên cluster | |
+| `ckanext.evntheme.*` khác (logo, liên hệ, link, `api_metrics_url`, `map_tile_url`…) | mặc định trong plugin (xem README của extension) | `CKANEXT__EVNTHEME__<KEY>` | Đặt khi có thông tin thật (Q2). Để trống `map_tile_url` nếu cluster không ra được Internet | |
+| `ckan.datastore.write_url` / `read_url`, `ckanext.xloader.api_token` | chưa đặt (Q4, `setup_step3_datastore.sh`) | `CKAN_DATASTORE_WRITE_URL` / `CKAN_DATASTORE_READ_URL` / `CKANEXT__XLOADER__API_TOKEN` | DB `datastore_default` trên `postgres-service` | ✔ |
 | `debug` | `true` (trong `[DEFAULT]`) | *(không đặt)* | `false` | |
 | *(thêm khi phát sinh)* | | | | |
 
 ## Kiểm thử trước khi sang GĐ3
 1. `docker compose up -d --build`, sau đó `docker compose ps` phải thấy `ckan` ở trạng thái **healthy**.
-2. Theme hiển thị đúng: logo, màu, trang chủ, footer, tiếng Việt.
+2. Theme hiển thị đúng ở mọi trang: trang chủ, tìm kiếm, chi tiết (4 tab), tổ chức, `/mds`. Kiểm cả logo, màu, footer và tiếng Việt. Font lấy từ bản tự host, không gọi Google Fonts.
 3. Chạy lại smoke test của GĐ1: org, dataset, upload, search, API.
 4. `docker compose restart ckan`: dữ liệu, file upload, đăng nhập và API token vẫn còn.
 5. `docker compose down && docker compose up -d` (giữ volume): mọi thứ vẫn còn.

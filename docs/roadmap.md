@@ -86,6 +86,55 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
   - "số bộ dữ liệu tìm thấy" / "Member" chưa dịch hoặc dịch vụng;
   - thiếu section logging trong `ckan-shot.ini` (6s).
 
+### Theme "Cổng dữ liệu EVN" (2026-09-19) · [README extension](../ckanext-evntheme/README.md)
+
+> User đưa mockup riêng (`CKAN Custom Theme UI Mockup/handoff/`: HTML + prompt + ảnh chụp), thay giao diện teal của `lakehouse_theme`.
+>
+> Đã làm extension mới **`ckanext-evntheme`**. Theme cũ `ckanext-lakehouse_theme` đã xóa ngày 2026-09-20 theo đồng ý của user; code vẫn còn trong lịch sử git.
+>
+> Đã chụp màn hình để so với mockup ở 1440px và 390px, thêm trạng thái đã đăng nhập. Không trang nào tràn ngang.
+>
+> Còn chờ:
+> - logo EVN chính thức: hiện là placeholder. Sysadmin tải lên (PNG/JPG/GIF/WebP) ở `/ckan-admin/config`, không cần build lại;
+> - DataStore (Q4): script đã sẵn sàng, chưa chạy;
+> - test ứng dụng chạy trong CI / DB test.
+
+- [x] Extension `ckanext-evntheme`, gồm:
+  - token màu, font Nunito tự host;
+  - header/footer mới;
+  - trang chủ;
+  - tìm kiếm với facet checkbox, chip lọc, dạng lưới;
+  - chi tiết 4 tab: Tổng quan, Xem trước (bảng, biểu đồ, bản đồ), Thử API, Nhật ký;
+  - danh bạ tổ chức và trang tổ chức;
+  - trang miền dữ liệu (group);
+  - Trang **Danh mục chuẩn** `/mds` có bảng riêng (`mds_*`, migration `-p evntheme`), xuất CSV/JSON, CLI `ckan evntheme mds load|export`.
+- [x] Chỉ dùng số liệu thật; khối nào thiếu dữ liệu thì ẩn:
+  - lượt tải và lượt xem lấy từ plugin `tracking` (bật ở local);
+  - chu kỳ, chất lượng, loại dữ liệu lấy từ extras;
+  - "công bố đúng hạn" tính từ chu kỳ và `metadata_modified`;
+  - số liệu API lấy qua `api_metrics_url`.
+- [x] Tương phản: mọi cặp chữ trong mockup dưới 4.5:1 được làm đậm vừa đủ (token "ink" trong `_tokens.scss`). Nút CTA cam đổi từ `#e8843c` (chữ trắng 2.7:1) sang `#b95b17` (4.6:1).
+- [x] i18n: msgid tiếng Anh, `.po` tiếng Việt dịch 291/291 chuỗi (gồm cả chuỗi core còn thiếu).
+- [x] Local:
+  - `ckan.plugins = evntheme activity tracking text_view image_view`, site title/description/favicon mới;
+  - `db upgrade -p tracking` và `-p evntheme`;
+  - dữ liệu demo: `ckan evntheme seed-demo` với 5 miền, 9 đơn vị, 12 dataset, 10 danh mục chuẩn.
+
+  Đã backup `ckan.ini` vào `~/ckan/backup/`.
+- [x] Test: `test_units.py` 27/27 qua ở local. `test_app.py` gồm render trang, tab, MDS, export, upload logo, chỉ chạy trong CI vì cần `ckan_test`. Ruff sạch.
+- [x] Logo nhận mọi định dạng ảnh qua `ckan.site_logo` của core: upload ở `/ckan-admin/config` hoặc trỏ path/URL. Khung logo cao cố định, rộng theo file. Đã thử ở local: JPG, PNG lên được, SVG bị chặn; header và footer đổi theo; mobile 390px không tràn (2026-09-19)
+- [x] CI ở `.github/workflows/evntheme.yml`, đặt ở gốc repo vì workflow trong thư mục con chưa từng chạy (gotchas 6ag).
+- [x] `setup_step2_switch_to_2.11.sh` đổi sang evntheme. Thêm `setup_step3_datastore.sh` (user tự chạy, cần sudo) để bật DataStore + XLoader 2.5.0 và tạo DB test.
+- [ ] Thay logo placeholder bằng logo EVN thật (Q2)
+- [ ] User chạy `setup_step3_datastore.sh`, rồi `xloader submit all` để tab Xem trước/Thử API có dữ liệu thật (Q4)
+- [x] Xóa `ckanext-lakehouse_theme` (2026-09-20), theo thứ tự:
+  - `pip uninstall` khỏi venv;
+  - xóa thư mục (37 file đã có trong git, còn lại chỉ là `__pycache__`, `.mo`, `egg-info`);
+  - backup `ckan.ini`, bỏ key sót `ckanext.lakehouse_theme.openmetadata_url`;
+  - restart, smoke test 23/23.
+
+  Muốn lấy lại: `git checkout 3d7a3a5 -- ckanext-lakehouse_theme`.
+
 ### Giai đoạn 2 — Đóng gói Docker · [chi tiết](phase-2-docker-packaging.md)
 - [ ] `.gitignore` (bỏ qua `.env`, `secrets.env`, `*.kubeconfig`, `ckan.ini`, `*.tar*`)
 - [ ] `docker/Dockerfile` (FROM `ckan/ckan-base:2.11.6` + theme)
@@ -125,15 +174,27 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 | 2026-09-18 | Trang chủ classic: hero có số dataset/tổ chức; dải dưới hero có cột trái "Bộ dữ liệu mới cập nhật" (helper `lakehouse_theme_recent_datasets`), cột phải org và nhóm nổi bật | Giữ lại những phần Midnight Blue có sẵn mà classic không có, bằng override ít block nhất (`featured_group`, `featured_organization`) |
 | 2026-09-18 | Local chuyển bằng **cài lại sạch** (backup `pg_dump` → `db clean` → `db init`), không dùng `db downgrade` | Hạ schema cần code 2.12 và mật khẩu DB, mà `ckan.ini` đã mất mật khẩu. DB chỉ có dữ liệu mẫu, dựng lại được qua API (gotchas 6q) |
 | 2026-09-18 | Đổi local cũng làm qua **script do user chạy** (`setup_step2_switch_to_2.11.sh`), không để agent làm | Có bước xóa venv/DB/volume Solr (agent bị chặn) và bước cần mật khẩu (DB, admin) |
+| 2026-09-19 | **Theme mới `ckanext-evntheme`** (plugin `evntheme`) theo mockup của user, thay `lakehouse_theme` trong `ckan.plugins`. Hộp kết nối Trino chuyển sang theme mới | User chọn: prompt mockup đặt tên này; theme cũ giữ lại tới khi user cho xóa |
+| 2026-09-19 | Số liệu **chỉ lấy từ nguồn thật, thiếu thì ẩn**, không hard-code số của mockup | User chọn. Nguồn: tracking, extras, `package_search`, bảng MDS, `api_metrics_url` |
+| 2026-09-19 | Tab Xem trước / Thử API dựng sẵn trên `datastore_search`, **DataStore bật sau** bằng `setup_step3_datastore.sh`. Khi chưa có DataStore thì tab Xem trước hiện empty state, tab Thử API dùng `package_show` | User chọn (Q4) |
+| 2026-09-19 | Bật plugin core **`tracking`** | Nguồn thật cho "lượt tải", "Xem nhiều nhất" và lượt tải của đơn vị |
+| 2026-09-19 | "Miền dữ liệu" = **CKAN group**, thứ tự theo `ckanext.evntheme.domain_groups`. "Loại dữ liệu" = extra `data_type`, facet thẳng trên field string cùng tên (gotchas 6x) | Không cần ckanext-scheming, không phải sửa schema Solr |
+| 2026-09-19 | Danh mục chuẩn dùng **bảng riêng** `mds_catalog/code/version/consumer` (Alembic của extension), nạp bằng CLI JSON; chưa có UI quản trị | Theo prompt; tách `mds/service.py` để sau này đổi sang dịch vụ MDS riêng không phải sửa template |
+| 2026-09-19 | Màu chữ làm đậm cho **đạt WCAG AA**, lệch hex mockup ở các cặp chưa đạt (CTA cam `#b95b17`, meta `#6f685e`…). Màu nền và trang trí giữ nguyên hex của mockup | Prompt yêu cầu ≥ 4.5:1 và "tăng độ đậm nếu không đạt". Muốn đổi thì sửa một token |
+| 2026-09-19 | Font Nunito / Nunito Sans **tự host** (subset vietnamese, latin, latin-ext); Chart.js và Leaflet vendored, chỉ nạp khi mở tab | Cluster nội bộ có thể không ra được Internet |
+| 2026-09-19 | i18n: **msgid tiếng Anh**, bản dịch vi trong `.po` | Giữ được locale `en` (`ckan.locales_offered = vi en`), đúng quy ước CKAN |
+| 2026-09-19 | **Logo = `ckan.site_logo` của core**, bỏ key `ckanext.evntheme.logo_url`. Sysadmin upload PNG/JPEG/GIF/WebP ở `/ckan-admin/config` (theme khai báo bù `ckan.upload.admin.*`, gotchas 6ai), hoặc trỏ path/URL trong ini/env (dùng được cả SVG). Khi vẫn là mặc định của CKAN thì dùng placeholder của theme | User muốn nhận PNG/JPG hoặc mọi định dạng. Chỉ một key, đổi logo không phải build lại image. File upload nằm trên PVC storage |
+| 2026-09-20 | **Xóa `ckanext-lakehouse_theme`**. Hai link footer của nó (OpenMetadata, hướng dẫn Trino JDBC) chưa chuyển sang evntheme vì mockup không có, chờ user quyết | User đồng ý xóa. Theme đã tắt từ 2026-09-19 và evntheme không phụ thuộc vào nó |
+| 2026-09-19 | Khung logo **cao cố định (44px header / 40px footer), rộng theo file**, tối đa 176px (88px trên mobile), token `--evn-logo-*`. Lệch mockup (ô vuông 44×44) chỉ khi logo không vuông | Logo ngang trong ô vuông co còn 44×18px, không đọc được. Logo vuông vẫn giống hệt mockup |
 
 ## Câu hỏi còn mở
 
 | # | Câu hỏi | Ai trả lời | Mặc định nếu chưa có câu trả lời |
 |---|---|---|---|
-| Q1 | ~~Tên theme/extension?~~ | User | **Đã chốt 2026-09-14:** `ckanext-lakehouse_theme`, plugin `lakehouse_theme` |
-| Q2 | Bộ nhận diện: logo, màu, font, favicon, nội dung footer? | User / công ty | **Tạm dùng placeholder (2026-09-14)**, màu gom vào token `--lh-*`. Vẫn chờ bộ nhận diện thật |
+| Q1 | ~~Tên theme/extension?~~ | User | ~~`ckanext-lakehouse_theme` (2026-09-14)~~ → **`ckanext-evntheme`, plugin `evntheme` (2026-09-19)** |
+| Q2 | Bộ nhận diện: logo, màu, font, favicon, nội dung footer? | User / công ty | **Màu, font, bố cục và nội dung đã có từ mockup (2026-09-19)**, gom trong `_tokens.scss` và config `ckanext.evntheme.*`. Còn chờ **file logo EVN chính thức** (đang dùng placeholder; PNG/JPG/SVG đều được, xem README mục Logo) |
 | Q3 | "Deploy" có nghĩa là chạy trên cluster công ty cho mọi người dùng? | Người giao task | Có, nên GĐ3 là bắt buộc |
-| Q4 | Có cần DataStore + xloader (preview dữ liệu, Data API)? | User | Không bật ở mốc đầu, thêm sau GĐ2 |
+| Q4 | Có cần DataStore + xloader (preview dữ liệu, Data API)? | User | **Có (2026-09-19)**: mockup cần tab Xem trước / Thử API. Theme đã sẵn sàng; bật local bằng `setup_step3_datastore.sh` (user chạy, XLoader 2.5.0). Trên K8s cần thêm DB `datastore_default` + worker `ckan jobs worker` |
 | Q5 | Có cần metadata schema riêng (ckanext-scheming), DCAT, SSO/LDAP? | User | Chưa |
 | Q6 | Ngôn ngữ mặc định `vi` hay `en`? | User | `ckan.locale_default = vi`, cho phép chọn `en` |
 | Q7 | Kubeconfig, quyền (`auth can-i`), registry nội bộ? | Infra | Chờ. Không có registry thì import tarball |

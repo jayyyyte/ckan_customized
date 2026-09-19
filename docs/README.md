@@ -13,6 +13,11 @@
 
 Phiên bản mục tiêu: **CKAN 2.11.6** (quay về từ 2.12.0 ngày 2026-09-18, xem Decision log trong roadmap).
 
-Script ở gốc repo (user tự chạy trong WSL): `setup_step1_system.sh` (gói hệ thống, cần sudo), `setup_step2_switch_to_2.11.sh` (CKAN 2.11.6 + config + Solr + DB, không cần sudo).
+Script ở gốc repo (user tự chạy trong WSL):
+- `setup_step1_system.sh`: gói hệ thống, cần sudo.
+- `setup_step2_switch_to_2.11.sh`: CKAN 2.11.6 + config + Solr + DB + theme `evntheme`, không cần sudo.
+- `setup_step3_datastore.sh`: DataStore + XLoader + DB test, cần sudo, chạy khi bật Q4.
+
+Theme: [`ckanext-evntheme/README.md`](../ckanext-evntheme/README.md).
 
 Nguồn chính: <https://docs.ckan.org/en/2.11/>, <https://docs.ckan.org/en/latest/changelog.html>, <https://github.com/ckan/ckan-docker-base> (thư mục `ckan-2.11`), <https://github.com/ckan/ckan-docker>, báo cáo nội bộ `Lakehouse_Kubernetes_Report.pdf` (mục 2.7, 7.2.3, 10.7, 11.10).

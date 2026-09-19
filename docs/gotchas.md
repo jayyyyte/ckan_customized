@@ -15,8 +15,8 @@ Thêm mục mới khi gặp bẫy mới. Ghi rõ **triệu chứng → nguyên n
    Nhúng trang vào `<iframe style="width:400px">` trong một trang rộng hơn rồi chụp trang đó.
 4. **Cluster kind local (`kind-lakehouse`, `kind-lakehouse-lab`) báo connection refused.**
    Docker Desktop đang tắt; mở Docker Desktop trước.
-5. **Code trên `/mnt/c` chậm hơn filesystem Linux.** Đôi khi reloader của `ckan run` không nhận thay đổi.
-   Restart `ckan run`. Nếu vẫn khó chịu, chuyển repo vào `~/` và mở bằng VS Code Remote-WSL.
+5. **Code trên `/mnt/c` chậm hơn filesystem Linux.** Reloader của `ckan run` thường **không** nhận thay đổi file `.py` (inotify không chạy qua `/mnt/c`). Template và CSS/JS ở chế độ debug thì vẫn nạp lại.
+   Restart `ckan run` sau mỗi lần sửa Python. Nếu vẫn khó chịu, chuyển repo vào `~/` và mở bằng VS Code Remote-WSL.
 6. **Windows không mở được `localhost:5000`.**
    Chạy `ckan ... run -H 0.0.0.0` và dùng IP của WSL (`hostname -I`).
 6a. **`apt install` báo `Package 'git-core' has no installation candidate`** trên Ubuntu 24.04, script `set -e` dừng giữa chừng.
@@ -32,7 +32,7 @@ Thêm mục mới khi gặp bẫy mới. Ghi rõ **triệu chứng → nguyên n
 6e. **Mọi lệnh `ckan -c ...`, kể cả `--help`, đều crash `password authentication failed`.** CLI nạp app và kết nối DB trước khi chạy lệnh con, còn `ckan generate config` đặt sẵn mật khẩu mẫu trong `sqlalchemy.url`.
    Điền mật khẩu thật trước khi gọi bất kỳ lệnh `-c` nào. Nếu mật khẩu có ký tự `@ : / # % ?` thì phải **URL-encode**, ví dụ `@` thành `%40`.
 6f. **Mất activity stream sau khi đặt lại `ckan.plugins`.** `ckan generate config` của 2.11 đặt sẵn `ckan.plugins = activity` (2.12 để trống). Ghi đè dòng đó mà quên `activity` thì trang dataset không còn tab hoạt động.
-   Đặt tường minh, ví dụ `ckan.plugins = lakehouse_theme activity text_view image_view`.
+   Đặt tường minh, ví dụ `ckan.plugins = evntheme activity tracking text_view image_view`.
 6g. **`ModuleNotFoundError: No module named 'flask_debugtoolbar'`** ở mọi lệnh `ckan -c` sau khi bật `debug = true`. `make_flask_stack` import toolbar khi debug bật, mà gói này chỉ có trong `dev-requirements.txt`.
    `pip install -r ~/ckan/default/src/ckan/dev-requirements.txt` (có cả `cookiecutter` cho `ckan generate extension` và `pytest`). Image production không bật debug nên không cần.
 6h. **`db init` in `2 unapplied migrations for activity`** (gặp ở 2.12.0, 2.11 cũng vậy). `db init` chỉ xử lý schema lõi; mỗi plugin có migration riêng. Quên chạy thì trang dataset hoặc dashboard lỗi thiếu bảng `activity`.
@@ -67,6 +67,37 @@ Thêm mục mới khi gặp bẫy mới. Ghi rõ **triệu chứng → nguyên n
    Đẩy phần tử cuối bằng `margin-left: auto` thay vì `space-between`, hoặc đặt `::after { display: none }`.
 6u. **Mô tả tổ chức/nhóm tiếng Việt bị ngắt giữa âm tiết** ("kiểm tr / a portal"). Classic đặt `word-break: break-all` cho `.media-description` và `.context-info .description`.
    `word-break: normal; overflow-wrap: anywhere;`: xuống dòng ở khoảng trắng, chỉ bẻ những chuỗi quá dài không có khoảng trắng.
+6v. **Dấu `:` thừa sau ô tìm kiếm, sau "Sắp xếp theo"…** Classic `main.css` có rule `label:after { content: ":" }` cho mọi `<label>`, kể cả label bọc input.
+   Tắt nó cho các label của theme (`::after { content: none }`); evntheme gom việc này ở `_base.scss`.
+6w. **Số liệu gom theo tổ chức toàn 0 dù tổng số dataset đúng.** `package_search` với `fl=owner_org` không trả `owner_org`: field này indexed nhưng **không stored**. Field được lưu là `organization`, tức *tên* tổ chức.
+   Đặt `fl` gồm `organization` và gom theo tên. Cùng bẫy: xin `extras_<key>` trong `fl` thì kết quả trả về dưới tên `<key>` (CKAN bỏ tiền tố `extras_`).
+6x. **Facet trên `extras_<key>` ra từ bị cắt kiểu `transact`, `refer`.** `extras_*` là field *text*: bị tách từ và stem.
+   Facet trên chính `<key>`: CKAN cũng index mỗi extra thành field *string* cùng tên, qua dynamic field `*`. Ví dụ facet `data_type` của evntheme.
+6y. **`pybabel extract` báo `Unknown extraction method 'ckan'`**, nên template không được trích. Có hai nguyên nhân:
+   - Khi `pyproject.toml` có bảng `[project]`, setuptools bỏ qua `[options.entry_points]` trong `setup.cfg`.
+   - Babel 2.15 tra entry point bằng `pkg_resources`, vốn không thấy bản cài editable kiểu mới.
+   Khai báo extractor ngay trong `babel.cfg`, ở section `[extractors]` với dòng `ckan = ckan.lib.extract:extract_ckan`. Pattern `**/templates/**.html` phải được chạy với thư mục cha của `ckanext/`.
+6z. **`AttributeError: module 'ckan.plugins.toolkit' has no attribute 'plugin_loaded'`.**
+   Dùng `from ckan.plugins import plugin_loaded`. Trong template thì dùng `h.plugin_loaded()`.
+6aa. **Lệnh CLI của plugin lỗi khi action cần sinh URL** (`package_show` sinh link tải về). CLI của CKAN nạp app nhưng không đẩy request context cho lệnh của plugin.
+   Bọc thân lệnh trong `click.get_current_context().meta["flask_app"].test_request_context()` (xem `ckanext/evntheme/cli.py`).
+6ab. **Nhật ký (activity) của dataset trống dù vừa tạo bằng script.** Hoạt động do *site user* tạo bị ẩn khỏi activity stream.
+   Chạy action với `context={"user": "<sysadmin thật>", "ignore_auth": True}`.
+6ac. **Nút theo dõi dùng form POST thường bị trả về một mảnh HTML.** Ở 2.11, `dataset.follow`/`unfollow` là endpoint cho htmx, trả `package/snippets/info.html`.
+   Gọi bằng `fetch` kèm header `X-CSRFToken`, lấy token từ `<meta name="csrf_field_name">` (module `evn-follow`).
+6ad. **Option của JS module nhận giá trị `true` thay vì chuỗi rỗng.** CKAN coi `data-module-foo=""` là thuộc tính boolean và đổi thành `true`, nên Leaflet crash (`t.replace is not a function`).
+   Chỉ in thuộc tính khi có giá trị, và trong JS kiểm tra `typeof x === 'string'`.
+6ae. **Override `header.html` làm mất tính năng của plugin khác**, ví dụ badge Dashboard của `activity` hay link login của plugin SSO. Nguyên nhân là viết lại toàn bộ markup tài khoản.
+   Trong block override, gọi lại block core bằng `{{ self.header_account_logged() }}` / `{{ self.header_account_notlogged() }}`. Các block con đã được plugin khác override vẫn được áp dụng.
+6af. **`h.render_datetime(date)` trả chuỗi rỗng.** Hàm này chỉ nhận `datetime`, không nhận `date`.
+   Dùng `h.evn_date()` (Babel `format_date`, dạng `dd/MM/y` với `vi`).
+6ah. **Mọi trang lỗi 500 `NotAuthorized` với trình duyệt còn phiên của một user vừa bị xóa**, trong khi khách (curl) vẫn vào được. CKAN từ chối mọi action của user đã xóa, kể cả `package_search`. Helper nào của theme gọi action bằng quyền người đang xem đều làm sập trang.
+   Các lệnh đọc dữ liệu **công khai** (bộ đếm, danh sách có cache) đi qua `ckanext/evntheme/public.py`, dùng `ignore_auth`; `package_search` mặc định vẫn loại dataset private/draft. Cách này cũng giữ cache không phụ thuộc quyền của người truy cập đầu tiên. Dữ liệu theo người dùng (DataStore, activity, theo dõi) vẫn dùng context của họ.
+6ag. **Workflow CI của extension không bao giờ chạy.** GitHub chỉ đọc `.github/workflows/` ở **gốc repo**, còn `ckanext-*/.github/` bị bỏ qua.
+   Workflow của evntheme đặt ở `.github/workflows/evntheme.yml`, dùng `working-directory`.
+6ai. **Tải logo lên ở `/ckan-admin/config` báo `No uploads allowed for object type admin`** (CKAN 2.11.6, định dạng nào cũng bị từ chối). Uploader đọc `ckan.upload.admin.types` / `ckan.upload.admin.mimetypes`, nhưng core chỉ khai báo hai key này cho `user` và `group`, còn `admin` thì bỏ trống.
+   evntheme khai báo bù hai key này (`CORE_GAPS` trong `config.py`), mặc định cho phép PNG, JPEG, GIF, WebP. Nếu core đã tự khai báo thì theme bỏ qua. SVG cố ý không nằm trong danh sách: mở trực tiếp một file SVG là chạy script của nó trên origin của portal. Logo SVG nên đặt trong theme rồi trỏ `ckan.site_logo` tới đó.
+   Cũng lưu ý: giá trị lưu từ trang admin nằm trong bảng `system_info` và **đè lên `ckan.ini`**. Đã upload rồi thì sửa `ckan.site_logo` trong ini/env sẽ không còn tác dụng, cho tới khi bấm "Remove" ở trang admin.
 7. **Thêm file template mới mà không thấy tác dụng.**
    Reloader chỉ theo dõi file đã biết. **Restart** `ckan run`.
 8. **Đổi `ckan.ini` (site title, logo…) mà giao diện không đổi.**

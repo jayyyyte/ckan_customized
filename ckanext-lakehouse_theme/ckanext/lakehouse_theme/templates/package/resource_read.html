@@ -1,9 +1,0 @@
-{% ckan_extends %}
-
-{% block resource_read_url %}
-  {{ super() }}
-  {% set trino = h.lakehouse_theme_trino_connection(res.url) %}
-  {% if trino %}
-    {% snippet 'lakehouse_theme/snippets/trino_connection.html', trino=trino %}
-  {% endif %}
-{% endblock %}

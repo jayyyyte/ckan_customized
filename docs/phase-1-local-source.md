@@ -13,7 +13,7 @@ flowchart LR
   C --> R[("Redis (WSL native)<br/>localhost:6379")]
   C --> S["Solr 9 — container Docker Desktop<br/>ckan/ckan-solr:2.11-solr9, :8983"]
   C --> F["~/ckan/storage (uploads)"]
-  T["ckanext-lakehouse_theme<br/>/mnt/c/Users/Tlinh/ckan_customized"] -. pip install -e .-> C
+  T["ckanext-evntheme<br/>/mnt/c/Users/Tlinh/ckan_customized"] -. pip install -e .-> C
 ```
 
 ## Layout thư mục
@@ -25,7 +25,7 @@ flowchart LR
 | `~/ckan/etc/ckan.ini` | file cấu hình |
 | `~/ckan/storage` | `ckan.storage_path` (file upload) |
 | `~/ckan/backup` | bản backup do script 1.1b tạo (`pg_dump`, `ckan.ini` cũ), quyền 700 |
-| `/mnt/c/Users/Tlinh/ckan_customized/ckanext-lakehouse_theme` | code theme (trong repo này) |
+| `/mnt/c/Users/Tlinh/ckan_customized/ckanext-evntheme` | code theme (trong repo này), từ 2026-09-19. Theme cũ `ckanext-lakehouse_theme` đã gỡ và xóa ngày 2026-09-20, vẫn còn trong lịch sử git |
 
 Docs gốc dùng `/usr/lib/ckan/default` và `/etc/ckan/default`. Dự án này cố ý đặt mọi thứ dưới `~` để khỏi cần sudo.
 
@@ -112,7 +112,7 @@ ckan.site_url = http://localhost:5000
 solr_url = http://127.0.0.1:8983/solr/ckan
 ckan.redis.url = redis://localhost:6379/0
 ckan.storage_path = /home/tlinh/ckan/storage
-ckan.plugins = lakehouse_theme activity text_view image_view
+ckan.plugins = evntheme activity tracking text_view image_view   # + db upgrade -p tracking / -p evntheme
 debug = true                       # trong [DEFAULT]; hiện footer debug tên template; CHỈ dùng local
 ckan.locale_default = vi           # Q6 trong roadmap
 ckan.locales_offered = vi en
@@ -159,6 +159,8 @@ CKAN 2.11 chỉ có **một** bộ template/asset gốc là classic (`templates`
 ## Bước 1.7 — Scaffold extension theme
 
 Đã làm ngày 2026-09-14. Code extension không phụ thuộc phiên bản CKAN nên giữ nguyên.
+
+> **2026-09-19:** theme đang dùng là `ckanext-evntheme` (làm theo mockup của user), không còn là `lakehouse_theme`. Cài đặt, cấu hình, dữ liệu demo (`ckan evntheme seed-demo`) và test xem trong [README của extension](../ckanext-evntheme/README.md). Các lệnh dưới đây giữ lại làm lịch sử của bước scaffold.
 
 ```bash
 cd /mnt/c/Users/Tlinh/ckan_customized

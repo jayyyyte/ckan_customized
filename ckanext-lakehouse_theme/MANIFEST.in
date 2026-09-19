@@ -1,6 +1,0 @@
-include README.md
-include LICENSE
-include requirements.txt
-recursive-include ckanext/lakehouse_theme *.html *.json *.js *.less *.css *.mo *.po *.yml *.svg
-recursive-include ckanext/lakehouse_theme/migration *.ini *.py *.mako
-recursive-include ckanext/lakehouse_theme/public *.*
