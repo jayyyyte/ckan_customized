@@ -332,7 +332,7 @@
     &--checked { background: var(--evn-blue-soft); color: var(--evn-blue); }
     &--edited { background: #fbe9d8; color: #9a5116; }
     &--warning { background: var(--evn-red-soft); color: var(--evn-red-ink); }
-    &--created { background: var(--evn-surface-4); color: #6e6559; }
+    &--created { background: var(--evn-surface-4); color: var(--evn-muted-2); }
   }
 
   &__text {

@@ -113,7 +113,7 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
   - chu kỳ, chất lượng, loại dữ liệu lấy từ extras;
   - "công bố đúng hạn" tính từ chu kỳ và `metadata_modified`;
   - số liệu API lấy qua `api_metrics_url`.
-- [x] Tương phản: mọi cặp chữ trong mockup dưới 4.5:1 được làm đậm vừa đủ (token "ink" trong `_tokens.scss`). Nút CTA cam đổi từ `#e8843c` (chữ trắng 2.7:1) sang `#b95b17` (4.6:1).
+- [x] Tương phản: mọi cặp chữ trong mockup dưới 4.5:1 được làm đậm vừa đủ (token "ink" trong `_tokens.scss`). Từ 2026-09-21 thang chữ phụ đậm thêm một bậc (`--evn-muted*` ≈ 6.5–7.6:1, `--evn-icon` 5.2:1) và nút CTA chuyển từ cam sang xanh `--evn-blue` (Decision log).
 - [x] i18n: msgid tiếng Anh, `.po` tiếng Việt dịch 291/291 chuỗi (gồm cả chuỗi core còn thiếu).
 - [x] Local:
   - `ckan.plugins = evntheme activity tracking text_view image_view`, site title/description/favicon mới;
@@ -180,6 +180,8 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 | 2026-09-19 | Bật plugin core **`tracking`** | Nguồn thật cho "lượt tải", "Xem nhiều nhất" và lượt tải của đơn vị |
 | 2026-09-19 | "Miền dữ liệu" = **CKAN group**, thứ tự theo `ckanext.evntheme.domain_groups`. "Loại dữ liệu" = extra `data_type`, facet thẳng trên field string cùng tên (gotchas 6x) | Không cần ckanext-scheming, không phải sửa schema Solr |
 | 2026-09-19 | Danh mục chuẩn dùng **bảng riêng** `mds_catalog/code/version/consumer` (Alembic của extension), nạp bằng CLI JSON; chưa có UI quản trị | Theo prompt; tách `mds/service.py` để sau này đổi sang dịch vụ MDS riêng không phải sửa template |
+| 2026-09-21 | Nút CTA **cam → xanh** (`--evn-cta: #0b5aa2`, hover `#094c89`): 4 nút `.evn-btn--cta` (tìm kiếm hero, thanh tìm kiếm, "Tải tất cả", nút tài liệu API). Cam chỉ còn là màu trang trí; thêm `--evn-cta-warm` cho badge thông báo | User yêu cầu. Chỉ sửa token, không đụng template |
+| 2026-09-21 | Thang chữ phụ **đậm thêm một bậc**: `--evn-muted` `#5f6a72→#4a545b`, `--evn-muted-b` `→#4f555a`, `--evn-muted-2` `→#554f46`, `--evn-muted-3` `→#5a5248`, `--evn-icon` `→#6b6152`, `--evn-on-dark` `.72→.86`. **Placeholder không nằm trong thang này**: token riêng `--evn-placeholder: #6e7378` (4.1:1), cố tình nhạt vì là gợi ý chứ không phải nội dung; chỉ pin lại để các trình duyệt hiển thị giống nhau | User phản hồi chữ nhỏ bị xám khó đọc, nhưng chốt placeholder để xám. Mức cũ chỉ vừa đạt AA (4.6–5.4:1); mức mới 6.5–7.6:1 vẫn giữ phân cấp với `--evn-ink` (11.7:1) |
 | 2026-09-19 | Màu chữ làm đậm cho **đạt WCAG AA**, lệch hex mockup ở các cặp chưa đạt (CTA cam `#b95b17`, meta `#6f685e`…). Màu nền và trang trí giữ nguyên hex của mockup | Prompt yêu cầu ≥ 4.5:1 và "tăng độ đậm nếu không đạt". Muốn đổi thì sửa một token |
 | 2026-09-19 | Font Nunito / Nunito Sans **tự host** (subset vietnamese, latin, latin-ext); Chart.js và Leaflet vendored, chỉ nạp khi mở tab | Cluster nội bộ có thể không ra được Internet |
 | 2026-09-19 | i18n: **msgid tiếng Anh**, bản dịch vi trong `.po` | Giữ được locale `en` (`ckan.locales_offered = vi en`), đúng quy ước CKAN |

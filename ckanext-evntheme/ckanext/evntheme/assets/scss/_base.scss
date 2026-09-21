@@ -44,6 +44,15 @@ body.evn {
   font-family: inherit;
 }
 
+// Placeholders stay a light grey: they are hints, not content, and must not read
+// as a filled-in value. Pinned only because the browser defaults differ wildly
+// (Chrome ~2.8:1, Firefox applies its own opacity).
+:where(.evn) input::placeholder,
+:where(.evn) textarea::placeholder {
+  color: var(--evn-placeholder);
+  opacity: 1;
+}
+
 :where(.evn) dd {
   margin: 0;
 }

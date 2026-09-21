@@ -62,8 +62,9 @@
   --evn-orange: #e8843c;
   --evn-orange-display: #c4661f;
   --evn-orange-ink: #a45219;
-  --evn-cta: #b95b17;
-  --evn-cta-hover: #a14e12;
+  --evn-cta: #0b5aa2;
+  --evn-cta-hover: #094c89;
+  --evn-cta-warm: #a45219;
   --evn-green: #3f8d6d;
   --evn-green-ink: #2c7456;
   --evn-green-soft: #e3f2e9;
@@ -87,12 +88,13 @@
   --evn-ink: #33383c;
   --evn-ink-strong: #1f2a33;
   --evn-ink-2: #4b5358;
-  --evn-muted: #5f6a72;
-  --evn-muted-b: #6e7378;
-  --evn-muted-2: #6f685e;
-  --evn-muted-3: #71685d;
-  --evn-icon: #938672;
-  --evn-on-dark: rgba(255, 255, 255, 0.72);
+  --evn-muted: #4a545b;
+  --evn-muted-b: #4f555a;
+  --evn-muted-2: #554f46;
+  --evn-muted-3: #5a5248;
+  --evn-icon: #6b6152;
+  --evn-placeholder: #6e7378;
+  --evn-on-dark: rgba(255, 255, 255, 0.86);
   --evn-code-bg: #1b2b3a;
   --evn-code-ink: #cfe0ef;
   --evn-font-heading: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -161,6 +163,12 @@ body.evn {
 :where(.evn) button,
 :where(.evn) textarea {
   font-family: inherit;
+}
+
+:where(.evn) input::placeholder,
+:where(.evn) textarea::placeholder {
+  color: var(--evn-placeholder);
+  opacity: 1;
 }
 
 :where(.evn) dd {
@@ -1592,7 +1600,7 @@ details:not([open]) > summary .evn-chevron {
   font-size: 11.5px;
 }
 .evn-user__menu .notifications-important .badge {
-  background: var(--evn-cta);
+  background: var(--evn-cta-warm);
   color: #fff;
 }
 .evn-user__menu .image img {
@@ -1981,7 +1989,7 @@ details:not([open]) > summary .evn-chevron {
 }
 .evn-devcard__eyebrow {
   margin: 0 0 10px;
-  color: #a9c8e4;
+  color: #c6dcf0;
   font-size: 13px;
 }
 .evn-devcard__title {
@@ -1997,7 +2005,7 @@ details:not([open]) > summary .evn-chevron {
   flex-direction: column;
   gap: 10px;
   margin: 0 0 18px;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.86);
   font-size: 13.5px;
 }
 .evn-devcard__metrics div {
@@ -2733,7 +2741,7 @@ details:not([open]) > summary .evn-chevron {
 }
 .evn-timeline__icon--created {
   background: var(--evn-surface-4);
-  color: #6e6559;
+  color: var(--evn-muted-2);
 }
 .evn-timeline__text {
   margin: 0;

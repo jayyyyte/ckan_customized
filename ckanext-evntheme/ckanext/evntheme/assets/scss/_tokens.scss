@@ -62,8 +62,9 @@ $statuses: (
   --evn-orange: #e8843c;          // decoration only: white text on it is 2.7:1
   --evn-orange-display: #c4661f;  // big numbers (>= 24px) on light backgrounds, 3.5:1
   --evn-orange-ink: #a45219;      // orange text, 4.8:1 on every light surface (mockup #d9762f, 3.0:1)
-  --evn-cta: #b95b17;             // call-to-action fill, white text 4.6:1 (mockup #e8843c)
-  --evn-cta-hover: #a14e12;
+  --evn-cta: #0b5aa2;             // call-to-action fill, white text 6.9:1 (was orange #b95b17)
+  --evn-cta-hover: #094c89;
+  --evn-cta-warm: #a45219;        // warm accent fill still needed for alerts, white text 4.8:1
   --evn-green: #3f8d6d;           // bars, dots, big numbers (3.9:1)
   --evn-green-ink: #2c7456;       // green text, 4.9:1 on its soft background
   --evn-green-soft: #e3f2e9;
@@ -91,12 +92,13 @@ $statuses: (
   --evn-ink: #33383c;
   --evn-ink-strong: #1f2a33;
   --evn-ink-2: #4b5358;
-  --evn-muted: #5f6a72;           // descriptions, 5.4:1
-  --evn-muted-b: #6e7378;         // 4.7:1
-  --evn-muted-2: #6f685e;         // meta text, >= 4.7:1 (mockup #8b8377 3.7:1, #7a7268 4.1:1)
-  --evn-muted-3: #71685d;         // labels and counts, >= 4.6:1 (mockup #a89e90, 2.6:1)
-  --evn-icon: #938672;            // icons and checkbox borders, >= 3:1 (mockup #b3a99a, 2.3:1)
-  --evn-on-dark: rgba(255, 255, 255, 0.72);
+  --evn-muted: #4a545b;           // descriptions, 7.6:1 (was #5f6a72, 5.4:1)
+  --evn-muted-b: #4f555a;         // 7.4:1 (was #6e7378, 4.7:1)
+  --evn-muted-2: #554f46;         // meta text, >= 6.9:1 (was #6f685e, 4.7:1)
+  --evn-muted-3: #5a5248;         // labels and counts, >= 6.5:1 (was #71685d, 4.6:1)
+  --evn-icon: #6b6152;            // icons and checkbox borders, >= 5.2:1 (was #938672, 3.0:1)
+  --evn-placeholder: #6e7378;     // input hints only: deliberately lighter than the text ramp, 4.1:1
+  --evn-on-dark: rgba(255, 255, 255, 0.86);
   --evn-code-bg: #1b2b3a;
   --evn-code-ink: #cfe0ef;
 
