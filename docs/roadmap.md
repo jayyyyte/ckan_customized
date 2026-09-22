@@ -126,7 +126,7 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 - [x] CI ở `.github/workflows/evntheme.yml`, đặt ở gốc repo vì workflow trong thư mục con chưa từng chạy (gotchas 6ag).
 - [x] `setup_step2_switch_to_2.11.sh` đổi sang evntheme. Thêm `setup_step3_datastore.sh` (user tự chạy, cần sudo) để bật DataStore + XLoader 2.5.0 và tạo DB test.
 - [ ] Thay logo placeholder bằng logo EVN thật (Q2)
-- [ ] User chạy `setup_step3_datastore.sh`, rồi `xloader submit all` để tab Xem trước/Thử API có dữ liệu thật (Q4)
+- [x] **DataStore + XLoader bật ở local (2026-09-22)**: user chạy `setup_step3_datastore.sh` rồi `xloader submit all`. Kiểm chứng: `datastore_default` có **12 bảng**, 12/32 resource `datastore_active` (12 CSV; 20 resource còn lại là link XLSX/JSON/API/GeoJSON/PDF/JDBC không có file). Tab **Xem trước** hiện bảng dữ liệu thật, tab **Thử API** trả JSON từ `datastore_search`, console 0 lỗi. Script phải sửa 4 lỗi trong quá trình chạy — xem gotchas 6aj–6am.
 - [x] Xóa `ckanext-lakehouse_theme` (2026-09-20), theo thứ tự:
   - `pip uninstall` khỏi venv;
   - xóa thư mục (37 file đã có trong git, còn lại chỉ là `__pycache__`, `.mo`, `egg-info`);
@@ -188,6 +188,7 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 | 2026-09-19 | **Logo = `ckan.site_logo` của core**, bỏ key `ckanext.evntheme.logo_url`. Sysadmin upload PNG/JPEG/GIF/WebP ở `/ckan-admin/config` (theme khai báo bù `ckan.upload.admin.*`, gotchas 6ai), hoặc trỏ path/URL trong ini/env (dùng được cả SVG). Khi vẫn là mặc định của CKAN thì dùng placeholder của theme | User muốn nhận PNG/JPG hoặc mọi định dạng. Chỉ một key, đổi logo không phải build lại image. File upload nằm trên PVC storage |
 | 2026-09-20 | **Xóa `ckanext-lakehouse_theme`**. Hai link footer của nó (OpenMetadata, hướng dẫn Trino JDBC) chưa chuyển sang evntheme vì mockup không có, chờ user quyết | User đồng ý xóa. Theme đã tắt từ 2026-09-19 và evntheme không phụ thuộc vào nó |
 | 2026-09-20 | Hai link đó vào cột "Nhà phát triển" của footer evntheme, sau "Tài liệu kỹ thuật": key `ckanext.evntheme.openmetadata_url` (mặc định trống, vì IP khác theo môi trường) và `trino_docs_url` (mặc định docs Trino JDBC). Để trống thì ẩn | User chọn. Giữ nguyên cách làm của theme cũ: link là config, đổi bằng env var trên K8s |
+| 2026-09-22 | Extension bên thứ ba cài **từ source bằng `pip install -e`**, không dùng wheel từ PyPI. Áp dụng cho cả local lẫn Dockerfile GĐ2 | Bản cài editable của `ckan` và theme sinh `*-nspkg.pth`, tạo sẵn module `ckanext` trong `sys.modules` nên `site-packages/ckanext/*` thành vô hình: wheel cài xong vẫn `ModuleNotFoundError` (gotchas 6ak). Cách này cũng trùng với ckan-docker và với lý do template/asset (bẫy 15) |
 | 2026-09-19 | Khung logo **cao cố định (44px header / 40px footer), rộng theo file**, tối đa 176px (88px trên mobile), token `--evn-logo-*`. Lệch mockup (ô vuông 44×44) chỉ khi logo không vuông | Logo ngang trong ô vuông co còn 44×18px, không đọc được. Logo vuông vẫn giống hệt mockup |
 
 ## Câu hỏi còn mở
@@ -197,7 +198,7 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 | Q1 | ~~Tên theme/extension?~~ | User | ~~`ckanext-lakehouse_theme` (2026-09-14)~~ → **`ckanext-evntheme`, plugin `evntheme` (2026-09-19)** |
 | Q2 | Bộ nhận diện: logo, màu, font, favicon, nội dung footer? | User / công ty | **Màu, font, bố cục và nội dung đã có từ mockup (2026-09-19)**, gom trong `_tokens.scss` và config `ckanext.evntheme.*`. Còn chờ **file logo EVN chính thức** (đang dùng placeholder; PNG/JPG/SVG đều được, xem README mục Logo) |
 | Q3 | "Deploy" có nghĩa là chạy trên cluster công ty cho mọi người dùng? | Người giao task | Có, nên GĐ3 là bắt buộc |
-| Q4 | Có cần DataStore + xloader (preview dữ liệu, Data API)? | User | **Có (2026-09-19)**: mockup cần tab Xem trước / Thử API. Theme đã sẵn sàng; bật local bằng `setup_step3_datastore.sh` (user chạy, XLoader 2.5.0). Trên K8s cần thêm DB `datastore_default` + worker `ckan jobs worker` |
+| Q4 | ~~Có cần DataStore + xloader (preview dữ liệu, Data API)?~~ **Đóng 2026-09-22** | User | **Có (2026-09-19), đã bật xong ở local (2026-09-22)**: XLoader 2.5.0 cài **editable từ source** (`~/ckan/default/src/ckanext-xloader`, bắt buộc — gotchas 6ak), 12 CSV đã nạp vào DataStore. GĐ2 phải đưa `datastore xloader datatables_view` vào image, thêm DB `datastore_default` trong compose và một service chạy `ckan jobs worker`; GĐ3 thêm DB trên `postgres-service` + Deployment worker |
 | Q5 | Có cần metadata schema riêng (ckanext-scheming), DCAT, SSO/LDAP? | User | Chưa |
 | Q6 | Ngôn ngữ mặc định `vi` hay `en`? | User | `ckan.locale_default = vi`, cho phép chọn `en` |
 | Q7 | Kubeconfig, quyền (`auth can-i`), registry nội bộ? | Infra | Chờ. Không có registry thì import tarball |
