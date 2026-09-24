@@ -96,7 +96,7 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 >
 > Còn chờ:
 > - logo EVN chính thức: hiện là placeholder. Sysadmin tải lên (PNG/JPG/GIF/WebP) ở `/ckan-admin/config`, không cần build lại;
-> - DataStore (Q4): script đã sẵn sàng, chưa chạy;
+> - ~~DataStore (Q4): script đã sẵn sàng, chưa chạy~~ → đã bật ở local 2026-09-22 và đã vào image ở GĐ2;
 > - test ứng dụng chạy trong CI / DB test.
 
 - [x] Extension `ckanext-evntheme`, gồm:
@@ -136,19 +136,33 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
   Muốn lấy lại: `git checkout 3d7a3a5 -- ckanext-lakehouse_theme`.
 
 ### Giai đoạn 2 — Đóng gói Docker · [chi tiết](phase-2-docker-packaging.md)
-- [ ] `.gitignore` (bỏ qua `.env`, `secrets.env`, `*.kubeconfig`, `ckan.ini`, `*.tar*`)
-- [ ] `docker/Dockerfile` (FROM `ckan/ckan-base:2.11.6` + theme)
-- [ ] `docker/compose.yaml` + `.env.example` (db, solr, redis, ckan)
-- [ ] Build `ckan-lakehouse:<version>`, `docker compose up`, theme hiển thị đúng
-- [ ] Kiểm tra sau khi restart vẫn còn dữ liệu, session và API token
-- [ ] `docker save` ra tarball cho GĐ3
+
+> **2026-09-22 — GĐ2 xong.** Image `ckan-lakehouse:0.1.0` (CKAN 2.11.6 + evntheme + DataStore/XLoader 2.5.0) build sạch ngay lần đầu, `pip check` không lỗi, và chạy qua hết 6 bước kiểm thử bằng `docker compose` ở local.
+>
+> Stack gồm 5 service, ánh xạ 1-1 sang GĐ3: `db` (2 role + 2 DB), `solr`, `redis`, `ckan`, `ckan-worker`.
+>
+> Hai câu hỏi treo từ trước đã có câu trả lời **bằng thực nghiệm**:
+> - **Secret truyền bằng env var có tác dụng** (mục ⚠ của phase-2): `ckan.ini` trong container vẫn mang `SECRET_KEY` ngẫu nhiên khác env, nhưng sau `docker compose restart ckan` thì cookie phiên và API token cũ vẫn dùng được. `envvars` chạy trước bước validate nên đè được ini.
+> - **DataStore chạy đúng trong image**: 10/10 resource CSV vào DataStore qua worker; role chỉ đọc `SELECT` được nhưng `CREATE TABLE` bị từ chối.
+>
+> Năm bẫy mới ghi vào gotchas: 15a (env var rỗng ≠ không đặt), 15b (worker không chạy `prerun.py`), 15c (URL nội bộ cho XLoader), 15d (`/_tracking` 405 nhưng vẫn ghi), 15e (`set-permissions` không cần superuser nếu đúng owner).
+>
+> Còn treo, không chặn GĐ3: logo EVN thật (Q2), và `.env` mẫu cho cluster (điền khi có thông tin thật).
+
+- [x] `.gitignore` (bỏ qua `.env`, `docker/.env`, `secrets.env`, `*.kubeconfig`, `ckan.ini`, `*.tar*`) + `.dockerignore` (2026-09-22)
+- [x] `docker/Dockerfile`: FROM `ckan/ckan-base:2.11.6`, XLoader 2.5.0 và theme cài `-e` từ source, `pybabel compile`, `pip check` và `import` kiểm ngay trong build (2026-09-22)
+- [x] `docker/compose.yaml` + `.env.example` + `make-env.sh`: db (role/DB cho cả DataStore), solr, redis, ckan, **ckan-worker** (2026-09-22)
+- [x] Build `ckan-lakehouse:0.1.0` (1.98 GB), `docker compose up`, theme hiển thị đúng — 24/24 kiểm tra, có ảnh chụp trang chủ và tab Xem trước ở 1440px (2026-09-22)
+- [x] DataStore đầu-cuối trong compose: `seed-demo` → `xloader submit all` → 10/10 CSV `datastore_active`, tab Xem trước và Thử API lấy dữ liệu thật (2026-09-22)
+- [x] Kiểm tra sau khi restart vẫn còn dữ liệu, session và API token; `down && up` giữ volume cũng giữ nguyên 12 dataset / 9 tổ chức / 10 bảng DataStore (2026-09-22)
+- [x] `docker save | gzip -1` chạy được, **537 MB** — con số cho bước `ctr import` ở GĐ3. File tạm đã xóa, tạo lại bằng một lệnh khi cần (2026-09-22)
 
 ### Giai đoạn 3 — K8s lab công ty · [chi tiết](phase-3-k8s-deploy.md)
 - [ ] Nhận kubeconfig (lưu **ngoài** repo)
 - [ ] Audit read-only, ghi kết quả vào [cluster-context.md](cluster-context.md)
-- [ ] Chốt với chủ cluster: xử lý stub `ckan`/`ckan-service`, tạo DB trên `postgres-service`
-- [ ] Import image lên 2 worker (hoặc push registry nếu infra có)
-- [ ] Apply manifest `k8s/`: Solr, Redis, CKAN (+ worker nếu cần)
+- [ ] Chốt với chủ cluster: xử lý stub `ckan`/`ckan-service`, tạo **hai** DB trên `postgres-service` (`ckan_default` và `datastore_default`, cùng owner `ckan_default` — bẫy 15e) và role chỉ đọc
+- [ ] Import image lên 2 worker (~537 MB mỗi lần, `docker save | gzip -1`), hoặc push registry nếu infra có
+- [ ] Apply manifest `k8s/`: Solr, Redis, CKAN, **Deployment worker** `ckan jobs worker` (XLoader), CronJob `ckan tracking update`
 - [ ] Verify tại http://10.1.117.91:30500 và tạo sysadmin
 - [ ] Tích hợp: Airflow publish qua API, link Trino, đồng bộ OpenMetadata (sau go-live)
 
@@ -189,6 +203,11 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 | 2026-09-20 | **Xóa `ckanext-lakehouse_theme`**. Hai link footer của nó (OpenMetadata, hướng dẫn Trino JDBC) chưa chuyển sang evntheme vì mockup không có, chờ user quyết | User đồng ý xóa. Theme đã tắt từ 2026-09-19 và evntheme không phụ thuộc vào nó |
 | 2026-09-20 | Hai link đó vào cột "Nhà phát triển" của footer evntheme, sau "Tài liệu kỹ thuật": key `ckanext.evntheme.openmetadata_url` (mặc định trống, vì IP khác theo môi trường) và `trino_docs_url` (mặc định docs Trino JDBC). Để trống thì ẩn | User chọn. Giữ nguyên cách làm của theme cũ: link là config, đổi bằng env var trên K8s |
 | 2026-09-22 | Extension bên thứ ba cài **từ source bằng `pip install -e`**, không dùng wheel từ PyPI. Áp dụng cho cả local lẫn Dockerfile GĐ2 | Bản cài editable của `ckan` và theme sinh `*-nspkg.pth`, tạo sẵn module `ckanext` trong `sys.modules` nên `site-packages/ckanext/*` thành vô hình: wheel cài xong vẫn `ModuleNotFoundError` (gotchas 6ak). Cách này cũng trùng với ckan-docker và với lý do template/asset (bẫy 15) |
+| 2026-09-22 | **GĐ2: một image cho cả web lẫn worker.** `ckan-worker` là service riêng chạy `ckan jobs worker` qua `worker-entrypoint.sh`, **không** chạy `prerun.py` | Cùng code, cùng plugin, chỉ khác lệnh chạy. Container web sở hữu schema, tránh hai tiến trình cùng `db init`. Ánh xạ thẳng sang hai Deployment ở GĐ3 |
+| 2026-09-22 | `ckan.plugins` **nướng vào `ckan.ini` lúc build**, worker ghi lại từ `CKAN__PLUGINS` khi khởi động | `ckan.plugins` được đọc trước khi nạp plugin, mà `envvars` lại là plugin, nên biến env không tự bật được plugin nào (bẫy 15b) |
+| 2026-09-22 | Mật khẩu để trong `.env`, **URL kết nối ghép trong `compose.yaml`**; `make-env.sh` sinh toàn bộ mật khẩu và secret | Mỗi mật khẩu chỉ nằm một chỗ. `secrets.token_urlsafe` chỉ sinh ký tự an toàn trong URL nên không phải percent-encode (bẫy 6e). Ở GĐ3 thì viết thẳng URL vào Secret |
+| 2026-09-22 | XLoader trong container: `ckanext.xloader.site_url` trỏ địa chỉ nội bộ, `jobs_db.uri` trỏ Postgres, API token do entrypoint tạo mỗi lần start (hoặc pin bằng `CKANEXT__XLOADER__API_TOKEN`) | Worker ở container khác không gọi được `ckan.site_url`; SQLite mặc định nằm trong `/tmp` của từng container; token không nên nằm sẵn trong image (bẫy 15c) |
+| 2026-09-22 | DataStore trong compose: DB `datastore_default` **cùng container Postgres**, cả hai DB thuộc sở hữu `ckan_default`; role `datastore_default` chỉ đọc | Giống hệt cách GĐ3 thêm DB vào `postgres-service` dùng chung, và nhờ đúng owner nên `datastore set-permissions` của `prerun.py` chạy được mà không cần superuser (bẫy 15e) |
 | 2026-09-19 | Khung logo **cao cố định (44px header / 40px footer), rộng theo file**, tối đa 176px (88px trên mobile), token `--evn-logo-*`. Lệch mockup (ô vuông 44×44) chỉ khi logo không vuông | Logo ngang trong ô vuông co còn 44×18px, không đọc được. Logo vuông vẫn giống hệt mockup |
 
 ## Câu hỏi còn mở
@@ -198,7 +217,7 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 | Q1 | ~~Tên theme/extension?~~ | User | ~~`ckanext-lakehouse_theme` (2026-09-14)~~ → **`ckanext-evntheme`, plugin `evntheme` (2026-09-19)** |
 | Q2 | Bộ nhận diện: logo, màu, font, favicon, nội dung footer? | User / công ty | **Màu, font, bố cục và nội dung đã có từ mockup (2026-09-19)**, gom trong `_tokens.scss` và config `ckanext.evntheme.*`. Còn chờ **file logo EVN chính thức** (đang dùng placeholder; PNG/JPG/SVG đều được, xem README mục Logo) |
 | Q3 | "Deploy" có nghĩa là chạy trên cluster công ty cho mọi người dùng? | Người giao task | Có, nên GĐ3 là bắt buộc |
-| Q4 | ~~Có cần DataStore + xloader (preview dữ liệu, Data API)?~~ **Đóng 2026-09-22** | User | **Có (2026-09-19), đã bật xong ở local (2026-09-22)**: XLoader 2.5.0 cài **editable từ source** (`~/ckan/default/src/ckanext-xloader`, bắt buộc — gotchas 6ak), 12 CSV đã nạp vào DataStore. GĐ2 phải đưa `datastore xloader datatables_view` vào image, thêm DB `datastore_default` trong compose và một service chạy `ckan jobs worker`; GĐ3 thêm DB trên `postgres-service` + Deployment worker |
+| Q4 | ~~Có cần DataStore + xloader (preview dữ liệu, Data API)?~~ **Đóng 2026-09-22** | User | **Có (2026-09-19), đã bật xong ở local (2026-09-22)**: XLoader 2.5.0 cài **editable từ source** (`~/ckan/default/src/ckanext-xloader`, bắt buộc — gotchas 6ak), 12 CSV đã nạp vào DataStore. **GĐ2 đã làm xong (2026-09-22)**: image có `datastore xloader datatables_view`, compose có DB `datastore_default` và service `ckan-worker`, 10/10 CSV nạp được trong container; GĐ3 thêm DB trên `postgres-service` + Deployment worker |
 | Q5 | Có cần metadata schema riêng (ckanext-scheming), DCAT, SSO/LDAP? | User | Chưa |
 | Q6 | Ngôn ngữ mặc định `vi` hay `en`? | User | `ckan.locale_default = vi`, cho phép chọn `en` |
 | Q7 | Kubeconfig, quyền (`auth can-i`), registry nội bộ? | Infra | Chờ. Không có registry thì import tarball |

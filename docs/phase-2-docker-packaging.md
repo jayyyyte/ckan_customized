@@ -28,153 +28,142 @@ Có hai cách cấu hình bằng biến môi trường:
    - `CKAN__A__B` → `ckan.a.b`. Ví dụ `CKAN__LOCALE_DEFAULT=vi` → `ckan.locale_default`.
    - `CKAN___A__B` (ba dấu gạch dưới) → `a.b`, **không** có tiền tố `ckan.`. Ví dụ `CKAN___API_TOKEN__JWT__ENCODE__SECRET`.
 
-## Cấu trúc repo sau GĐ2
+## Cấu trúc repo sau GĐ2 (đã dựng xong 2026-09-22)
 
 ```
 ckan_customized/
-├── ckanext-evntheme/           # theme (từ 2026-09-19; ckanext-lakehouse_theme cũ đã xóa 2026-09-20)
+├── ckanext-evntheme/                     # theme, copy vào image
 ├── docker/
-│   ├── Dockerfile
-│   ├── compose.yaml
-│   ├── .env.example            # commit; .env thật KHÔNG commit
-│   ├── docker-entrypoint.d/    # script init bổ sung (nếu cần)
-│   └── postgres-init/          # tạo role/DB cho container db local
+│   ├── Dockerfile                        # FROM ckan/ckan-base:2.11.6 + xloader + theme
+│   ├── compose.yaml                      # db, solr, redis, ckan, ckan-worker
+│   ├── .env.example                      # commit; .env thật KHÔNG commit
+│   ├── make-env.sh                       # sinh .env với mật khẩu/secret ngẫu nhiên
+│   ├── worker-entrypoint.sh              # entrypoint của service ckan-worker
+│   ├── docker-entrypoint.d/              # chạy trong container web sau prerun.py
+│   │   ├── 10-plugin-migrations.sh       # db upgrade -p activity|tracking|evntheme
+│   │   └── 20-xloader-token.sh           # API token cho XLoader
+│   └── postgres-init/
+│       └── 10-ckan-databases.sh          # role + 2 DB, chạy 1 lần khi tạo volume
 ├── .dockerignore
 └── .gitignore
 ```
 
-## Dockerfile (khung)
+## Chạy ở local
 
-```dockerfile
-FROM ckan/ckan-base:2.11.6
-
-# /usr/local (site-packages) thuộc ckan-sys, user mặc định là ckan → cài bằng root cho gọn
-# (ckan-sys cũng được). Source extension để trong SRC_DIR, chủ ckan-sys như phần còn lại của /srv/app.
-USER root
-COPY --chown=ckan-sys:ckan-sys ckanext-evntheme ${SRC_DIR}/ckanext-evntheme
-# Cài -e (giống cách ckan-docker làm): template/asset đọc thẳng từ source,
-# không phụ thuộc vào việc MANIFEST.in/package_data khai báo đủ hay chưa.
-# .mo không commit (decision log 2026-09-14) → biên dịch từ .po ngay khi build.
-# CSS đã biên dịch sẵn và có commit (assets/css/evn-theme.css) → image không cần Node/sass.
-RUN pip3 install --no-cache-dir -e ${SRC_DIR}/ckanext-evntheme && \
-    pybabel compile -d ${SRC_DIR}/ckanext-evntheme/ckanext/evntheme/i18n -D ckanext-evntheme && \
-    chown -R ckan-sys:ckan-sys ${SRC_DIR}/ckanext-evntheme
-# Extension khác (sau khi chốt Q4/Q5/Q10). Image 2.11 có git/g++ nên cài từ git được,
-# nhưng vẫn nên ghim tag, ví dụ:
-# RUN pip3 install --no-cache-dir -e 'git+https://github.com/ckan/ckanext-xloader.git@<tag>#egg=ckanext-xloader'
-
-COPY --chown=ckan-sys:ckan-sys docker/docker-entrypoint.d/ /docker-entrypoint.d/
-
-USER ckan
-# Giống local; datatables_view cần DataStore nên chỉ thêm khi chốt Q4.
-ENV CKAN__PLUGINS="evntheme activity tracking text_view image_view envvars"
+```bash
+bash docker/make-env.sh                    # sinh docker/.env (chỉ chạy một lần)
+cd docker && docker compose up -d --build  # lần đầu ~2 phút kể cả pull
+docker compose ps                          # ckan phải healthy
 ```
 
-- Migration của plugin: `prerun.py` của ckan-base chỉ chạy `db init` (gotchas 6h), nên phải chạy thêm `ckan db upgrade -p activity`, `-p tracking` và `-p evntheme`. Đặt các lệnh này trong `docker-entrypoint.d/`, hoặc chạy tay một lần sau khi DB lên.
-- `tracking` cần chạy `ckan tracking update` hằng đêm (CronJob ở GĐ3).
+Cổng mặc định là 5000. Nếu `ckan run` của GĐ1 đang chiếm cổng đó thì sửa **cả hai** key trong `.env`: `CKAN_PORT` và cổng trong `CKAN_SITE_URL` (bẫy 10). Bản kiểm thử 2026-09-22 chạy ở 5003.
 
-- Build context là **gốc repo**: `docker build -f docker/Dockerfile -t ckan-lakehouse:0.1.0 .`
-- Tag luôn theo phiên bản (`0.1.0`, `0.1.1`…), **không dùng `latest`** (xem gotchas về pull policy).
-- Kiểm tra lại user/đường dẫn mỗi khi đổi base tag:
-  ```bash
-  docker run --rm ckan/ckan-base:2.11.6 sh -c 'id; python3 -V; env | grep -E "APP_DIR|SRC_DIR|CKAN_INI"; ls -ld /usr/local/lib/python3*/site-packages; which git wget curl'
-  ```
+Dữ liệu demo và DataStore:
 
-## compose.yaml (khung)
-
-```yaml
-services:
-  db:
-    image: postgres:16-alpine            # cùng major với postgres-service trên cluster
-    environment: [POSTGRES_PASSWORD=${POSTGRES_PASSWORD}]
-    volumes: [pg_data:/var/lib/postgresql/data, ./postgres-init:/docker-entrypoint-initdb.d:ro]
-    healthcheck: {test: ["CMD", "pg_isready", "-U", "postgres"], interval: 5s}
-  solr:
-    image: ckan/ckan-solr:2.11-solr9
-    volumes: [solr_data:/var/solr]
-  redis:
-    image: redis:7-alpine
-  ckan:
-    build: {context: .., dockerfile: docker/Dockerfile}
-    image: ckan-lakehouse:0.1.0
-    env_file: .env
-    ports: ["5000:5000"]                 # không cần nginx: cluster cũng không có ingress
-    volumes: [ckan_storage:/var/lib/ckan]
-    depends_on: {db: {condition: service_healthy}, solr: {condition: service_started}, redis: {condition: service_started}}
-    healthcheck: {test: ["CMD", "wget", "-qO", "/dev/null", "http://localhost:5000/api/action/status_show"], interval: 30s, start_period: 120s}
-volumes: {pg_data: {}, solr_data: {}, ckan_storage: {}}
+```bash
+docker compose exec ckan ckan -c /srv/app/ckan.ini evntheme seed-demo
+docker compose exec ckan ckan -c /srv/app/ckan.ini xloader submit all
+docker compose logs -f ckan-worker          # theo dõi job
 ```
 
-- Image 2.11 có `wget` (cài trong Dockerfile gốc), nên healthcheck giống ckan-docker dùng được luôn.
-- Container Solr của GĐ1 (`ckan-solr`, cổng 8983) có thể trùng cổng. Hoặc dừng nó, hoặc không publish cổng Solr trong compose (như khung trên đang làm).
+## Dockerfile — xem [docker/Dockerfile](../docker/Dockerfile)
 
-## `.env.example` (khung, không chứa giá trị thật)
+Bốn điểm quyết định, đều đã kiểm chứng trong image:
 
-```dotenv
-POSTGRES_PASSWORD=change-me
-CKAN_SQLALCHEMY_URL=postgresql://ckan_default:change-me@db/ckan_default
-CKAN_SOLR_URL=http://solr:8983/solr/ckan
-CKAN_REDIS_URL=redis://redis:6379/1
-CKAN_SITE_URL=http://localhost:5000
-CKAN_SITE_ID=default
-CKAN_STORAGE_PATH=/var/lib/ckan
-CKAN_SYSADMIN_NAME=admin
-CKAN_SYSADMIN_PASSWORD=change-me
-CKAN_SYSADMIN_EMAIL=admin@example.com
-CKAN__LOCALE_DEFAULT=vi
-CKAN__LOCALES_OFFERED=vi en
-# Theme gốc: 2.11 chỉ có classic (mặc định), không đặt CKAN__BASE_TEMPLATES_FOLDER / CKAN__BASE_PUBLIC_FOLDER
-# Cố định secret để restart không làm mất session / vô hiệu API token (xem gotchas)
-CKAN___SECRET_KEY=generate-me
-CKAN___WTF_CSRF_SECRET_KEY=generate-me
-CKAN___API_TOKEN__JWT__ENCODE__SECRET=string:generate-me
-CKAN___API_TOKEN__JWT__DECODE__SECRET=string:generate-me
+1. **`USER root` khi cài, `USER ckan` khi chạy** (bẫy 12).
+2. **Extension bên thứ ba cài `-e` từ source.** Trong image, `ckanext.__path__` là `['/srv/app/src/ckan/ckanext', '/srv/app/src/ckanext-evntheme/ckanext']` — không có `site-packages`, nên wheel sẽ vô hình (bẫy 6ak). XLoader ghim tag `2.5.0` qua `ARG XLOADER_VERSION`, cài kèm `requirements.txt` của đúng tag đó. `pip3 check` chạy ngay trong build: bản 2.5.0 không xung đột với requirements của CKAN 2.11.6 trên Python 3.10.
+3. **`pybabel compile` lúc build**, vì `.mo` không commit; `.dockerignore` loại luôn `.mo` của bản local để không dính bản cũ. CSS đã commit sẵn nên image không cần Node.
+4. **`ckan config-tool` ghi `ckan.plugins` vào ini lúc build.** `prerun.py` chỉ chạy ở container web, mà `ckan.plugins` lại được đọc trước khi nạp plugin nên `envvars` không tự bật plugin được. Không có bước này thì `ckan-worker` chạy CKAN trần (bẫy 15b).
+
+Build, và lệnh kiểm tra lại mỗi khi đổi base tag:
+
+```bash
+docker build -f docker/Dockerfile -t ckan-lakehouse:0.1.0 .      # chạy từ gốc repo
+docker run --rm ckan/ckan-base:2.11.6 sh -c 'id; python3 -V; env | grep -E "APP_DIR|SRC_DIR|CKAN_INI"'
 ```
 
-Sinh secret bằng lệnh: `python3 -c 'import secrets; print(secrets.token_urlsafe())'`
+Image `0.1.0` nặng **1.98 GB**; `docker save | gzip -1` ra **537 MB** — đây là khối lượng phải `ctr import` lên từng worker ở GĐ3.
 
-⚠ **Cần xác minh trong GĐ2:** các biến `CKAN___SECRET_KEY` và `CKAN___WTF_CSRF_SECRET_KEY` có thật sự ghi đè được giá trị do `start_ckan.sh` tự sinh không.
+## compose.yaml — xem [docker/compose.yaml](../docker/compose.yaml)
 
-Cách kiểm tra:
-1. Tạo một API token.
-2. Chạy `docker compose restart ckan`.
-3. Gọi API bằng token cũ. Nếu vẫn dùng được là đạt.
+| Service | Vai trò | Tương ứng ở GĐ3 |
+|---|---|---|
+| `db` | `postgres:16-alpine`, init tạo 2 role + 2 DB | `postgres-service` dùng chung (chỉ thêm DB) |
+| `solr` | `ckan/ckan-solr:2.11-solr9`, không publish cổng | Deployment + Service `ckan-solr` |
+| `redis` | `redis:7-alpine` | Deployment + Service `ckan-redis` |
+| `ckan` | image tự build, publish `CKAN_PORT` | Deployment 1 replica + NodePort 30500 |
+| `ckan-worker` | cùng image, chạy `ckan jobs worker` | Deployment riêng, không cần Service |
 
-Ghi kết quả vào gotchas.
+- Các URL kết nối (`CKAN_SQLALCHEMY_URL`, hai URL DataStore, `CKANEXT__XLOADER__JOBS_DB__URI`) được **ghép trong compose** từ mật khẩu trong `.env`, để mỗi mật khẩu chỉ nằm một chỗ. Ở GĐ3 thì viết thẳng URL vào Secret.
+- `ckan-worker` **không** chạy `prerun.py`: container web mới là nơi `db init` và chạy migration. `worker-entrypoint.sh` chỉ đồng bộ `ckan.plugins` từ env rồi `exec ckan jobs worker`.
+- `depends_on` của worker chờ `ckan` **healthy**, nên schema chắc chắn đã sẵn sàng.
+- Healthcheck: `wget` cho CKAN (image có sẵn), `curl` cho Solr, `redis-cli ping` cho Redis, `pg_isready -d ckan_default` cho Postgres — có `-d` để chờ cả script init chứ không chỉ chờ server.
+
+## DataStore + XLoader trong image (Q4)
+
+- `CKAN__PLUGINS` có `datastore xloader datatables_view`, giống local.
+- `postgres-init/10-ckan-databases.sh` tạo role `ckan_default` (ghi) và `datastore_default` (chỉ đọc) cùng hai DB, **đều thuộc sở hữu `ckan_default`**. Nhờ vậy `datastore set-permissions` mà `prerun.py` chạy bằng chính user ghi vẫn thành công, không cần superuser (bẫy 15e).
+- `CKANEXT__XLOADER__SITE_URL=http://ckan:5000`: worker ở container khác không giải được `localhost:5000` trong payload job (bẫy 15c).
+- `CKANEXT__XLOADER__JOBS_DB__URI` trỏ vào DB CKAN thay cho file SQLite `/tmp` mặc định, để web và worker dùng chung nhật ký job.
+- API token của XLoader: `20-xloader-token.sh` thu hồi token `xloader-container` cũ rồi tạo token mới mỗi lần start, hoặc dùng `CKANEXT__XLOADER__API_TOKEN` nếu được đặt. Chỉ container web cần token này — nó đi kèm payload job sang worker.
+
+## `.env.example` — xem [docker/.env.example](../docker/.env.example)
+
+`bash docker/make-env.sh` sinh `.env` với mật khẩu và secret ngẫu nhiên (`secrets.token_urlsafe`, chỉ gồm ký tự an toàn trong URL nên không phải percent-encode — bẫy 6e). Script không ghi đè `.env` đã có.
+
+⚠ **Đã xác minh xong (2026-09-22): secret truyền bằng biến môi trường có tác dụng.**
+
+- `start_ckan.sh` vẫn sinh `SECRET_KEY` ngẫu nhiên vào `ckan.ini` mỗi lần start, và giá trị trong ini **khác** giá trị env.
+- Nhưng `envvars` là `IConfigurer`, chạy trong `update_config()` trước bước validate, nên env đè lên ini.
+- Kiểm chứng: tạo API token, đăng nhập lấy cookie phiên, `docker compose restart ckan` → **cả token lẫn cookie vẫn dùng được** (HTTP 200).
+- `SECRET_KEY` và `WTF_CSRF_SECRET_KEY` nằm trong config declaration nên `envvars` giữ nguyên chữ HOA. Key không được khai báo sẽ bị hạ thành chữ thường và trượt.
+
+Một bẫy khác phát hiện khi test: **để trống một biến khác với không đặt nó**. `CKANEXT__XLOADER__API_TOKEN=` làm CKAN chết vì option đó khai báo `not_missing` (bẫy 15a) — trong `.env` phải comment cả dòng.
 
 ## Bảng ánh xạ cấu hình
 
-Điền dần từ GĐ1. Mỗi key `ckan.ini` đã chỉnh ở local phải có biến env tương ứng cho GĐ2/3. Script `setup_step2_switch_to_2.11.sh` đặt đúng các giá trị ở cột "Local".
+Mỗi key `ckan.ini` đã chỉnh ở local đều có biến env tương ứng. Cột "Env" là tên biến trong `docker/.env` hoặc trong `compose.yaml`.
 
 | Key `ckan.ini` | Local (GĐ1) | Env (GĐ2/3) | Giá trị K8s | Secret? |
 |---|---|---|---|---|
-| `sqlalchemy.url` | `postgresql://ckan_default:***@localhost/ckan_default` | `CKAN_SQLALCHEMY_URL` | `postgresql://ckan_default:***@postgres-service.lakehouse:5432/ckan_default` | ✔ |
-| `solr_url` | `http://127.0.0.1:8983/solr/ckan` (cũng là giá trị `generate config` 2.11 đặt sẵn) | `CKAN_SOLR_URL` | `http://ckan-solr:8983/solr/ckan` | |
-| `ckan.redis.url` | `redis://localhost:6379/0` | `CKAN_REDIS_URL` | `redis://ckan-redis:6379/0` | |
+| `sqlalchemy.url` | `postgresql://ckan_default:***@localhost/ckan_default` | `CKAN_SQLALCHEMY_URL` (compose ghép từ `CKAN_DB_PASSWORD`) | `postgresql://ckan_default:***@postgres-service.lakehouse:5432/ckan_default` | ✔ |
+| `solr_url` | `http://127.0.0.1:8983/solr/ckan` | `CKAN_SOLR_URL` | `http://ckan-solr:8983/solr/ckan` | |
+| `ckan.redis.url` | `redis://localhost:6379/0` | `CKAN_REDIS_URL` (compose dùng db 1) | `redis://ckan-redis:6379/0` | |
 | `ckan.site_url` | `http://localhost:5000` | `CKAN_SITE_URL` | `http://10.1.117.91:30500` | |
-| `ckan.storage_path` | `/home/tlinh/ckan/storage` | `CKAN_STORAGE_PATH` | `/var/lib/ckan` | |
-| `ckan.plugins` | `evntheme activity tracking text_view image_view` | `CKAN__PLUGINS` | giống local, `envvars` ở cuối (thêm `datastore xloader datatables_view` khi chốt Q4) | |
-| `ckan.base_templates_folder` / `ckan.base_public_folder` | `templates` / `public` (mặc định; 2.11 chỉ nhận hai giá trị này) | *(không đặt)* | mặc định | |
-| `ckan.locale_default` | `vi` | `CKAN__LOCALE_DEFAULT` | `vi` | |
-| `ckan.locales_offered` | `vi en` | `CKAN__LOCALES_OFFERED` | `vi en` | |
-| `ckan.site_title` | `Cổng dữ liệu EVN` | `CKAN__SITE_TITLE` | giống local | |
-| `ckan.site_description` | `Chia sẻ dữ liệu dùng chung toàn Tập đoàn` | `CKAN__SITE_DESCRIPTION` | giống local | |
+| `ckan.storage_path` | `/home/tlinh/ckan/storage` | *(image đặt sẵn `/var/lib/ckan`)* | `/var/lib/ckan` trên PVC | |
+| `ckan.plugins` | `evntheme activity tracking datastore xloader text_view image_view datatables_view` | `CKAN__PLUGINS` (thêm `envvars` ở cuối) | giống GĐ2 | |
+| `ckan.base_templates_folder` / `ckan.base_public_folder` | mặc định | *(không đặt)* | mặc định | |
+| `ckan.locale_default` / `ckan.locales_offered` | `vi` / `vi en` | `CKAN__LOCALE_DEFAULT` / `CKAN__LOCALES_OFFERED` | giống local | |
+| `ckan.site_title` / `ckan.site_description` | `Cổng dữ liệu EVN` / `Chia sẻ dữ liệu dùng chung toàn Tập đoàn` | `CKAN__SITE_TITLE` / `CKAN__SITE_DESCRIPTION` | giống local | |
 | `ckan.favicon` | `/evntheme/images/favicon.svg` | `CKAN__FAVICON` | giống local | |
-| `ckanext.evntheme.domain_groups` | `kinh-doanh-dvkh ky-thuat-an-toan dau-tu-xay-dung tai-chinh-vat-tu to-chuc-nhan-su` | `CKANEXT__EVNTHEME__DOMAIN_GROUPS` | tên group thật trên cluster | |
-| `ckanext.evntheme.*` khác (logo, liên hệ, link, `api_metrics_url`, `map_tile_url`…) | mặc định trong plugin (xem README của extension) | `CKANEXT__EVNTHEME__<KEY>` | Đặt khi có thông tin thật (Q2). Để trống `map_tile_url` nếu cluster không ra được Internet | |
-| `ckan.datastore.write_url` / `read_url`, `ckanext.xloader.api_token` | chưa đặt (Q4, `setup_step3_datastore.sh`) | `CKAN_DATASTORE_WRITE_URL` / `CKAN_DATASTORE_READ_URL` / `CKANEXT__XLOADER__API_TOKEN` | DB `datastore_default` trên `postgres-service` | ✔ |
-| `debug` | `true` (trong `[DEFAULT]`) | *(không đặt)* | `false` | |
-| *(thêm khi phát sinh)* | | | | |
+| `ckan.site_logo` | mặc định (theme dùng placeholder) | `CKAN__SITE_LOGO` | đặt khi có logo thật (Q2) | |
+| `ckan.views.default_views` | `image_view datatables_view` | `CKAN__VIEWS__DEFAULT_VIEWS` | giống local | |
+| `ckan.max_resource_size` | `10` | `CKAN_MAX_UPLOAD_SIZE_MB` | theo dung lượng PVC | |
+| `ckan.datastore.write_url` | `postgresql://ckan_default:***@localhost/datastore_default` | `CKAN_DATASTORE_WRITE_URL` | DB `datastore_default` trên `postgres-service` | ✔ |
+| `ckan.datastore.read_url` | `postgresql://datastore_default:***@localhost/datastore_default` | `CKAN_DATASTORE_READ_URL` | role chỉ đọc trên cùng DB | ✔ |
+| `ckanext.xloader.api_token` | token của `admin` | `CKANEXT__XLOADER__API_TOKEN` (bỏ trống → entrypoint tự tạo) | Secret, hoặc để entrypoint tự tạo | ✔ |
+| *(mới ở GĐ2)* `ckanext.xloader.site_url` | không cần | `CKANEXT__XLOADER__SITE_URL` | `http://ckan-service:5000` | |
+| *(mới ở GĐ2)* `ckanext.xloader.jobs_db.uri` | mặc định SQLite | `CKANEXT__XLOADER__JOBS_DB__URI` | DB CKAN trên `postgres-service` | ✔ |
+| `ckanext.evntheme.domain_groups` | 5 group | `CKANEXT__EVNTHEME__DOMAIN_GROUPS` | tên group thật trên cluster | |
+| `ckanext.evntheme.openmetadata_url` | `http://10.1.117.91:30858` | `CKANEXT__EVNTHEME__OPENMETADATA_URL` | URL OpenMetadata của cluster | |
+| `ckanext.evntheme.*` khác | mặc định trong plugin | `CKANEXT__EVNTHEME__<KEY>` | đặt khi có thông tin thật (Q2) | |
+| `SECRET_KEY`, `WTF_CSRF_SECRET_KEY`, `api_token.jwt.*.secret` | do `generate config` sinh | `CKAN___SECRET_KEY`, `CKAN___WTF_CSRF_SECRET_KEY`, `CKAN___API_TOKEN__JWT__ENCODE__SECRET` / `__DECODE__SECRET` | Secret | ✔ |
+| `debug` | `true` | *(không đặt)* | `false` | |
 
-## Kiểm thử trước khi sang GĐ3
-1. `docker compose up -d --build`, sau đó `docker compose ps` phải thấy `ckan` ở trạng thái **healthy**.
-2. Theme hiển thị đúng ở mọi trang: trang chủ, tìm kiếm, chi tiết (4 tab), tổ chức, `/mds`. Kiểm cả logo, màu, footer và tiếng Việt. Font lấy từ bản tự host, không gọi Google Fonts.
-3. Chạy lại smoke test của GĐ1: org, dataset, upload, search, API.
-4. `docker compose restart ckan`: dữ liệu, file upload, đăng nhập và API token vẫn còn.
-5. `docker compose down && docker compose up -d` (giữ volume): mọi thứ vẫn còn.
-6. Xuất image: `docker save ckan-lakehouse:0.1.0 | gzip > ckan-lakehouse_0.1.0.tar.gz` (tarball **không** commit).
+## Kiểm thử — kết quả 2026-09-22
+
+| # | Bước | Kết quả |
+|---|---|---|
+| 1 | `docker compose up -d --build`, `docker compose ps` | 4/4 service có healthcheck đều **healthy**, worker chạy |
+| 2 | Theme đúng ở mọi trang, font tự host | 24/24 kiểm tra qua: 7 trang + 4 tab trả 200, có marker của theme, **không** gọi Google Fonts, `.woff2` và favicon trả 200, tiếng Việt đúng. Ảnh chụp 1440px: trang chủ và tab Xem trước khớp bản local |
+| 3 | Smoke test GĐ1: org, dataset, upload, search, API | `status_show` báo 2.11.6; `package_search` ra kết quả với truy vấn tiếng Việt; `organization_list` đủ 9 đơn vị; file CSV upload tải về đúng nội dung; `datastore_search` trả JSON |
+| 4 | `docker compose restart ckan` | Dữ liệu, file upload, **cookie phiên và API token cũ** đều còn (xem mục ⚠) |
+| 5 | `docker compose down && up -d` (giữ volume) | 12 dataset, 9 tổ chức, 10 bảng DataStore còn nguyên; tab Xem trước vẫn 200 |
+| 6 | `docker save \| gzip -1` | 537 MB |
+
+Riêng DataStore: `seed-demo` rồi `xloader submit all` → **10/10 resource CSV upload đã vào DataStore**, `datastore_active` đúng 10, tab Xem trước hiện bảng thật. 19 resource còn lại là link ngoài giả lập (`data.evn.example`) hoặc định dạng XLoader không nhận (JSON/GeoJSON/PDF), hỏng đúng như ở local. Role chỉ đọc `SELECT` được `_table_metadata` nhưng `CREATE TABLE` bị từ chối: phân quyền DataStore đúng.
 
 ## Tiêu chí hoàn thành GĐ2
-- [ ] Qua hết 6 bước kiểm thử.
-- [ ] Bảng ánh xạ cấu hình đầy đủ.
-- [ ] Đã xác minh biến secret (xem ⚠ ở trên) và ghi lại kết quả.
+- [x] Qua hết 6 bước kiểm thử.
+- [x] Bảng ánh xạ cấu hình đầy đủ.
+- [x] Đã xác minh biến secret và ghi lại kết quả (mục ⚠ ở trên, bẫy 11).
