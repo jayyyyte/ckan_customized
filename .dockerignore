@@ -1,0 +1,34 @@
+# Build context is the repository root (docker build -f docker/Dockerfile .).
+# Only ckanext-evntheme and docker/ are needed, so everything else stays out:
+# a smaller context means faster builds and no chance of leaking a local secret.
+.git
+.github
+.claude
+.playwright-mcp
+docs
+CKAN Custom Theme UI Mockup
+README.md
+CLAUDE.md
+setup_step*.sh
+
+# Never ship secrets or images
+.env
+*.env
+!docker/.env.example
+secrets.env
+*.kubeconfig
+*.tar
+*.tar.gz
+
+# Build leftovers of the local (WSL) install; the image builds its own
+**/__pycache__
+**/*.py[cod]
+**/*.egg-info
+**/.pytest_cache
+**/.ruff_cache
+**/node_modules
+**/.coverage
+**/htmlcov
+# Compiled catalogues: the Dockerfile runs pybabel compile itself, so a stale
+# local .mo must not win (decision log 2026-09-14).
+**/*.mo

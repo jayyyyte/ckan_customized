@@ -1,6 +1,6 @@
 # CKAN Lakehouse Portal — Cổng dữ liệu EVN
 
-Data portal cho kiến trúc Lakehouse, xây trên **CKAN 2.11.6** cài từ source, với theme riêng **`ckanext-evntheme`**. Hiện đang ở **Giai đoạn 1** (phát triển local trên WSL2) trong lộ trình 3 giai đoạn local → Docker → K8s. Xem chi tiết đầy đủ ở [docs/roadmap.md](docs/roadmap.md).
+Data portal cho kiến trúc Lakehouse, xây trên **CKAN 2.11.6** cài từ source, với theme riêng **`ckanext-evntheme`**. Lộ trình 3 giai đoạn local → Docker → K8s: **GĐ1 (local WSL2) và GĐ2 (đóng gói image) đã xong**, đang chuẩn bị GĐ3 (deploy K8s). Xem chi tiết đầy đủ ở [docs/roadmap.md](docs/roadmap.md).
 
 > File này là hướng dẫn nhanh để **chạy và dùng** project. Muốn hiểu bối cảnh, quyết định kỹ thuật hay đang làm gì tiếp theo, đọc [docs/roadmap.md](docs/roadmap.md) trước.
 
@@ -61,12 +61,35 @@ ckan -c ~/ckan/etc/ckan.ini evntheme seed-demo --reset    # xóa sạch rồi n�
 
 Đăng nhập bằng tài khoản `admin` đã tạo ở bước cài đặt.
 
+## Chạy bằng Docker (GĐ2)
+
+Toàn bộ portal (Postgres + Solr + Redis + CKAN + worker XLoader) chạy bằng `docker compose`, dùng đúng image sẽ deploy lên K8s:
+
+```bash
+bash docker/make-env.sh                     # sinh docker/.env, chỉ chạy một lần
+cd docker && docker compose up -d --build   # lần đầu ~2 phút
+docker compose ps                           # ckan phải healthy
+```
+
+Mở **http://localhost:5000** (mật khẩu sysadmin nằm trong `docker/.env`). Nếu `ckan run` của GĐ1 đang chiếm cổng 5000, sửa `CKAN_PORT` **và** cổng trong `CKAN_SITE_URL` của `docker/.env`.
+
+```bash
+docker compose exec ckan ckan -c /srv/app/ckan.ini evntheme seed-demo    # dữ liệu demo
+docker compose exec ckan ckan -c /srv/app/ckan.ini xloader submit all    # nạp CSV vào DataStore
+docker compose logs -f ckan-worker                                       # theo dõi job XLoader
+docker compose down                                                      # dừng, vẫn giữ dữ liệu
+docker compose down -v                                                   # xóa sạch cả volume
+```
+
+Chi tiết cấu hình, bảng ánh xạ env var và kết quả kiểm thử: [docs/phase-2-docker-packaging.md](docs/phase-2-docker-packaging.md).
+
 ## Cấu trúc repo
 
 | Đường dẫn | Nội dung |
 |---|---|
 | `docs/` | Roadmap, tài liệu từng giai đoạn, gotchas — xem [mục lục](docs/README.md) |
 | `ckanext-evntheme/` | Theme "Cổng dữ liệu EVN" — xem [README](ckanext-evntheme/README.md) |
+| `docker/` | Dockerfile, compose, entrypoint và script sinh `.env` cho GĐ2 |
 | `setup_step*.sh` | Script cài đặt/chuyển đổi môi trường local (user tự chạy) |
 | `~/ckan/` (ngoài repo, trong WSL) | venv, source CKAN, config `ckan.ini`, storage upload |
 

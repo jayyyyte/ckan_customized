@@ -2,4 +2,14 @@
 /CLAUDE.md
 # Playwright MCP screenshots and logs (local UI checks)
 .playwright-mcp/
+
+# Secrets and generated configuration (docs/phase-2, CLAUDE.md)
 .env
+docker/.env
+secrets.env
+*.kubeconfig
+ckan.ini
+
+# Image tarballs exported for the cluster (docker save)
+*.tar
+*.tar.gz
