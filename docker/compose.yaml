@@ -1,0 +1,114 @@
+# Cổng dữ liệu EVN — phase 2 stack: the image that phase 3 deploys, with the services
+# the cluster provides around it. Each service maps 1-to-1 onto a K8s object:
+#   db     -> the shared postgres-service (CKAN only adds its own databases there)
+#   solr   -> ckan-solr Deployment + Service        redis -> ckan-redis
+#   ckan   -> ckan Deployment (1 replica, Recreate) + NodePort 30500
+#   ckan-worker -> a second Deployment running `ckan jobs worker` (XLoader jobs)
+#
+# Run from this directory:  docker compose up -d --build
+# Settings and secrets come from .env — create it with ./make-env.sh (never committed).
+
+name: ckan-evn
+
+# Values the containers must agree on. They are built here rather than written into .env
+# so that a password is stored in exactly one place; .env keeps the rest.
+x-ckan-env: &ckan-env
+  CKAN_SQLALCHEMY_URL: postgresql://ckan_default:${CKAN_DB_PASSWORD:?set it in .env}@db/ckan_default
+  # DataStore: CKAN writes as ckan_default, the API reads as the SELECT-only role.
+  CKAN_DATASTORE_WRITE_URL: postgresql://ckan_default:${CKAN_DB_PASSWORD:?}@db/datastore_default
+  CKAN_DATASTORE_READ_URL: postgresql://datastore_default:${DATASTORE_RO_PASSWORD:?set it in .env}@db/datastore_default
+  CKAN_SOLR_URL: http://solr:8983/solr/ckan
+  CKAN_REDIS_URL: redis://redis:6379/1
+  # XLoader runs in another container: ckan.site_url (a browser URL) is not reachable from
+  # there, so it rewrites both the download URL and the xloader_hook callback to this one.
+  CKANEXT__XLOADER__SITE_URL: http://ckan:5000
+  # Job log of XLoader ("why did this resource fail"). Its default is an SQLite file in
+  # /tmp, which would give the worker and the web container each their own copy.
+  CKANEXT__XLOADER__JOBS_DB__URI: postgresql://ckan_default:${CKAN_DB_PASSWORD:?}@db/ckan_default
+
+services:
+  db:
+    image: postgres:16-alpine          # same major as postgres-service on the cluster
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set it in .env}
+      # Read by postgres-init/10-ckan-databases.sh on first start only.
+      CKAN_DB_PASSWORD: ${CKAN_DB_PASSWORD:?}
+      DATASTORE_RO_PASSWORD: ${DATASTORE_RO_PASSWORD:?}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # -d ckan_default: "accepting connections" is not enough, the init scripts must
+      # have run, otherwise CKAN starts against a database that does not exist yet.
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ckan_default"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+
+  solr:
+    image: ckan/ckan-solr:2.11-solr9   # ships the CKAN 2.11 schema
+    volumes:
+      - solr_data:/var/solr
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8983/solr/ckan/admin/ping >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+    # No published port: 8983 on this machine belongs to the phase 1 container (ckan-solr).
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  ckan:
+    build:
+      context: ..                      # the repository root: the theme is copied from there
+      dockerfile: docker/Dockerfile
+    image: ${CKAN_IMAGE:-ckan-lakehouse:0.1.0}
+    env_file: .env
+    environment: *ckan-env
+    ports:
+      - "${CKAN_PORT:-5000}:5000"      # no nginx: the cluster has no ingress either
+    volumes:
+      - ckan_storage:/var/lib/ckan     # uploads; a PVC in phase 3
+    depends_on:
+      db: {condition: service_healthy}
+      solr: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://localhost:5000/api/action/status_show"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s               # prerun.py runs db init + migrations on every start
+    restart: unless-stopped
+
+  ckan-worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: ${CKAN_IMAGE:-ckan-lakehouse:0.1.0}
+    env_file: .env
+    environment: *ckan-env
+    # Not start_ckan.sh: no uWSGI, no prerun.py — the web container owns the schema.
+    entrypoint: ["/srv/app/worker-entrypoint.sh"]
+    volumes:
+      - ckan_storage:/var/lib/ckan
+    depends_on:
+      ckan: {condition: service_healthy}
+    restart: unless-stopped
+
+volumes:
+  pg_data:
+  solr_data:
+  redis_data:
+  ckan_storage:
