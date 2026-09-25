@@ -82,7 +82,7 @@ docker build -f docker/Dockerfile -t ckan-lakehouse:0.1.0 .      # chạy từ g
 docker run --rm ckan/ckan-base:2.11.6 sh -c 'id; python3 -V; env | grep -E "APP_DIR|SRC_DIR|CKAN_INI"'
 ```
 
-Image `0.1.0` nặng **1.98 GB**; `docker save | gzip -1` ra **537 MB** — đây là khối lượng phải `ctr import` lên từng worker ở GĐ3.
+Image `0.1.0` nặng **1.98 GB**. `docker save | gzip -1` ra **537 MiB** (562.6 MB): đây là khối lượng phải `ctr import` lên từng worker ở GĐ3. Đã tập dượt trên kind ngày 2026-09-25: `ctr -n k8s.io images import` nhận tệp này bình thường, dù Docker Desktop dùng containerd image store (xuất định dạng OCI index).
 
 ## compose.yaml — xem [docker/compose.yaml](../docker/compose.yaml)
 
@@ -92,7 +92,9 @@ Image `0.1.0` nặng **1.98 GB**; `docker save | gzip -1` ra **537 MB** — đâ
 | `solr` | `ckan/ckan-solr:2.11-solr9`, không publish cổng | Deployment + Service `ckan-solr` |
 | `redis` | `redis:7-alpine` | Deployment + Service `ckan-redis` |
 | `ckan` | image tự build, publish `CKAN_PORT` | Deployment 1 replica + NodePort 30500 |
-| `ckan-worker` | cùng image, chạy `ckan jobs worker` | Deployment riêng, không cần Service |
+| `ckan-worker` | cùng image, chạy `ckan jobs worker` | Deployment riêng, không cần Service, **không gắn PVC** (XLoader tải file qua HTTP) |
+
+Các manifest tương ứng nằm trong [k8s/base/](../k8s/base), xem [phase-3 §3.5](phase-3-k8s-deploy.md#35-manifest--k8s).
 
 - Các URL kết nối (`CKAN_SQLALCHEMY_URL`, hai URL DataStore, `CKANEXT__XLOADER__JOBS_DB__URI`) được **ghép trong compose** từ mật khẩu trong `.env`, để mỗi mật khẩu chỉ nằm một chỗ. Ở GĐ3 thì viết thẳng URL vào Secret.
 - `ckan-worker` **không** chạy `prerun.py`: container web mới là nơi `db init` và chạy migration. `worker-entrypoint.sh` chỉ đồng bộ `ckan.plugins` từ env rồi `exec ckan jobs worker`.
@@ -145,10 +147,11 @@ Mỗi key `ckan.ini` đã chỉnh ở local đều có biến env tương ứng.
 | *(mới ở GĐ2)* `ckanext.xloader.site_url` | không cần | `CKANEXT__XLOADER__SITE_URL` | `http://ckan-service:5000` | |
 | *(mới ở GĐ2)* `ckanext.xloader.jobs_db.uri` | mặc định SQLite | `CKANEXT__XLOADER__JOBS_DB__URI` | DB CKAN trên `postgres-service` | ✔ |
 | `ckanext.evntheme.domain_groups` | 5 group | `CKANEXT__EVNTHEME__DOMAIN_GROUPS` | tên group thật trên cluster | |
-| `ckanext.evntheme.openmetadata_url` | `http://10.1.117.91:30858` | `CKANEXT__EVNTHEME__OPENMETADATA_URL` | URL OpenMetadata của cluster | |
+| `ckanext.evntheme.openmetadata_url` | `http://10.1.117.91:30858` | `CKANEXT__EVNTHEME__OPENMETADATA_URL` | `http://10.1.117.91:30858` (`k8s/overlays/lab/config.env`) | |
 | `ckanext.evntheme.*` khác | mặc định trong plugin | `CKANEXT__EVNTHEME__<KEY>` | đặt khi có thông tin thật (Q2) | |
 | `SECRET_KEY`, `WTF_CSRF_SECRET_KEY`, `api_token.jwt.*.secret` | do `generate config` sinh | `CKAN___SECRET_KEY`, `CKAN___WTF_CSRF_SECRET_KEY`, `CKAN___API_TOKEN__JWT__ENCODE__SECRET` / `__DECODE__SECRET` | Secret | ✔ |
 | `debug` | `true` | *(không đặt)* | `false` | |
+| *(mới ở GĐ3)* tham số uWSGI `--max-fd` | không có uWSGI | `EXTRA_UWSGI_OPTS` (compose không cần: Docker cấp 1048576 fd) | `--max-fd 65536` trong `k8s/base/config.env` (bẫy 21a) | |
 
 ## Kiểm thử — kết quả 2026-09-22
 
@@ -159,7 +162,7 @@ Mỗi key `ckan.ini` đã chỉnh ở local đều có biến env tương ứng.
 | 3 | Smoke test GĐ1: org, dataset, upload, search, API | `status_show` báo 2.11.6; `package_search` ra kết quả với truy vấn tiếng Việt; `organization_list` đủ 9 đơn vị; file CSV upload tải về đúng nội dung; `datastore_search` trả JSON |
 | 4 | `docker compose restart ckan` | Dữ liệu, file upload, **cookie phiên và API token cũ** đều còn (xem mục ⚠) |
 | 5 | `docker compose down && up -d` (giữ volume) | 12 dataset, 9 tổ chức, 10 bảng DataStore còn nguyên; tab Xem trước vẫn 200 |
-| 6 | `docker save \| gzip -1` | 537 MB |
+| 6 | `docker save \| gzip -1` | 537 MiB |
 
 Riêng DataStore: `seed-demo` rồi `xloader submit all` → **10/10 resource CSV upload đã vào DataStore**, `datastore_active` đúng 10, tab Xem trước hiện bảng thật. 19 resource còn lại là link ngoài giả lập (`data.evn.example`) hoặc định dạng XLoader không nhận (JSON/GeoJSON/PDF), hỏng đúng như ở local. Role chỉ đọc `SELECT` được `_table_metadata` nhưng `CREATE TABLE` bị từ chối: phân quyền DataStore đúng.
 

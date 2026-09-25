@@ -138,7 +138,7 @@ Với Python, dùng thư viện `ckanapi`: `RemoteCKAN(url, apikey=token).action
 | Extension | Dùng khi |
 |---|---|
 | `ckanext-envvars` | Cấu hình bằng biến môi trường. **Có sẵn** trong ckan-base (v0.0.6) |
-| `ckanext-xloader` | Nạp CSV/XLSX vào DataStore (thay DataPusher) |
+| `ckanext-xloader` | Nạp CSV/XLSX vào DataStore (thay DataPusher). **Đang dùng 2.5.0**, cài editable từ source ở local lẫn trong image (gotchas 6ak) |
 | `ckanext-scheming` | Schema metadata tùy biến (ví dụ `layer`, `trino_table`, `owner_team`) |
 | `ckanext-dcat` | Xuất/nhập DCAT (RDF, JSON-LD), liên thông với portal khác |
 | `ckanext-pages` | Trang nội dung tĩnh (Giới thiệu, Hướng dẫn) do admin tự soạn |

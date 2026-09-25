@@ -9,6 +9,7 @@ Data portal cho kiến trúc Lakehouse, xây trên **CKAN 2.11.6** cài từ sou
 - Windows 11 + **WSL2 Ubuntu 24.04** (user tự tạo, Python ≥ 3.10)
 - **Docker Desktop** với WSL Integration bật cho Ubuntu (chạy Solr)
 - PostgreSQL và Redis cài trong WSL (không dùng container, xem script bước 1)
+- GĐ3: `kubectl` và `kind` trong WSL (đã có: kubectl v1.36, kind v0.33) để tập dượt; kubeconfig của cluster công ty lưu **ngoài** repo
 
 ## Cài đặt lần đầu (chỉ chạy một lần)
 
@@ -111,6 +112,7 @@ Cluster công ty (dùng chung, **mọi lệnh ghi cần xác nhận**): làm đ�
 | `docker/` | Dockerfile, compose, entrypoint và script sinh `.env` cho GĐ2 |
 | `k8s/` | Manifest kustomize (base + overlay `lab`/`kind`), script audit / sinh secret / tạo DB, smoke test cho GĐ3 |
 | `setup_step*.sh` | Script cài đặt/chuyển đổi môi trường local (user tự chạy) |
+| `Bao-cao-ky-thuat-Cong-du-lieu-EVN.docx` | Báo cáo kỹ thuật cho EVN (bài toán → triển khai → nghiệm thu → hướng mở rộng), trạng thái ngày 2026-09-25 |
 | `~/ckan/` (ngoài repo, trong WSL) | venv, source CKAN, config `ckan.ini`, storage upload |
 
 Code CKAN gốc và `ckan.ini` (chứa mật khẩu) nằm ngoài repo này, dưới `~/ckan/` trong WSL — không commit.

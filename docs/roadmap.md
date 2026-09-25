@@ -175,6 +175,11 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 - [x] Viết manifest `k8s/` (kustomize base + overlay `lab`/`kind`): Solr, Redis, CKAN, **Deployment worker** (XLoader, không PVC), CronJob `ckan tracking update` (2026-09-25)
 - [x] Script `audit.sh` (read-only), `make-secrets.sh`, `prepare-postgres.sh` (check / `--apply` / `--print`) (2026-09-25)
 - [x] **Tập dượt trên kind 1.30** theo đúng quy trình của cluster thật, smoke test đạt đủ 47 kiểm tra; `smoke-test.sh` đã commit (2026-09-25)
+- [x] **Báo cáo kỹ thuật cho EVN** (2026-09-25): [Bao-cao-ky-thuat-Cong-du-lieu-EVN.docx](../Bao-cao-ky-thuat-Cong-du-lieu-EVN.docx) ở gốc repo, 40 trang.
+  - Nội dung: bài toán, công nghệ, 15 use case, triển khai theo 3 giai đoạn, kết quả, tiêu chí nghiệm thu, đánh giá, hướng mở rộng, phụ lục vận hành.
+  - Ảnh chụp lấy từ cụm kind, dùng dữ liệu demo.
+  - Trang bìa đã điền đơn vị và người thực hiện; còn trống ô "Người phê duyệt".
+  - Sau khi deploy thật thì cập nhật mục 6.1 (tiêu chí 12–14) và ra bản 1.1.
 - [ ] Nhận kubeconfig (lưu **ngoài** repo)
 - [ ] Audit read-only (`k8s/scripts/audit.sh`), ghi kết quả vào [cluster-context.md](cluster-context.md)
 - [ ] Chốt với chủ cluster: xóa stub `ckan`/`ckan-service` (bắt buộc, bẫy 21b), tạo **hai** DB trên `postgres-service` (`prepare-postgres.sh --apply`, hoặc chủ Postgres chạy file `--print`)

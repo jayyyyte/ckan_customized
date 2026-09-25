@@ -181,13 +181,23 @@ pybabel compile -d ckanext-lakehouse_theme/ckanext/lakehouse_theme/i18n -D ckane
 - Unit test thuần: `python -m pytest -o addopts="" -p no:ckan -p no:ckan_fixtures ckanext/lakehouse_theme/tests/test_helpers.py` (xem gotchas 6k).
 - Cách làm theme chi tiết: [ckan-theming.md](ckan-theming.md).
 
-## Bước 1.8 (tùy chọn) — DataStore + xloader
+## Bước 1.8 — DataStore + XLoader (đã làm 2026-09-22)
 
-Chỉ làm khi Q4 được chốt.
-- Tạo DB `datastore_default` và role read-only `datastore_default`.
-- Cấu hình `ckan.datastore.write_url` và `ckan.datastore.read_url`.
-- Chạy `ckan -c ... datastore set-permissions | sudo -u postgres psql --set ON_ERROR_STOP=1` (**user tự chạy** vì cần sudo).
-- Cài `ckanext-xloader` (kiểm tra phiên bản hỗ trợ 2.11, Q10) và chạy `ckan -c ... jobs worker`.
+Q4 chốt "có" (2026-09-19). Cả bước này được gói trong `setup_step3_datastore.sh` ở gốc repo, **user tự chạy** vì cần sudo. Script làm các việc sau:
+- tạo DB `datastore_default` (owner `ckan_default`) và role chỉ đọc `datastore_default`;
+- đặt `ckan.datastore.write_url` / `ckan.datastore.read_url` trong `ckan.ini`;
+- `ckan datastore set-permissions | sudo -u postgres psql --set ON_ERROR_STOP=1`;
+- cài **XLoader 2.5.0 editable từ source** vào `~/ckan/default/src/ckanext-xloader`. Bắt buộc cài editable: bản wheel không import được (gotchas 6ak);
+- bật plugin `datastore xloader datatables_view` và tạo DB test.
+
+Sau đó chạy worker trong một terminal riêng, rồi nạp các CSV có sẵn:
+
+```bash
+ckan -c ~/ckan/etc/ckan.ini jobs worker
+ckan -c ~/ckan/etc/ckan.ini xloader submit all
+```
+
+Kết quả ngày 2026-09-22: 12/12 resource CSV vào DataStore; tab Xem trước và Thử API có dữ liệu thật. Script đã phải sửa 4 lỗi trong lúc chạy (gotchas 6aj–6am).
 
 ## Tiêu chí hoàn thành GĐ1
 

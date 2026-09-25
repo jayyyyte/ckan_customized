@@ -13,8 +13,10 @@ Thêm mục mới khi gặp bẫy mới. Ghi rõ **triệu chứng → nguyên n
    Tách thành hai lệnh: lệnh kill chạy trước (pattern kiểu `"etc/ckan\.in[i] run"` để không khớp chính nó), rồi mới start ở một lệnh khác.
 3b. **Ảnh chụp mobile bằng Chrome headless `--window-size=400,…` bị cắt lề phải, trông như trang tràn ngang.** Chrome không dàn trang hẹp hơn khoảng 500px, nhưng ảnh vẫn chỉ rộng 400px.
    Nhúng trang vào `<iframe style="width:400px">` trong một trang rộng hơn rồi chụp trang đó.
-4. **Cluster kind local (`kind-lakehouse`, `kind-lakehouse-lab`) báo connection refused.**
+4. **Cluster kind local (`kind-lakehouse`, `kind-lakehouse-lab`, `kind-ckan-rehearsal`) báo connection refused.**
    Docker Desktop đang tắt; mở Docker Desktop trước.
+   Nếu Docker Desktop chạy rồi mà vẫn lỗi: node kind có thể đang `Exited`. Ngày 2026-09-25, sau khi bật lại Docker Desktop, các node `lakehouse-*` ở trạng thái `Exited (130/137)`. Khởi động lại đúng cụm cần dùng:
+   `docker start $(docker ps -aq --filter label=io.x-k8s.kind.cluster=<tên cụm>)`, rồi chờ `kubectl --context kind-<tên> get nodes` báo Ready.
 5. **Code trên `/mnt/c` chậm hơn filesystem Linux.** Reloader của `ckan run` thường **không** nhận thay đổi file `.py` (inotify không chạy qua `/mnt/c`). Template và CSS/JS ở chế độ debug thì vẫn nạp lại.
    Restart `ckan run` sau mỗi lần sửa Python. Nếu vẫn khó chịu, chuyển repo vào `~/` và mở bằng VS Code Remote-WSL.
 6. **Windows không mở được `localhost:5000`.**

@@ -46,10 +46,24 @@ Trước khi tạo tài nguyên phải chạy audit read-only:
 - `auth can-i create namespaces`
 
 ## Hệ quả thiết kế cho CKAN
-- 1 replica + `strategy: Recreate` cho mọi thứ có PVC. Pod bị ghim vào node chứa PV.
-- `ckan.site_url` cố định `http://10.1.117.91:30500`. Người dùng phải vào bằng đúng URL này (xem gotchas).
+Manifest đã hiện thực các điểm này ở [k8s/](../k8s), đã tập dượt trên kind ngày 2026-09-25 ([phase-3 §3.10](phase-3-k8s-deploy.md#310-tập-dượt-trên-kind--kết-quả-2026-09-25)).
+- 1 replica + `strategy: Recreate` cho mọi thứ có PVC (`ckan`, `ckan-solr`). Pod bị ghim vào node chứa PV. `ckan-worker` không gắn PVC nên chạy được trên node nào cũng được.
+- `ckan.site_url` cố định `http://10.1.117.91:30500`. Người dùng phải vào bằng đúng URL này (gotchas 10).
 - Solr/Redis dùng Service **ClusterIP**, không mở NodePort.
 - Image tự build phải import vào containerd (`ctr -n k8s.io`) trên **cả 2 worker** nếu không có registry.
+- Namespace dùng chung, nên mọi pod đặt `enableServiceLinks: false` (gotchas 21d) và mang nhãn `app.kubernetes.io/part-of=ckan`. Base **không** khai báo object Namespace.
+- containerd có thể cấp giới hạn fd rất lớn cho container, nên uWSGI được ghim `--max-fd 65536` (gotchas 21a).
+
+## Cần xác minh khi audit
+`bash k8s/scripts/audit.sh --context <ctx>` (chỉ đọc) trả lời các câu dưới đây. Ghi câu trả lời vào mục "Kết quả audit".
+- Kiến trúc node (image build cho amd64), phiên bản containerd, taint của master.
+- CPU/RAM còn trống: CKAN request ~0.65 CPU / ~1.7 GiB, limit 4.5 CPU / ~4.8 GiB.
+- Quyền của kubeconfig: create deployments, services, secrets, configmaps, PVC, cronjobs; `pods/exec` (cần cho `prepare-postgres.sh`, nếu không có thì dùng `--print`).
+- ResourceQuota, LimitRange, NetworkPolicy và label Pod Security của ns `lakehouse`.
+- Selector và owner của stub `ckan`: bắt buộc xóa trước khi apply (gotchas 21b).
+- Tên workload và cổng của `postgres-service`; image phải là Postgres ≥ 15 (gotchas 15e).
+- Node có kéo được `ckan/ckan-solr` và `redis` từ Docker Hub không.
+- Phiên bản server: kubectl trong WSL là v1.36, lệch xa v1.30 (gotchas 21h).
 
 ## Kết quả audit
-_(chưa thực hiện — chờ kubeconfig)_
+_(chưa thực hiện — chờ kubeconfig. Kiểm tra lại ngày 2026-09-25: `~/.kube/config` chỉ có context kind `kind-lakehouse`, `kind-lakehouse-lab`, `kind-ckan-rehearsal`.)_

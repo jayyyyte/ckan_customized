@@ -40,9 +40,9 @@ ckan -c ckan.ini db upgrade -p tracking
 ckan -c ckan.ini db upgrade -p evntheme
 ```
 
-Plugin `tracking` không bắt buộc. Có nó thì theme hiện "lượt tải" và có thêm lựa chọn sắp xếp "Xem nhiều nhất". Không có thì các chỗ đó tự ẩn. Số liệu tracking được tổng hợp bằng `ckan tracking update`, nên chạy lệnh này theo lịch, ví dụ cron hằng đêm.
+Plugin `tracking` không bắt buộc. Có nó thì theme hiện "lượt tải" và có thêm lựa chọn sắp xếp "Xem nhiều nhất". Không có thì các chỗ đó tự ẩn. Số liệu tracking được tổng hợp bằng `ckan tracking update`, nên chạy lệnh này theo lịch. Trên K8s, CronJob `ckan-tracking-update` chạy lệnh này mỗi giờ, vào phút 15 (`k8s/base/ckan-tracking.yaml`). Lệnh cần cả Postgres lẫn Solr, vì nó reindex các dataset có lượt xem mới.
 
-Khi bật `datastore` (+ XLoader), các tab "Xem trước dữ liệu" và "Thử API" dùng `datastore_search`. Chưa bật thì tab Xem trước hiện empty state, còn tab Thử API minh họa bằng `package_show`. Trên WSL local, bật bằng `setup_step3_datastore.sh` ở gốc repo.
+Khi bật `datastore` (+ XLoader), các tab "Xem trước dữ liệu" và "Thử API" dùng `datastore_search`. Chưa bật thì tab Xem trước hiện empty state, còn tab Thử API minh họa bằng `package_show`. Trên WSL local, bật bằng `setup_step3_datastore.sh` ở gốc repo. Image `ckan-lakehouse` bật sẵn DataStore và XLoader.
 
 ### Logo và favicon
 
