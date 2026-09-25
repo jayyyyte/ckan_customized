@@ -1,0 +1,51 @@
+# The tracking plugin only records raw hits (tracking_raw). The counts the theme shows —
+# downloads, "most viewed", views per organisation — come from tracking_summary, which
+# `ckan tracking update` fills in; it also reindexes the datasets that got new hits, so
+# the job needs Postgres and Solr, i.e. the same settings as the web pod.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ckan-tracking-update
+  labels:
+    app.kubernetes.io/name: ckan-tracking-update
+spec:
+  schedule: "15 * * * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: ckan-tracking-update
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          automountServiceAccountToken: false
+          containers:
+            - name: tracking
+              image: ckan-lakehouse
+              imagePullPolicy: IfNotPresent
+              # Like the worker: write ckan.plugins back first (gotchas 15b), no prerun.py.
+              command: ["/bin/bash", "-c"]
+              args:
+                - |
+                  set -euo pipefail
+                  ckan config-tool "$CKAN_INI" "ckan.plugins = ${CKAN__PLUGINS}"
+                  exec ckan -c "$CKAN_INI" tracking update
+              envFrom:
+                - configMapRef:
+                    name: ckan-config
+                - secretRef:
+                    name: ckan-secrets
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: "1"
+                  memory: 1Gi

@@ -1,0 +1,110 @@
+# The portal itself. start_ckan.sh runs prerun.py (wait for DB and Solr, `ckan db init`,
+# DataStore permissions, first sysadmin), then /docker-entrypoint.d (plugin migrations,
+# XLoader token), then uWSGI on :5000 — on every start, hence the long startupProbe.
+#
+# Uploads, the logo uploaded at /ckan-admin/config and the webassets cache live on the
+# PVC. local-path is RWO and pins the volume to one node: one replica, Recreate.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ckan-storage
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ckan
+  labels:
+    app.kubernetes.io/name: ckan
+spec:
+  # Never two at once: the volume is RWO and prerun.py runs `db init` on every start.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ckan
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ckan
+    spec:
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      securityContext:
+        # gid 502 (ckan-sys) is the primary group of the runtime user ckan (uid 503).
+        fsGroup: 502
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: ckan
+          image: ckan-lakehouse           # tag: images in kustomization.yaml
+          imagePullPolicy: IfNotPresent   # no registry: the image is imported on the nodes
+          envFrom:
+            - configMapRef:
+                name: ckan-config
+            - secretRef:
+                name: ckan-secrets
+          ports:
+            - name: http
+              containerPort: 5000
+          volumeMounts:
+            - name: storage
+              mountPath: /var/lib/ckan
+          # Up to 5 minutes for prerun.py and the migrations before liveness takes over.
+          startupProbe:
+            httpGet:
+              path: /api/action/status_show
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /api/action/status_show
+              port: http
+            periodSeconds: 15
+            timeoutSeconds: 5
+          # Lenient: uWSGI runs 2 processes, and two slow uploads can keep both busy.
+          livenessProbe:
+            httpGet:
+              path: /api/action/status_show
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
+          # Measured on the kind rehearsal: ~175 MiB idle with 2 uWSGI processes. The
+          # request is what the shared cluster reserves; the limit leaves room for uploads.
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: ckan-storage
+---
+# Same name and port as the 2.10 stub it replaces (phase-3 §3.2). Inside the cluster
+# (Airflow, the XLoader worker) use http://ckan-service:5000 instead of the NodePort.
+apiVersion: v1
+kind: Service
+metadata:
+  name: ckan-service
+  labels:
+    app.kubernetes.io/name: ckan
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: ckan
+  ports:
+    - name: http
+      port: 5000
+      targetPort: http
+      nodePort: 30500

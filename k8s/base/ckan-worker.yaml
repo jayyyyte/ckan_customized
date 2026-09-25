@@ -1,0 +1,61 @@
+# Background jobs (XLoader: CSV -> DataStore). Same image as the web pod, other command:
+# worker-entrypoint.sh syncs ckan.plugins and execs `ckan jobs worker`; it never runs
+# prerun.py, the web pod owns the schema (decision log 2026-09-22).
+#
+# No volume: XLoader fetches uploaded files over HTTP from CKANEXT__XLOADER__SITE_URL,
+# so this pod is free to run on any node, whichever one holds ckan-storage.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ckan-worker
+  labels:
+    app.kubernetes.io/name: ckan-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ckan-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ckan-worker
+    spec:
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      # compose waited for `ckan` to be healthy; here the Service only has an endpoint once
+      # the web pod is ready, i.e. once db init and the migrations are done.
+      initContainers:
+        - name: wait-for-ckan
+          image: ckan-lakehouse
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              until wget -qO /dev/null http://ckan-service:5000/api/action/status_show; do
+                echo "waiting for ckan-service"; sleep 5
+              done
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+      containers:
+        - name: worker
+          image: ckan-lakehouse
+          imagePullPolicy: IfNotPresent
+          command: ["/srv/app/worker-entrypoint.sh"]
+          envFrom:
+            - configMapRef:
+                name: ckan-config
+            - secretRef:
+                name: ckan-secrets
+          resources:
+            requests:
+              cpu: 100m
+              memory: 384Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi

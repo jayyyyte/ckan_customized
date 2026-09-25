@@ -1,0 +1,39 @@
+# Cổng dữ liệu EVN — what phase 3 deploys into the shared namespace `lakehouse`.
+# Never applied on its own: an overlay adds the Secret and the per-cluster settings.
+#   overlays/lab   the company cluster (http://10.1.117.91:30500)
+#   overlays/kind  local rehearsal on kind, with a stand-in for postgres-service
+#
+# No Namespace object here on purpose: `lakehouse` belongs to the whole team, and a
+# `kubectl delete -k` would take everything in it down with it.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: lakehouse
+
+# Tells our objects apart from the colleagues' ones in the shared namespace:
+#   kubectl -n lakehouse get all,pvc,cm,secret -l app.kubernetes.io/part-of=ckan
+# Not added to selectors: those are immutable once a Deployment exists.
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: ckan
+    includeTemplates: true
+
+resources:
+  - solr.yaml
+  - redis.yaml
+  - ckan.yaml
+  - ckan-worker.yaml
+  - ckan-tracking.yaml
+
+# Plain settings, shared by every overlay; an overlay merges its own on top.
+# The hash suffix in the generated name rolls the pods whenever a value changes.
+configMapGenerator:
+  - name: ckan-config
+    envs:
+      - config.env
+
+# The one place to bump the release: every container running our image gets this tag.
+# There is no registry, so the image must already be on the node (phase-3 §3.4).
+images:
+  - name: ckan-lakehouse
+    newTag: 0.1.0

@@ -1,0 +1,99 @@
+# Solr for CKAN only — the cluster has none. The image carries the CKAN 2.11 schema as a
+# configset under /opt/solr and its CMD (solr-precreate) creates the `ckan` core in
+# SOLR_HOME=/var/solr/data on first start, so an empty volume is all it needs.
+# No backup: the index is rebuilt from Postgres with `ckan search-index rebuild`.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ckan-solr-data
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ckan-solr
+  labels:
+    app.kubernetes.io/name: ckan-solr
+spec:
+  replicas: 1
+  # RWO volume: the old pod has to let go of it before the new one can mount it.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ckan-solr
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ckan-solr
+    spec:
+      # A Service named `solr` elsewhere in the shared namespace would otherwise inject
+      # SOLR_PORT=tcp://… into this pod, and Solr reads SOLR_PORT as its listen port.
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 8983
+        runAsGroup: 8983
+        fsGroup: 8983
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: solr
+          image: ckan/ckan-solr:2.11-solr9
+          env:
+            - name: SOLR_HEAP
+              value: 512m
+          ports:
+            - name: solr
+              containerPort: 8983
+          volumeMounts:
+            - name: data
+              mountPath: /var/solr
+          startupProbe:
+            httpGet:
+              path: /solr/ckan/admin/ping
+              port: solr
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /solr/ckan/admin/ping
+              port: solr
+            periodSeconds: 10
+            timeoutSeconds: 5
+          # The JVM, not the core: a broken core is not fixed by a restart.
+          livenessProbe:
+            tcpSocket:
+              port: solr
+            periodSeconds: 30
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: 250m
+              memory: 768Mi
+            limits:
+              cpu: "1"
+              memory: 1536Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: ckan-solr-data
+---
+# ClusterIP only: nothing outside the namespace needs Solr.
+apiVersion: v1
+kind: Service
+metadata:
+  name: ckan-solr
+  labels:
+    app.kubernetes.io/name: ckan-solr
+spec:
+  selector:
+    app.kubernetes.io/name: ckan-solr
+  ports:
+    - name: solr
+      port: 8983
+      targetPort: solr
