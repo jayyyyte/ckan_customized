@@ -1,0 +1,5 @@
+# Only in the rehearsal. On the company cluster the namespace exists and is shared.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lakehouse

@@ -1,0 +1,21 @@
+# Rehearsal cluster for phase 3, shaped like the company one: one control-plane and two
+# workers, Kubernetes 1.30 (the company runs v1.30.14; v1.30.13 is the closest kind node
+# image), containerd, rancher local-path storage.
+#   kind create cluster --config k8s/overlays/kind/kind-cluster.yaml
+#   kind delete cluster --name ckan-rehearsal        # when done; nothing else uses it
+# kubectl context: kind-ckan-rehearsal. The portal: http://localhost:30500
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: ckan-rehearsal
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.30.13@sha256:397209b3d947d154f6641f2d0ce8d473732bd91c87d9575ade99049aa33cd648
+    # NodePort 30500 answers on every node; publish it from this one only.
+    extraPortMappings:
+      - containerPort: 30500
+        hostPort: 30500
+        listenAddress: "127.0.0.1"
+  - role: worker
+    image: kindest/node:v1.30.13@sha256:397209b3d947d154f6641f2d0ce8d473732bd91c87d9575ade99049aa33cd648
+  - role: worker
+    image: kindest/node:v1.30.13@sha256:397209b3d947d154f6641f2d0ce8d473732bd91c87d9575ade99049aa33cd648

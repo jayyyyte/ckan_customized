@@ -1,0 +1,30 @@
+# Local rehearsal of phase 3 on kind (cluster config: kind-cluster.yaml).
+# Same base as the company cluster; this overlay only adds what the company cluster
+# already has: the namespace, a StorageClass named local-path, and postgres-service.
+#
+#   bash k8s/scripts/make-secrets.sh kind
+#   kubectl --context kind-ckan-rehearsal apply -k k8s/overlays/kind
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: lakehouse
+
+resources:
+  - ../../base
+  - namespace.yaml
+  - storageclass.yaml
+  - postgres.yaml
+
+configMapGenerator:
+  - name: ckan-config
+    behavior: merge
+    envs:
+      - config.env
+
+secretGenerator:
+  - name: ckan-secrets
+    envs:
+      - secrets.env
+  - name: postgres-superuser
+    envs:
+      - postgres-secrets.env

@@ -1,0 +1,11 @@
+# kind ships the same rancher local-path provisioner as the company cluster, but calls
+# its StorageClass `standard`. A second class with the company's name lets the base keep
+# `storageClassName: local-path` unchanged. Same semantics: RWO, node-local, bound when
+# the first pod is scheduled.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-path
+provisioner: rancher.io/local-path
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
