@@ -1,6 +1,6 @@
 # CKAN Lakehouse Portal — Cổng dữ liệu EVN
 
-Data portal cho kiến trúc Lakehouse, xây trên **CKAN 2.11.6** cài từ source, với theme riêng **`ckanext-evntheme`**. Lộ trình 3 giai đoạn local → Docker → K8s: **GĐ1 (local WSL2) và GĐ2 (đóng gói image) đã xong**, đang chuẩn bị GĐ3 (deploy K8s). Xem chi tiết đầy đủ ở [docs/roadmap.md](docs/roadmap.md).
+Data portal cho kiến trúc Lakehouse, xây trên **CKAN 2.11.6** cài từ source, với theme riêng **`ckanext-evntheme`**. Lộ trình 3 giai đoạn local → Docker → K8s: **GĐ1 (local WSL2) và GĐ2 (đóng gói image) đã xong**. GĐ3 (deploy K8s) đã có manifest và đã tập dượt trọn quy trình trên kind; còn chờ kubeconfig của cluster công ty. Xem chi tiết đầy đủ ở [docs/roadmap.md](docs/roadmap.md).
 
 > File này là hướng dẫn nhanh để **chạy và dùng** project. Muốn hiểu bối cảnh, quyết định kỹ thuật hay đang làm gì tiếp theo, đọc [docs/roadmap.md](docs/roadmap.md) trước.
 
@@ -83,6 +83,25 @@ docker compose down -v                                                   # xóa 
 
 Chi tiết cấu hình, bảng ánh xạ env var và kết quả kiểm thử: [docs/phase-2-docker-packaging.md](docs/phase-2-docker-packaging.md).
 
+## Triển khai Kubernetes (GĐ3)
+
+Manifest dùng kustomize: `k8s/base` (chung) + `k8s/overlays/lab` (cluster công ty) / `k8s/overlays/kind` (tập dượt local). Mọi script bắt buộc `--context` để không chạy nhầm cluster.
+
+Tập dượt trên kind: cluster riêng `ckan-rehearsal`, portal ở **http://localhost:30500**.
+
+```bash
+kind create cluster --config k8s/overlays/kind/kind-cluster.yaml   # rồi use-context lại context cũ
+# đưa image lên 2 worker: docs/phase-3-k8s-deploy.md §3.10
+bash k8s/scripts/make-secrets.sh kind
+kubectl --context kind-ckan-rehearsal apply -f k8s/overlays/kind/namespace.yaml
+kubectl --context kind-ckan-rehearsal apply -k k8s/overlays/kind
+bash k8s/scripts/prepare-postgres.sh --context kind-ckan-rehearsal kind --apply
+bash k8s/overlays/kind/smoke-test.sh
+kind delete cluster --name ckan-rehearsal                          # dọn
+```
+
+Cluster công ty (dùng chung, **mọi lệnh ghi cần xác nhận**): làm đúng thứ tự audit → DB → image → dry-run → apply ở [docs/phase-3-k8s-deploy.md](docs/phase-3-k8s-deploy.md#36-triển-khai--kiểm-tra-trên-cluster-công-ty).
+
 ## Cấu trúc repo
 
 | Đường dẫn | Nội dung |
@@ -90,6 +109,7 @@ Chi tiết cấu hình, bảng ánh xạ env var và kết quả kiểm thử: [
 | `docs/` | Roadmap, tài liệu từng giai đoạn, gotchas — xem [mục lục](docs/README.md) |
 | `ckanext-evntheme/` | Theme "Cổng dữ liệu EVN" — xem [README](ckanext-evntheme/README.md) |
 | `docker/` | Dockerfile, compose, entrypoint và script sinh `.env` cho GĐ2 |
+| `k8s/` | Manifest kustomize (base + overlay `lab`/`kind`), script audit / sinh secret / tạo DB, smoke test cho GĐ3 |
 | `setup_step*.sh` | Script cài đặt/chuyển đổi môi trường local (user tự chạy) |
 | `~/ckan/` (ngoài repo, trong WSL) | venv, source CKAN, config `ckan.ini`, storage upload |
 
@@ -120,6 +140,6 @@ Tra [docs/gotchas.md](docs/gotchas.md) trước — hầu hết lỗi từng g�
 
 ## Quy tắc khi đóng góp
 
-- Không commit `.env`, `ckan.ini`, `*.kubeconfig`, `secrets.env`, file `.mo` đã build.
+- Không commit `.env`, `ckan.ini`, `*.kubeconfig`, `secrets.env` / `*-secrets.env`, file `.mo` đã build.
 - Cluster K8s dùng chung với đồng nghiệp — không tự tạo/sửa/xóa tài nguyên khi chưa xác nhận. Xem [docs/phase-3-k8s-deploy.md](docs/phase-3-k8s-deploy.md) và [CLAUDE.md](CLAUDE.md).
 - Xong việc gì → tick checklist trong [docs/roadmap.md](docs/roadmap.md); quyết định mới → thêm vào Decision log; gặp bẫy mới → thêm vào [docs/gotchas.md](docs/gotchas.md).

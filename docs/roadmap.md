@@ -158,12 +158,29 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 - [x] `docker save | gzip -1` chạy được, **537 MB** — con số cho bước `ctr import` ở GĐ3. File tạm đã xóa, tạo lại bằng một lệnh khi cần (2026-09-22)
 
 ### Giai đoạn 3 — K8s lab công ty · [chi tiết](phase-3-k8s-deploy.md)
+
+> **2026-09-25 — đã chuẩn bị và tập dượt xong; còn chờ việc bên ngoài.**
+>
+> Manifest `k8s/` gồm base (phần lên cluster công ty) và hai overlay: `lab` cho cluster công ty, `kind` cho tập dượt. Kèm 3 script:
+> - `audit.sh`: read-only;
+> - `make-secrets.sh`;
+> - `prepare-postgres.sh`: gửi SCRAM verifier qua stdin; có chế độ `--print` để đưa SQL cho chủ Postgres.
+>
+> **Tập dượt** trên cluster kind `ckan-rehearsal`, dựng giống cluster công ty (1.30.13, 1 master + 2 worker, containerd, local-path). Làm đúng thứ tự 3.3 → 3.6: `ctr import` tarball lên 2 worker, tạo DB bằng script, `--dry-run=server`, `apply -k`. Smoke test đạt đủ 47 kiểm tra (chi tiết ở [phase-3 §3.10](phase-3-k8s-deploy.md#310-tập-dượt-trên-kind--kết-quả-2026-09-25)).
+>
+> Tập dượt bắt được một lỗi compose không thể lộ ra: **uWSGI bị OOMKilled vì containerd cấp giới hạn fd 1073741816** (bẫy 21a). Đã sửa bằng ConfigMap, không phải build lại image.
+>
+> **Chặn bởi:** kubeconfig của cluster công ty (Q7; `~/.kube/config` hiện chỉ có context kind), và chủ cluster đồng ý thay stub cùng tạo DB (Q8).
+
+- [x] Viết manifest `k8s/` (kustomize base + overlay `lab`/`kind`): Solr, Redis, CKAN, **Deployment worker** (XLoader, không PVC), CronJob `ckan tracking update` (2026-09-25)
+- [x] Script `audit.sh` (read-only), `make-secrets.sh`, `prepare-postgres.sh` (check / `--apply` / `--print`) (2026-09-25)
+- [x] **Tập dượt trên kind 1.30** theo đúng quy trình của cluster thật, smoke test đạt đủ 47 kiểm tra; `smoke-test.sh` đã commit (2026-09-25)
 - [ ] Nhận kubeconfig (lưu **ngoài** repo)
-- [ ] Audit read-only, ghi kết quả vào [cluster-context.md](cluster-context.md)
-- [ ] Chốt với chủ cluster: xử lý stub `ckan`/`ckan-service`, tạo **hai** DB trên `postgres-service` (`ckan_default` và `datastore_default`, cùng owner `ckan_default` — bẫy 15e) và role chỉ đọc
-- [ ] Import image lên 2 worker (~537 MB mỗi lần, `docker save | gzip -1`), hoặc push registry nếu infra có
-- [ ] Apply manifest `k8s/`: Solr, Redis, CKAN, **Deployment worker** `ckan jobs worker` (XLoader), CronJob `ckan tracking update`
-- [ ] Verify tại http://10.1.117.91:30500 và tạo sysadmin
+- [ ] Audit read-only (`k8s/scripts/audit.sh`), ghi kết quả vào [cluster-context.md](cluster-context.md)
+- [ ] Chốt với chủ cluster: xóa stub `ckan`/`ckan-service` (bắt buộc, bẫy 21b), tạo **hai** DB trên `postgres-service` (`prepare-postgres.sh --apply`, hoặc chủ Postgres chạy file `--print`)
+- [ ] Import image lên 2 worker (tarball 562.6 MB, `docker save | gzip -1` → `ctr -n k8s.io images import`), hoặc push registry nếu infra có
+- [ ] `apply -k k8s/overlays/lab` (sau `--dry-run=server`)
+- [ ] Verify tại http://10.1.117.91:30500, đổi email sysadmin, thử upload + XLoader + job tracking
 - [ ] Tích hợp: Airflow publish qua API, link Trino, đồng bộ OpenMetadata (sau go-live)
 
 ## Decision log
@@ -209,6 +226,13 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 | 2026-09-22 | XLoader trong container: `ckanext.xloader.site_url` trỏ địa chỉ nội bộ, `jobs_db.uri` trỏ Postgres, API token do entrypoint tạo mỗi lần start (hoặc pin bằng `CKANEXT__XLOADER__API_TOKEN`) | Worker ở container khác không gọi được `ckan.site_url`; SQLite mặc định nằm trong `/tmp` của từng container; token không nên nằm sẵn trong image (bẫy 15c) |
 | 2026-09-22 | DataStore trong compose: DB `datastore_default` **cùng container Postgres**, cả hai DB thuộc sở hữu `ckan_default`; role `datastore_default` chỉ đọc | Giống hệt cách GĐ3 thêm DB vào `postgres-service` dùng chung, và nhờ đúng owner nên `datastore set-permissions` của `prerun.py` chạy được mà không cần superuser (bẫy 15e) |
 | 2026-09-19 | Khung logo **cao cố định (44px header / 40px footer), rộng theo file**, tối đa 176px (88px trên mobile), token `--evn-logo-*`. Lệch mockup (ô vuông 44×44) chỉ khi logo không vuông | Logo ngang trong ô vuông co còn 44×18px, không đọc được. Logo vuông vẫn giống hệt mockup |
+| 2026-09-25 | Manifest GĐ3 là **kustomize base + overlay** (`lab`, `kind`) thay cho một thư mục `k8s/` phẳng. Base không có object `Namespace`; ConfigMap/Secret sinh bằng generator có hash suffix | Cùng một base được tập dượt và được deploy thật, chỉ overlay khác nhau. Không quản lý ns dùng chung, nên `delete -k` không xóa được nó. Đổi config là pod tự rollout |
+| 2026-09-25 | **Tập dượt GĐ3 trên cluster kind riêng** (`ckan-rehearsal`, 1.30.13, 1+2 node), không dùng cluster kind `lakehouse` có sẵn của user | Không đụng môi trường có sẵn. Dáng cluster giống cluster công ty (phiên bản, containerd, local-path, NodePort, master NoSchedule). Postgres giả chỉ có superuser, để chạy thử đúng script tạo DB |
+| 2026-09-25 | **Worker không mount PVC**; initContainer chờ `ckan-service` | XLoader tải file upload qua HTTP. Worker được tự do chọn node (đã kiểm chứng: worker ở node khác vẫn nạp được file upload) |
+| 2026-09-25 | **`EXTRA_UWSGI_OPTS=--max-fd 65536`** trong ConfigMap base, chưa đưa vào image | Sửa OOMKilled do giới hạn fd của containerd (bẫy 21a) mà không phải build lại image. Đưa vào `ENV` của Dockerfile ở lần build sau |
+| 2026-09-25 | Tạo DB bằng **`prepare-postgres.sh`**: chỉ CREATE thứ còn thiếu, gửi SCRAM verifier qua stdin; có `--print` cho chủ Postgres | Postgres dùng chung: không ALTER/DROP, không để lộ mật khẩu vào argv, audit log API server hay log Postgres (bẫy 21g) |
+| 2026-09-25 | Request pod `ckan` **250m / 512Mi** (tài liệu cũ: 500m / 1Gi), limit giữ 2 / 2Gi | Đo trên kind: khoảng 175 MiB khi rảnh. Request là phần giữ chỗ trên cluster dùng chung |
+| 2026-09-25 | CronJob `ckan-tracking-update` chạy **mỗi giờ, phút 15** | `tracking update` gộp `tracking_raw` vào `tracking_summary` (số lượt xem/tải theme hiển thị) và reindex dataset liên quan |
 
 ## Câu hỏi còn mở
 
@@ -220,7 +244,7 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 | Q4 | ~~Có cần DataStore + xloader (preview dữ liệu, Data API)?~~ **Đóng 2026-09-22** | User | **Có (2026-09-19), đã bật xong ở local (2026-09-22)**: XLoader 2.5.0 cài **editable từ source** (`~/ckan/default/src/ckanext-xloader`, bắt buộc — gotchas 6ak), 12 CSV đã nạp vào DataStore. **GĐ2 đã làm xong (2026-09-22)**: image có `datastore xloader datatables_view`, compose có DB `datastore_default` và service `ckan-worker`, 10/10 CSV nạp được trong container; GĐ3 thêm DB trên `postgres-service` + Deployment worker |
 | Q5 | Có cần metadata schema riêng (ckanext-scheming), DCAT, SSO/LDAP? | User | Chưa |
 | Q6 | Ngôn ngữ mặc định `vi` hay `en`? | User | `ckan.locale_default = vi`, cho phép chọn `en` |
-| Q7 | Kubeconfig, quyền (`auth can-i`), registry nội bộ? | Infra | Chờ. Không có registry thì import tarball |
+| Q7 | Kubeconfig, quyền (`auth can-i`), registry nội bộ? | Infra | Chờ (kiểm tra lại 2026-09-25: `~/.kube/config` chỉ có context kind). Không có registry thì import tarball (đã tập dượt). Không có quyền `pods/exec` thì đưa file `prepare-postgres.sh --print` cho chủ Postgres |
 | Q8 | Ai sở hữu stub `ckan` trên cluster, được xóa hoặc thay không? | Chủ cluster | Không động vào khi chưa hỏi |
 | Q9 | ~~Theme dựa trên classic hay Midnight Blue?~~ | User, sau khi xem thử cả hai ở GĐ1 | ~~Midnight Blue (2026-09-14)~~ → **classic (2026-09-18)**, vì 2.11 chỉ có classic. Cân nhắc lại nếu sau này lên 2.12+ |
 | Q10 | Extension bên thứ ba cần dùng có hỗ trợ 2.11 không, bản nào? | Agent kiểm tra khi chốt Q4/Q5 | Kiểm tra README/CHANGELOG/CI của từng extension; ghim bản cuối còn hỗ trợ 2.11 |

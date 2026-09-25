@@ -154,6 +154,32 @@ Thêm mục mới khi gặp bẫy mới. Ghi rõ **triệu chứng → nguyên n
 21. **Ảnh hưởng người khác trên cluster dùng chung.**
     Audit read-only trước. Dùng `--dry-run=server` trước mỗi lần `apply`. Tên tài nguyên có tiền tố `ckan-`.
 
+21a. **Pod `ckan` bị `OOMKilled` (exit 137) chỉ vài giây sau dòng `WSGI app 0 ... ready`, dù cùng image chạy tốt trong compose** (gặp khi tập dượt trên kind, 2026-09-25).
+    - Nguyên nhân: uWSGI cấp phát bảng theo giới hạn số file mở (`RLIMIT_NOFILE`) mà nó nhận từ runtime. Docker đặt 1048576. containerd trên node kind (và có thể cả node kubeadm, tùy `LimitNOFILE` của containerd và `fs.nr_open`) đặt **1073741816**, gấp khoảng 1000 lần, nên RAM vượt limit 2Gi.
+    - Nhận biết: log in `detected max file descriptor number: 1073741816`.
+    - Xử lý: `EXTRA_UWSGI_OPTS=--max-fd 65536` trong `k8s/base/config.env`, không phải build lại image. `start_ckan.sh` nối biến này vào lệnh uwsgi. Khi build image mới, cân nhắc đưa vào `ENV` của Dockerfile.
+
+21b. **`kubectl apply` báo `spec.selector: Invalid value ... field is immutable` cho `deployment/ckan`** (dự đoán, chưa gặp). Bản stub 2.10 đã có Deployment tên `ckan` với selector khác. Selector của Deployment không sửa được sau khi tạo.
+    `--dry-run=server` sẽ báo lỗi này trước. Phải xóa stub (sau khi chủ cluster đồng ý, Q8) rồi mới apply. Đừng đổi tên Deployment để lách, vì Service `ckan-service` và NodePort 30500 vẫn phải thay.
+
+21c. **Secret/ConfigMap sinh ở overlay rơi vào namespace `default`**, pod trong `lakehouse` báo `secret "ckan-secrets-…" not found` (phòng trước). Trường `namespace:` của base không áp lên object do overlay sinh ra; thiếu trường này ở overlay thì `kubectl apply` dùng namespace của context.
+    Cả hai overlay đều khai báo lại `namespace: lakehouse`.
+
+21d. **Solr/Redis nhận biến lạ kiểu `SOLR_PORT=tcp://10.96.x.x:8983` và không khởi động** (phòng trước). K8s tự bơm biến môi trường cho **mọi Service trong namespace** (service links). Namespace `lakehouse` dùng chung, nên chỉ cần một Service tên `solr` hay `redis` của người khác là đủ gây lỗi.
+    Mọi pod của CKAN đặt `enableServiceLinks: false`.
+
+21e. **`kubectl rollout status` báo xong nhưng `curl` tới NodePort vẫn bị từ chối vài giây** (gặp khi tập dượt: `000` rồi `200` sau khoảng 4 giây). Endpoint của Service cập nhật sau khi pod ready, rồi kube-proxy mới đổi luật.
+    Smoke test phải retry vài giây. Cộng thêm thời gian `prerun.py` với `strategy: Recreate`, mỗi lần deploy portal gián đoạn khoảng 30 giây. Nên deploy ngoài giờ.
+
+21f. **`kind create cluster` âm thầm đổi `current-context` của `~/.kube/config`.** Lệnh `kubectl` gõ sau đó (không có `--context`) sẽ chạy vào cluster khác với dự định. Khi đã có kubeconfig của cluster công ty, lỗi này nguy hiểm.
+    Mọi script trong `k8s/scripts/` bắt buộc `--context`. Sau khi tạo cluster kind thì `kubectl config use-context <cũ>`.
+
+21g. **Mật khẩu đưa vào dòng lệnh `kubectl exec ... psql -c "CREATE ROLE ... PASSWORD '...'"` bị lộ ở nhiều chỗ**: argv trên máy mình, audit log của API server (lệnh exec nằm trong URL của request), và log của Postgres nếu câu lệnh lỗi.
+    `prepare-postgres.sh` gửi SQL qua **stdin**, và gửi **SCRAM verifier** tính sẵn ở máy local thay cho mật khẩu thật.
+
+21h. **`kubectl` trong WSL là v1.36, cluster công ty v1.30.** Chênh lệch 6 bản minor, vượt chính sách hỗ trợ ±1 của kubectl. Khi tập dượt trên kind 1.30.13, `apply -k`, `--dry-run=server`, `exec svc/…`, `create job --from=cronjob/…` và `rollout` đều chạy đúng.
+    Nếu gặp lỗi lạ trên cluster thật, dùng kubectl 1.30 (tải binary riêng, gọi bằng đường dẫn đầy đủ) để loại trừ nguyên nhân này.
+
 ## Riêng CKAN 2.11
 22. **Extension bên thứ ba lỗi import hoặc template.** Bản mới nhất của một extension có thể đã chuyển hẳn sang 2.12, ví dụ dùng tầng `ckan.files.*` hoặc bỏ phụ thuộc `PackageExtra`.
     Kiểm tra README, CHANGELOG hoặc CI của extension để lấy **phiên bản cuối còn hỗ trợ 2.11** (Q10), rồi ghim đúng phiên bản đó.
