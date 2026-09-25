@@ -1,0 +1,24 @@
+# The company cluster, namespace lakehouse, http://10.1.117.91:30500.
+# Shared with colleagues: every step in docs/phase-3-k8s-deploy.md, in order, and
+#   kubectl apply -k k8s/overlays/lab --dry-run=server
+# before the real apply. secrets.env comes from `bash k8s/scripts/make-secrets.sh lab`.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Again here: objects generated in this file (the Secret) would otherwise land in
+# whatever namespace the kubeconfig context points at.
+namespace: lakehouse
+
+resources:
+  - ../../base
+
+configMapGenerator:
+  - name: ckan-config
+    behavior: merge
+    envs:
+      - config.env
+
+secretGenerator:
+  - name: ckan-secrets
+    envs:
+      - secrets.env
