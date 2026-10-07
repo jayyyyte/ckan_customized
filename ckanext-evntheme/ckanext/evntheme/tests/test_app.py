@@ -118,7 +118,7 @@ def test_sysadmin_uploads_a_raster_logo(storage, app):
 @pytest.mark.ckan_config("ckanext.evntheme.trino_docs_url", "")
 def test_footer_developer_links_follow_config(app):
     body = _text(app.get("/"))
-    assert '<a href="http://openmetadata.test">Danh mục kỹ thuật (OpenMetadata)</a>' in body
+    assert '<a href="http://openmetadata.test">Technical catalog (OpenMetadata)</a>' in body  # test-core: locale en
     assert "Kết nối bằng Trino JDBC" not in body
 
 

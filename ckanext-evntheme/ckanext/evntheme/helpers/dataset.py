@@ -19,6 +19,9 @@ from ckanext.evntheme.vocab import (
     FORMAT_LABELS,
     FORMAT_STYLES,
     FREQUENCIES,
+    HIDDEN_EXTRA_PREFIXES,
+    OPENMETADATA_TAB,
+    OPENMETADATA_TAB_TEMPLATE,
     QUALITY_METRICS,
     Extra,
     Term,
@@ -122,7 +125,7 @@ def _contact(pkg: dict[str, Any]) -> str:
 _KNOWN_EXTRAS = {
     Extra.DATA_TYPE, Extra.FREQUENCY, Extra.SOURCE_SYSTEM, Extra.RECORD_COUNT, Extra.GOLDEN_RECORD,
     Extra.METADATA_STANDARD, Extra.SPATIAL, Extra.TEMPORAL, Extra.OPEN_LEVEL, Extra.RATING_AVERAGE,
-    Extra.RATING_COUNT, *(m.code for m in QUALITY_METRICS),
+    Extra.RATING_COUNT, Extra.SOURCE_TABLE, *(m.code for m in QUALITY_METRICS),
 }
 
 
@@ -135,6 +138,7 @@ def info_rows(pkg: dict[str, Any]) -> list[dict[str, Any]]:
     groups = ", ".join(g.get("display_name") or g.get("title") or g["name"] for g in pkg.get("groups") or [])
     rows = [
         (tk._("Identifier"), pkg.get("name")),
+        (tk._("Source table"), field(pkg, Extra.SOURCE_TABLE)),
         (tk._("Data domain"), groups),
         (tk._("Publisher"), org.get("title") or org.get("name")),
         (tk._("Contact"), _contact(pkg)),
@@ -149,7 +153,8 @@ def info_rows(pkg: dict[str, Any]) -> list[dict[str, Any]]:
     if level is not None:
         result.append({"label": tk._("Openness"), "value": tk._("{n} of 5 stars").format(n=level), "stars": level})
     for extra in pkg.get("extras") or []:
-        if extra.get("key") not in _KNOWN_EXTRAS and extra.get("value"):
+        key = extra.get("key") or ""
+        if key not in _KNOWN_EXTRAS and not key.startswith(HIDDEN_EXTRA_PREFIXES) and extra.get("value"):
             result.append({"label": extra["key"], "value": extra["value"]})
     return result
 
@@ -186,19 +191,34 @@ def am_following(pkg: dict[str, Any]) -> bool | None:
     return tk.get_action("am_following_dataset")({}, {"id": pkg["id"]})
 
 
-def tabs(pkg: dict[str, Any]) -> list[dict[str, Any]]:
-    current = active_tab()
+def _tab_terms(pkg: dict[str, Any]) -> list[Term]:
     items = [t for t in DATASET_TABS if t.code != "activity" or plugin_loaded("activity")]
+    if plugin_loaded("lakehouse") and tk.h.lakehouse_om_has_panel(pkg):
+        at = next((i for i, t in enumerate(items) if t.code == "activity"), len(items))
+        items.insert(at, OPENMETADATA_TAB)
+    return items
+
+
+def _tab_template(code: str) -> str:
+    return OPENMETADATA_TAB_TEMPLATE if code == OPENMETADATA_TAB.code else f"evntheme/dataset/{code}.html"
+
+
+def tabs(pkg: dict[str, Any]) -> list[dict[str, Any]]:
+    """Tabs of the dataset page, with the template of each panel."""
+    items = _tab_terms(pkg)
+    current = active_tab(pkg)
     return [
-        {"code": t.code, "label": tk._(t.label), "active": t.code == current,
+        {"code": t.code, "label": tk._(t.label), "active": t.code == current, "template": _tab_template(t.code),
          "url": tk.url_for(f"{pkg['type']}.read", id=pkg["name"], tab=None if t.code == "overview" else t.code)}
         for t in items
     ]
 
 
-def active_tab() -> str:
+def active_tab(pkg: dict[str, Any] | None = None) -> str:
+    """?tab=..., if this dataset has that tab (any theme tab when no dataset is given)."""
     tab = tk.request.args.get("tab", "overview")
-    return tab if tab in {t.code for t in DATASET_TABS} else "overview"
+    codes = {t.code for t in (_tab_terms(pkg) if pkg is not None else DATASET_TABS)}
+    return tab if tab in codes else "overview"
 
 
 def activities(pkg: dict[str, Any], limit: int = 6) -> list[dict[str, Any]]:

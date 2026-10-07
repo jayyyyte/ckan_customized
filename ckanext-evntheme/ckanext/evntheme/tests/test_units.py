@@ -210,7 +210,7 @@ def _vi_catalog():
 def _all_vocab_labels():
     terms = [
         *vocab.DATA_TYPES.values(), *vocab.FREQUENCIES.values(), *vocab.QUALITY_METRICS,
-        *vocab.ORG_TYPES.values(), *vocab.ORG_FILTERS, *vocab.FACETS, *vocab.DATASET_TABS,
+        *vocab.ORG_TYPES.values(), *vocab.ORG_FILTERS, *vocab.FACETS, *vocab.DATASET_TABS, vocab.OPENMETADATA_TAB,
         *vocab.ACTIVITY_KINDS.values(), vocab.DEFAULT_ACTIVITY, *vocab.MDS_CATALOG_STATUSES.values(),
         *vocab.MDS_CODE_STATUSES.values(), *vocab.MDS_CONSUMER_STATUSES.values(),
     ]

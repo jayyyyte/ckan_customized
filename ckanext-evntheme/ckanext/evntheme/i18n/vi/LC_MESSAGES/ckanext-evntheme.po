@@ -411,6 +411,10 @@ msgstr "Thử API"
 msgid "Activity"
 msgstr "Nhật ký"
 
+#: ckanext/evntheme/vocab.py
+msgid "Technical catalog"
+msgstr "Danh mục kỹ thuật"
+
 msgid "What is this dataset?"
 msgstr "Bộ dữ liệu này là gì?"
 
@@ -621,6 +625,10 @@ msgstr "Thông tin bộ dữ liệu"
 
 msgid "Identifier"
 msgstr "Mã định danh"
+
+#: ckanext/evntheme/helpers/dataset.py
+msgid "Source table"
+msgstr "Bảng nguồn"
 
 msgid "Spatial coverage"
 msgstr "Phạm vi không gian"

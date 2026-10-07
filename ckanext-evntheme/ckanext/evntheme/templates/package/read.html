@@ -1,10 +1,11 @@
 {% ckan_extends %}
 
-{#- Dataset page: hero with tabs, four tab panels, sidebar.
+{#- Dataset page: hero with tabs, one panel per tab (h.evn_tabs: the theme's four, plus
+    "Technical catalog" on datasets from OpenMetadata when ckanext-lakehouse is loaded), sidebar.
     Every panel is rendered on the server and the inactive ones are `hidden`, so
     ?tab=... works without JS; evn-tabs only switches panels and updates the URL. -#}
 {% block content %}
-  {% set tab = h.evn_active_tab() %}
+  {% set tab = h.evn_active_tab(pkg) %}
   {% set can_edit = h.check_access('package_update', {'id': pkg.id}) %}
   <div class="evn-page evn-detail" data-module="evn-tabs">
     {% block evn_dataset_hero %}
@@ -13,13 +14,11 @@
     <div class="evn-container evn-flash">{{ self.flash() }}</div>
     <div class="evn-container evn-split evn-split--detail">
       <div class="evn-split__main">
-        {% for code, template in [('overview', 'overview'), ('preview', 'preview'), ('api', 'api'), ('activity', 'activity')] %}
-          {% if code != 'activity' or h.plugin_loaded('activity') %}
-            <section class="evn-tabpanel evn-stack" id="tab-{{ code }}" role="tabpanel" aria-labelledby="tab-{{ code }}-link"
-                     tabindex="-1"{% if tab != code %} hidden{% endif %}>
-              {% snippet 'evntheme/dataset/' ~ template ~ '.html', pkg=pkg, can_edit=can_edit %}
-            </section>
-          {% endif %}
+        {% for item in h.evn_tabs(pkg) %}
+          <section class="evn-tabpanel evn-stack" id="tab-{{ item.code }}" role="tabpanel" aria-labelledby="tab-{{ item.code }}-link"
+                   tabindex="-1"{% if tab != item.code %} hidden{% endif %}>
+            {% snippet item.template, pkg=pkg, can_edit=can_edit, active=(tab == item.code) %}
+          </section>
         {% endfor %}
       </div>
       <aside class="evn-split__aside evn-stack" aria-label="{{ _('About this dataset') }}">

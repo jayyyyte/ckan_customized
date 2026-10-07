@@ -43,6 +43,13 @@ class Extra:
     OPEN_LEVEL = "open_level"
     RATING_AVERAGE = "rating_average"
     RATING_COUNT = "rating_count"
+    # Written by ckanext-lakehouse's OpenMetadata sync: the table the dataset describes.
+    SOURCE_TABLE = "om_fqn"
+
+
+# Extras the "Dataset information" sidebar never lists: bookkeeping of other extensions
+# (ckanext-lakehouse keeps its OpenMetadata ids, columns... in om_* extras).
+HIDDEN_EXTRA_PREFIXES = ("om_",)
 
 
 # Organization extras.
@@ -165,6 +172,11 @@ DATASET_TABS = (
     Term("api", N_("Try the API")),
     Term("activity", N_("Activity")),
 )
+
+# Extra tab, before "Activity", on datasets published from OpenMetadata when
+# ckanext-lakehouse is loaded. Its panel is that extension's template.
+OPENMETADATA_TAB = Term("openmetadata", N_("Technical catalog"))
+OPENMETADATA_TAB_TEMPLATE = "lakehouse/om_tab.html"
 
 # --- Activity stream -------------------------------------------------------------
 
