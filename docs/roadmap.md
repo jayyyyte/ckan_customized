@@ -8,6 +8,10 @@ Hai task được giao:
 1. **Deploy CKAN from source.**
 2. **Customize theme** cho CKAN.
 
+Hai đầu việc giao thêm ngày 2026-10-06 (GĐ4, [chi tiết](phase-4-content-openmetadata.md)):
+3. **Tạo organization, group, dataset và phân quyền người dùng.**
+4. **Kết nối OpenMetadata**, lấy dữ liệu từ OpenMetadata để hiển thị.
+
 **Phiên bản mục tiêu:** CKAN **2.11.6**, bản vá mới nhất của nhánh 2.11, phát hành 2026-08-26, tag git `ckan-2.11.6`. Dự án đã quay về bản này từ 2.12.0 ngày 2026-09-18 (Decision log).
 
 Trong kiến trúc Lakehouse (báo cáo nội bộ, mục 11.10), CKAN là **data portal cho người dùng cuối**. Nó đứng cạnh OpenMetadata (catalog kỹ thuật) và publish các dataset tầng curated/Gold. Resource của dataset là link Trino JDBC hoặc file CSV do Airflow export qua CKAN API. Hiện trên cluster chỉ có bản stub `ckan/ckan-base:2.10` chưa nối Postgres, Solr hay Redis. Xem [cluster-context.md](cluster-context.md).
@@ -186,7 +190,43 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 - [ ] Import image lên 2 worker (tarball 562.6 MB, `docker save | gzip -1` → `ctr -n k8s.io images import`), hoặc push registry nếu infra có
 - [ ] `apply -k k8s/overlays/lab` (sau `--dry-run=server`)
 - [ ] Verify tại http://10.1.117.91:30500, đổi email sysadmin, thử upload + XLoader + job tracking
-- [ ] Tích hợp: Airflow publish qua API, link Trino, đồng bộ OpenMetadata (sau go-live)
+- [ ] Tích hợp: Airflow publish qua API, link Trino, đồng bộ OpenMetadata (sau go-live). Đồng bộ OpenMetadata và link Trino đã có code ở GĐ4; còn Airflow
+
+### Giai đoạn 4 — Nội dung, phân quyền, OpenMetadata · [chi tiết](phase-4-content-openmetadata.md)
+
+> **2026-10-06 — xong ở local, sẵn sàng đóng gói lên cụm.** Extension mới **`ckanext-lakehouse`** (plugin `lakehouse`):
+> - `ckan lakehouse bootstrap`: khai báo org, group, user và vai trò bằng YAML, chạy lại an toàn;
+> - `ckan lakehouse om check | sync`: công bố bảng của OpenMetadata thành dataset private;
+> - tab **Danh mục kỹ thuật** trên trang dataset: lineage, kiểm định chất lượng, profile, cột; lấy live, cache Redis, có bản dự phòng khi OpenMetadata không trả lời.
+>
+> OpenMetadata thật chỉ vào được qua Remote Desktop (gotchas 36). Vì vậy kiểm thử dùng snapshot hư cấu và `tools/openmetadata/om_mock.py`. Bước tiếp theo: ghi **snapshot thật** trên máy công ty để chốt ánh xạ team/domain (Q11–Q13).
+>
+> Kiểm thử:
+> - unit `lakehouse` 28/28, app `lakehouse` 17/17;
+> - theme sau khi sửa: unit 27/27, app 22/22 (lần đầu tiên chạy được app test ở local, nhờ `ckan_test`);
+> - ruff sạch;
+> - image `ckan-lakehouse:0.2.0` build sạch, import được trên Python 3.10.
+>
+> Bẫy mới: gotchas 28–38.
+
+- [x] Extension `ckanext-lakehouse`: config `ckanext.lakehouse.*` (17 key), CLI, i18n vi 46/46, unit + app test, CI `.github/workflows/lakehouse.yml` (2026-10-06)
+- [x] **Đầu việc 1** — `bootstrap` + `demo/portal.yaml` gồm 9 user hư cấu, 9 org, 5 group (trùng tên `seed-demo`) và vai trò ở cả org lẫn group. Chạy ở local: tạo 9 user, mật khẩu ghi vào `~/ckan/backup/lakehouse-demo-users-*.csv` (quyền 600); chạy lần hai báo `Nothing to change.` (2026-10-06)
+- [x] Siết `ckan.auth.*` ở cả ba môi trường: không tự đăng ký, chỉ sysadmin tạo org/group, ẩn danh sách user. Ở local, backup trước tại `~/ckan/backup/ckan.ini.before-lakehouse.20261006-092445` (2026-10-06)
+- [x] Ma trận quyền 9 user × 10 thao tác khớp với file khai báo ([phase-4 §4.1](phase-4-content-openmetadata.md#ma-trận-đã-kiểm-chứng-local-2026-10-06)) (2026-10-06)
+- [x] **Đầu việc 2** — `om sync` trên mock gồm 7 bảng: 5 dataset được tạo (đúng org và group, có link Trino, `record_count`), 1 bảng bị bỏ qua vì không org nào nhận, 1 bảng raw nằm ngoài phạm vi. Đã kiểm: chạy lần hai `5 unchanged`; loại khỏi phạm vi thì soft delete, quay lại thì khôi phục; phạm vi rỗng thì không xóa (2026-10-06)
+- [x] Tab "Danh mục kỹ thuật": lazy-load và render phía server đều chạy; console 0 lỗi; lineage trỏ về dataset CKAN; OM tắt thì có thông báo và cột dự phòng; người ngoài org gọi endpoint nhận 403 (2026-10-06)
+- [x] Đóng gói:
+  - Dockerfile cài `ckanext-lakehouse`;
+  - `CKAN__PLUGINS` thêm `lakehouse`;
+  - CronJob `ckan-om-sync` (phút 40);
+  - các key OM/auth trong ConfigMap, token trong Secret;
+  - `newTag: 0.2.0`;
+  - `.gitignore`/`.dockerignore` chặn snapshot thật và file mật khẩu. (2026-10-06)
+- [ ] **User chạy `om_snapshot.py` trên máy công ty** (RDP), chép file về laptop, chạy `om check` trên snapshot thật để viết phần `openmetadata:` của file bootstrap
+- [ ] Danh sách org, user và vai trò thật (Q11). File thật để ngoài repo nếu có email cá nhân
+- [ ] Bot OpenMetadata chỉ đọc và token (Q12); phạm vi công bố `om.include` / `om.require_tags` (Q13)
+- [x] **Tập dượt `0.2.0` trên kind** (`ckan-rehearsal`, nâng cấp tại chỗ từ `0.1.0`): mock OM trong cụm (`om-mock.sh`); `smoke-test-om.sh` **31/31** (chạy 2 lần); `smoke-test.sh` GĐ3 hồi quy **47/47**. `ctr import` chỉ 10–12 s/node nhờ dùng lại layer ([phase-4 §4.6b](phase-4-content-openmetadata.md#46b-tập-dượt-trên-kind--kết-quả-2026-10-06)) (2026-10-06)
+- [ ] `docker/.env` của stack compose đang có (sinh trước GĐ4) chưa có `lakehouse` trong `CKAN__PLUGINS`: thêm tay hoặc sinh lại bằng `make-env.sh` trước khi chạy image `0.2.0`
 
 ## Decision log
 
@@ -238,6 +278,17 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 | 2026-09-25 | Tạo DB bằng **`prepare-postgres.sh`**: chỉ CREATE thứ còn thiếu, gửi SCRAM verifier qua stdin; có `--print` cho chủ Postgres | Postgres dùng chung: không ALTER/DROP, không để lộ mật khẩu vào argv, audit log API server hay log Postgres (bẫy 21g) |
 | 2026-09-25 | Request pod `ckan` **250m / 512Mi** (tài liệu cũ: 500m / 1Gi), limit giữ 2 / 2Gi | Đo trên kind: khoảng 175 MiB khi rảnh. Request là phần giữ chỗ trên cluster dùng chung |
 | 2026-09-25 | CronJob `ckan-tracking-update` chạy **mỗi giờ, phút 15** | `tracking update` gộp `tracking_raw` vào `tracking_summary` (số lượt xem/tải theme hiển thị) và reindex dataset liên quan |
+| 2026-10-06 | GĐ4 làm trong **extension mới `ckanext-lakehouse`** (plugin `lakehouse`). Theme chỉ thêm một chỗ cắm tab (`h.evn_tabs` trả cả template của panel) và ẩn extras `om_*` | Theo quyết định Q1 (2026-09-14): logic nghiệp vụ tách khỏi theme. Theme đã có sẵn tiền lệ bật tab theo plugin (`activity`) |
+| 2026-10-06 | Org/group/user/vai trò khai báo bằng **YAML + `ckan lakehouse bootstrap`** (idempotent, `--prune` tùy chọn). Dataset demo vẫn dùng `seed-demo`, dataset thật lấy từ OpenMetadata | User chọn: "file khai báo + script (demo) và dataset từ OpenMetadata (real data)". Một file dùng chung cho local, compose và K8s (`exec -i ... -`) |
+| 2026-10-06 | **Tài khoản local CKAN**, mật khẩu ngẫu nhiên ghi một lần ra file quyền 600 (hoặc stdout). Tắt tự đăng ký; chỉ sysadmin tạo org/group | User chọn (Q5 chưa có SSO). `user_create_groups=true` ở local cho phép bất kỳ ai tạo miền dữ liệu |
+| 2026-10-06 | OpenMetadata: **đồng bộ thành dataset + tab live** | User chọn. Đồng bộ cho phép tìm kiếm và facet trong CKAN; tab live cho lineage, chất lượng và profile mà không phải lưu lại |
+| 2026-10-06 | Sync **chỉ sở hữu** title, org, mô tả (khi OM có), tag/group do chính nó thêm (nhớ trong `om_tags`/`om_groups`), extras `om_*`, `record_count`, resource có `om_kind`. Mọi thứ khác thuộc về biên tập viên; `source_system` chỉ điền khi trống | Chạy mỗi giờ mà không xóa công sức chỉnh tay, và không sinh activity khi không có gì đổi |
+| 2026-10-06 | Dataset từ OpenMetadata **mặc định private**; sync không bao giờ đổi lại `private`. `om.include` trên cụm **để trống** đến khi chốt phạm vi | Công bố là quyết định của đơn vị sở hữu dữ liệu. Tránh lỡ đẩy toàn bộ catalog lên portal |
+| 2026-10-06 | Ánh xạ owner **team → org** (`om_teams`), mẫu FQN → org (`om_fqn_patterns`), **domain → group** (`om_domains`), lưu ở extras của org/group do bootstrap ghi | Tên team/domain bên OM khác tên đơn vị bên CKAN; giữ ánh xạ cạnh khai báo đơn vị |
+| 2026-10-06 | Gán group qua `member_create`/`member_delete`, user sync **không phải sysadmin** | `package_*` lặng lẽ bỏ group nếu user không đọc được group (gotchas 28); không muốn cấp sysadmin cho tài khoản kỹ thuật |
+| 2026-10-06 | Không vào được OM từ laptop → **snapshot (máy RDP) + mock (laptop)**, cùng một client HTTP cho cả mock lẫn OM thật. Snapshot không chứa sample data, profile cột hay token; không commit | Kiểm thử với metadata thật mà không cần mạng công ty, không mang dữ liệu thật ra ngoài |
+| 2026-10-06 | Tab OM: render phía server khi tab được mở bằng URL, lazy-load khi bấm tab; **cache Redis** (600 s, lỗi 60 s). Link lineage tới dataset CKAN chỉ hiện khi người xem có quyền đọc | OM chậm không làm chậm trang; cache dùng chung giữa các worker uWSGI; không lộ tên dataset private |
+| 2026-10-06 | Image **`0.2.0`** (+`ckanext-lakehouse`), CronJob `ckan-om-sync` **phút 40** | Tách khỏi `tracking update` (phút 15); cả hai đều reindex |
 
 ## Câu hỏi còn mở
 
@@ -253,3 +304,6 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 | Q8 | Ai sở hữu stub `ckan` trên cluster, được xóa hoặc thay không? | Chủ cluster | Không động vào khi chưa hỏi |
 | Q9 | ~~Theme dựa trên classic hay Midnight Blue?~~ | User, sau khi xem thử cả hai ở GĐ1 | ~~Midnight Blue (2026-09-14)~~ → **classic (2026-09-18)**, vì 2.11 chỉ có classic. Cân nhắc lại nếu sau này lên 2.12+ |
 | Q10 | Extension bên thứ ba cần dùng có hỗ trợ 2.11 không, bản nào? | Agent kiểm tra khi chốt Q4/Q5 | Kiểm tra README/CHANGELOG/CI của từng extension; ghim bản cuối còn hỗ trợ 2.11 |
+| Q11 | Danh sách đơn vị, người dùng thật và vai trò của từng người? Team/domain nào bên OpenMetadata ứng với đơn vị/miền nào? | User / công ty | Dùng `demo/portal.yaml` (hư cấu) cho local/kind. Ánh xạ thật viết sau khi chạy `om check` trên snapshot thật |
+| Q12 | Bot OpenMetadata chỉ đọc cho CKAN và token? | Chủ OpenMetadata | Chưa có thì `CKANEXT__LAKEHOUSE__OM__URL` vẫn đặt nhưng sync lỗi 401 và không ghi gì; tab hiện bản đồng bộ |
+| Q13 | Bảng nào được công bố (mẫu FQN, tag như `Tier.Tier1`)? Có giữ mặc định private không? | User / chủ dữ liệu | `om.include` trống trên cụm (không công bố gì), `om.private = true` |

@@ -195,3 +195,27 @@ Thêm mục mới khi gặp bẫy mới. Ghi rõ **triệu chứng → nguyên n
     Kiểm tra danh sách block trong `~/ckan/default/src/ckan/ckan/templates`.
 27. **Grep block bỏ sót.** Nhiều block viết dạng `{%- block scripts %}`.
     Dùng regex `\{%-?\s*block [a-z_]+`.
+
+## Phân quyền & OpenMetadata (GĐ4, 2026-10-06)
+28. **Dataset tạo bằng `package_create`/`package_patch` có `groups` nhưng không vào group nào, và không có lỗi.** `package_membership_list_save` gọi `authz.has_user_permission_for_group_or_org(group, user, 'read')`. `ignore_auth` **không** bỏ qua được kiểm tra này. User không phải sysadmin và không thuộc group (ví dụ `om-sync`) thì group bị bỏ qua lặng lẽ. `seed-demo` chạy bằng `admin` (sysadmin) nên chưa từng gặp.
+    Gán group bằng action `member_create` / `member_delete` (`object_type: package`). Hai action này chỉ đi qua `_check_access` và tự reindex dataset. Xem `Syncer._set_groups`.
+29. **Script đặt vai trò "chạy lại vẫn đổi".** `member_list` trả capacity **đã dịch** theo locale (`Admin` thành "Quản trị"), nên so với `admin` lúc nào cũng lệch.
+    Đọc capacity thô từ bảng `member` (`model.Member`).
+30. **Username có dấu chấm (`npc.quantri`) bị từ chối.** Tên user, org và group của CKAN chỉ gồm chữ thường, số, `-` và `_`, độ dài 2–100.
+    `bootstrap` kiểm tra trước khi ghi bất cứ thứ gì.
+31. **`package_activity_list` trả rỗng cho dataset private khi gọi với context `ignore_auth`.** Activity của dataset private được lọc theo quyền của người gọi, mà context không có user thì không có quyền nào.
+    Gọi với `{"user": <sysadmin>}`. `package_patch` cũng cần user, nếu không plugin activity sẽ báo `User not found`.
+32. **OpenMetadata trả `400 Invalid field name owners`.** Các bản 1.x đổi tên field: `owner` thành `owners` (1.5), `domain` thành `domains` (các bản gần đây). Xin field mà server không biết là lỗi cả request.
+    Client thử lần lượt từ cách viết mới tới cũ, nhớ cách đầu tiên server chấp nhận, và đọc được cả hai dạng (`om/client.py`, `mapping.owners/domains`).
+33. **Test app của theme mong đợi tiếng Việt nhưng trang render tiếng Anh.** `test-core.ini` đặt `ckan.locale_default = en`.
+    Test của `lakehouse` ghim `ckan.locale_default = vi`. Test footer của theme đã sửa để so với msgid tiếng Anh.
+34. **(agent) `pkill -f om_mock.py` trong `wsl.exe -e bash -c '...'` diệt luôn chính lệnh đó (exit 15).** Dòng lệnh của `bash -c` cũng chứa chuỗi cần tìm.
+    Dùng mẫu tự loại trừ: `pkill -f "[o]m_mock\.py"`.
+35. **(agent) Tiến trình `nohup ... &` khởi động trong `wsl.exe -e bash -c` chết khi `wsl.exe` thoát** (đã gặp với `ckan run`).
+    Chạy bằng chế độ nền của tool, hoặc `setsid nohup ... < /dev/null &`.
+36. **Laptop không vào được OpenMetadata thật**, vì OM chỉ truy cập được qua Remote Desktop tới máy công ty.
+    Ghi snapshot ở máy công ty bằng `tools/openmetadata/om_snapshot.py`, rồi phát lại trên laptop bằng `om_mock.py`. Snapshot chứa tên bảng và người phụ trách thật, nên không commit (`*.om-snapshot.json` đã có trong `.gitignore`).
+37. **`kubectl wait --for=condition=complete job/x` ngồi chờ hết timeout khi job thất bại** (gặp trong `smoke-test-om.sh`, với job sync cố ý chạy lúc OpenMetadata tắt). Job thất bại không bao giờ có điều kiện `Complete`.
+    Thăm dò `.status.succeeded` / `.status.failed`, hoặc chờ cả `condition=failed`. `ckan-om-sync` có `backoffLimit: 1`, nên job lỗi sẽ chạy 2 lần trước khi báo failed.
+38. **Kustomize báo `security; file ... is not in or below ...`** khi `configMapGenerator` trỏ ra ngoài thư mục overlay (ví dụ `tools/openmetadata/`). `kubectl apply -k` không có cờ `--load-restrictor`.
+    Tạo ConfigMap đó bằng script (`kubectl create configmap --from-file ... --dry-run=client -o yaml | kubectl apply -f -`), như `om-mock.sh`. Không chép file vào overlay vì sẽ thành hai bản lệch nhau.
