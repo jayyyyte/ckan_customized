@@ -1,0 +1,49 @@
+/* "Technical catalog" tab. Colours, radii and fonts are the theme's tokens (ckanext-evntheme
+   _tokens.scss), with fallbacks so the tab stays readable without it. */
+.lh-om { display: flex; flex-direction: column; gap: 18px; }
+.lh-om__head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.lh-om__head .evn-card__title { margin: 0; }
+.lh-om__notice {
+  margin: 14px 0 0; padding: 12px 16px;
+  border-radius: var(--evn-radius-tile, 14px);
+  background: var(--evn-red-soft, #f7ece4); color: var(--evn-red-ink, #a14a33); font-size: 14px;
+}
+.lh-om__fresh { margin: 10px 0 0; color: var(--evn-muted-3, #5a5248); font-size: 13px; }
+.lh-om__facts {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px 24px; margin: 20px 0 0;
+}
+.lh-om__facts dt { margin-bottom: 3px; color: var(--evn-muted-3, #5a5248); font-size: 12.5px; font-weight: 600; }
+.lh-om__facts dd { margin: 0; color: var(--evn-ink, #33383c); overflow-wrap: anywhere; }
+.lh-om__fqn {
+  font-family: var(--evn-font-mono, monospace); font-size: 12.5px;
+  color: var(--evn-ink-2, #4b5358); overflow-wrap: anywhere;
+}
+.lh-om__tags { margin-top: 16px; }
+.lh-om__counts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 14px; }
+.lh-om__type { font-family: var(--evn-font-mono, monospace); font-size: 12.5px; white-space: nowrap; }
+
+.lh-lineage { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: start; }
+.lh-lineage__title { margin: 0 0 10px; font-size: 14px; color: var(--evn-muted-3, #5a5248); }
+.lh-lineage__list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.lh-lineage__node {
+  display: flex; flex-direction: column; gap: 2px; padding: 10px 12px;
+  border: 1px solid var(--evn-line, #ece5da); border-radius: 10px; background: var(--evn-surface, #fffdf9);
+}
+.lh-lineage__type {
+  font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--evn-muted-3, #5a5248);
+}
+.lh-lineage__self { align-self: center; }
+.lh-lineage__self span {
+  display: inline-block; padding: 10px 14px; border-radius: 999px;
+  background: var(--evn-blue-soft, #e6eff8); color: var(--evn-navy, #153b5e); font-weight: 700;
+}
+.lh-lineage__self span::before { content: "→ "; }
+.lh-lineage__self span::after { content: " →"; }
+
+@media (max-width: 720px) {
+  .lh-lineage { grid-template-columns: 1fr; }
+  .lh-lineage__self { justify-self: center; }
+  .lh-lineage__self span::before, .lh-lineage__self span::after { content: "↓"; margin: 0 .3em; }
+}
