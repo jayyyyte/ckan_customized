@@ -1,0 +1,1 @@
+# Runtime dependencies come with CKAN itself (requests, PyYAML, redis).

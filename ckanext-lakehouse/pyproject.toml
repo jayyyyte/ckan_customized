@@ -1,0 +1,56 @@
+[project]
+name = "ckanext-lakehouse"
+version = "0.1.0"
+description = "Cổng dữ liệu EVN: khai báo đơn vị/nhóm/người dùng và tích hợp OpenMetadata cho CKAN 2.11"
+readme = "README.md"
+authors = [
+    {name = "jayyyyte"}
+]
+license = {text = "AGPL"}
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+keywords = ["CKAN", "OpenMetadata", "Lakehouse", "EVN"]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/jayyyyte/ckan_customized"
+
+[project.entry-points."ckan.plugins"]
+lakehouse = "ckanext.lakehouse.plugin:LakehousePlugin"
+
+[project.entry-points."babel.extractors"]
+ckan = "ckan.lib.extract:extract_ckan"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::sqlalchemy.exc.SADeprecationWarning",
+    "ignore::sqlalchemy.exc.SAWarning",
+    "ignore::DeprecationWarning",
+]
+addopts = "--ckan-ini test.ini"
+
+[tool.ruff]
+line-length = 120
+# Python 3.10: the ckan-base:2.11 image (docs/gotchas.md 23).
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+# Imports: stdlib, third party, then CKAN core, then this extension.
+[tool.ruff.lint.isort]
+known-first-party = ["ckanext"]
+section-order = ["future", "standard-library", "third-party", "ckan", "first-party", "local-folder"]
+
+[tool.ruff.lint.isort.sections]
+ckan = ["ckan"]

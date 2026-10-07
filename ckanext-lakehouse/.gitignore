@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+node_modules/
+.coverage
+htmlcov/
+# Compiled translations: built from .po with `pybabel compile`, locally and in the Dockerfile.
+*.mo
