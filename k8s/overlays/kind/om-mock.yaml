@@ -1,0 +1,81 @@
+# Rehearsal stand-in for the company's OpenMetadata (kind only, like postgres.yaml): serves
+# tools/openmetadata/sample-snapshot.json — fictional tables — through the OpenMetadata
+# REST API so `ckan lakehouse om sync` and the "Technical catalog" tab can be rehearsed.
+#
+# Not part of the kustomization: its files live outside this overlay, which kustomize
+# refuses to read. Deploy it with om-mock.sh, which also creates:
+#   ConfigMap ckan-om-mock-files   om_mock.py + snapshot.json
+#   Secret    ckan-om-mock         OM_TOKEN, the same value as CKANEXT__LAKEHOUSE__OM__API_TOKEN
+# The CKAN image already has Python, so no other image is needed on the nodes.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ckan-om-mock
+  namespace: lakehouse
+  labels:
+    app.kubernetes.io/name: ckan-om-mock
+    app.kubernetes.io/part-of: ckan
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ckan-om-mock
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ckan-om-mock
+        app.kubernetes.io/part-of: ckan
+    spec:
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      containers:
+        - name: om-mock
+          # Any tag of our image works; keep it on one that is imported on the nodes.
+          image: ckan-lakehouse:0.2.0
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
+          args:
+            - exec python3 /om/om_mock.py /om/snapshot.json --host 0.0.0.0 --port 8585 --token "$OM_TOKEN"
+          env:
+            - name: OM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ckan-om-mock
+                  key: OM_TOKEN
+          ports:
+            - containerPort: 8585
+          # The API needs the token, so probe the socket.
+          readinessProbe:
+            tcpSocket:
+              port: 8585
+            periodSeconds: 5
+          volumeMounts:
+            - name: files
+              mountPath: /om
+              readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: files
+          configMap:
+            name: ckan-om-mock-files
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ckan-om-mock
+  namespace: lakehouse
+  labels:
+    app.kubernetes.io/name: ckan-om-mock
+    app.kubernetes.io/part-of: ckan
+spec:
+  selector:
+    app.kubernetes.io/name: ckan-om-mock
+  ports:
+    - port: 8585
+      targetPort: 8585

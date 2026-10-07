@@ -28,7 +28,7 @@ st=$(api status_show)
 v=$(echo "$st" | jget 'd["result"]["ckan_version"]')
 expect "status_show reports 2.11.6 (got $v)" test "$v" = 2.11.6
 exts=$(echo "$st" | jget '" ".join(d["result"]["extensions"])')
-for e in evntheme activity tracking datastore xloader datatables_view envvars; do
+for e in evntheme lakehouse activity tracking datastore xloader datatables_view envvars; do
     expect "plugin $e loaded" grep -qw "$e" <<<"$exts"
 done
 
