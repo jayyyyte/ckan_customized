@@ -24,6 +24,7 @@ resources:
   - ckan.yaml
   - ckan-worker.yaml
   - ckan-tracking.yaml
+  - ckan-om-sync.yaml
 
 # Plain settings, shared by every overlay; an overlay merges its own on top.
 # The hash suffix in the generated name rolls the pods whenever a value changes.
@@ -36,4 +37,4 @@ configMapGenerator:
 # There is no registry, so the image must already be on the node (phase-3 §3.4).
 images:
   - name: ckan-lakehouse
-    newTag: 0.1.0
+    newTag: 0.2.0

@@ -1,0 +1,53 @@
+# Publishes OpenMetadata tables as CKAN datasets (`ckan lakehouse om sync`, ckanext-lakehouse).
+# Only writes what changed, so hourly runs leave the activity streams quiet. Exits at once
+# while CKANEXT__LAKEHOUSE__OM__URL is empty, and changes nothing if OpenMetadata is down.
+# Run it by hand:
+#   kubectl --context <ctx> -n lakehouse create job --from=cronjob/ckan-om-sync om-sync-now
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ckan-om-sync
+  labels:
+    app.kubernetes.io/name: ckan-om-sync
+spec:
+  # Minute 40: away from ckan-tracking-update (minute 15), both reindex datasets.
+  schedule: "40 * * * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: ckan-om-sync
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          automountServiceAccountToken: false
+          containers:
+            - name: om-sync
+              image: ckan-lakehouse
+              imagePullPolicy: IfNotPresent
+              # Like the worker: write ckan.plugins back first (gotchas 15b), no prerun.py.
+              command: ["/bin/bash", "-c"]
+              args:
+                - |
+                  set -euo pipefail
+                  ckan config-tool "$CKAN_INI" "ckan.plugins = ${CKAN__PLUGINS}"
+                  exec ckan -c "$CKAN_INI" lakehouse om sync
+              envFrom:
+                - configMapRef:
+                    name: ckan-config
+                - secretRef:
+                    name: ckan-secrets
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: "1"
+                  memory: 1Gi
