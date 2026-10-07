@@ -1,0 +1,19 @@
+{#- "Technical catalog" tab of the dataset page (included by ckanext-evntheme's read.html).
+    Active tab: rendered right away, so ?tab=openmetadata works without JS.
+    Otherwise lakehouse-om-panel loads /dataset/<id>/openmetadata when the tab is first shown. -#}
+{% asset 'lakehouse/lakehouse-css' %}
+{% asset 'lakehouse/lakehouse-js' %}
+<div class="lh-om" data-module="lakehouse-om-panel"
+     data-module-url="{{ h.url_for('lakehouse_om.panel', id=pkg.name) }}"
+     data-module-loaded="{{ 'true' if active else 'false' }}"
+     data-module-error="{{ _('Could not load the technical catalog. Reload the page to try again.') }}"
+     aria-busy="{{ 'false' if active else 'true' }}">
+  {% if active %}
+    {% snippet 'lakehouse/om_panel.html', pkg=pkg, om=h.lakehouse_om_panel(pkg) %}
+  {% else %}
+    <div class="evn-card evn-card--pad-lg lh-om__loading">
+      <p class="evn-muted">{{ _('Loading the technical catalog…') }}</p>
+      <noscript><p><a href="{{ h.url_for(pkg.type ~ '.read', id=pkg.name, tab='openmetadata') }}">{{ _('Show the technical catalog') }}</a></p></noscript>
+    </div>
+  {% endif %}
+</div>

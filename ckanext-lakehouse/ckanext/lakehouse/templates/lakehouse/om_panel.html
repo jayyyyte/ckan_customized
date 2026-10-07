@@ -1,0 +1,152 @@
+{#- Body of the "Technical catalog" tab. `om` comes from h.lakehouse_om_panel(pkg) (om/panel.py).
+    Also served alone by /dataset/<id>/openmetadata, so it must not extend a page template. -#}
+{% set table = om.table or {} %}
+{% set status_labels = {'Success': _('Passed'), 'Failed': _('Failed'), 'Aborted': _('Aborted'), 'Queued': _('Queued')} %}
+{% set status_styles = {'Success': 'good', 'Failed': 'danger', 'Aborted': 'outline', 'Queued': 'outline'} %}
+
+<section class="evn-card evn-card--pad-lg lh-om__summary" aria-labelledby="lh-om-title">
+  <div class="lh-om__head">
+    <h2 class="evn-card__title evn-card__title--lg" id="lh-om-title">{{ _('Technical catalog') }}</h2>
+    {% if om.om_url %}
+      <a class="evn-btn evn-btn--outline lh-om__open" href="{{ om.om_url }}" target="_blank" rel="noopener">{{ _('Open in OpenMetadata') }}</a>
+    {% endif %}
+  </div>
+  <p class="evn-card__text">
+    {{ _('This dataset describes a Lakehouse table registered in OpenMetadata, the technical catalog of the platform.') }}
+  </p>
+
+  {% if om.error %}
+    <p class="lh-om__notice" role="status">
+      {% if om.error == 'not-found' %}
+        {{ _('OpenMetadata no longer knows this table. The information below is from the last synchronisation.') }}
+      {% elif om.error == 'not-configured' %}
+        {{ _('The portal is not connected to OpenMetadata. The information below is from the last synchronisation.') }}
+      {% else %}
+        {{ _('OpenMetadata cannot be reached right now. The information below is from the last synchronisation.') }}
+      {% endif %}
+    </p>
+  {% elif om.fetched_at %}
+    <p class="lh-om__fresh">{{ _('Live from OpenMetadata, {time}.').format(time=h.time_ago_from_timestamp(om.fetched_at)) }}</p>
+  {% endif %}
+
+  <dl class="lh-om__facts">
+    <div><dt>{{ _('Source table') }}</dt><dd><code class="lh-om__fqn">{{ om.fqn }}</code></dd></div>
+    {% if table.service_type or table.service %}
+      <div><dt>{{ _('Source system') }}</dt><dd>{{ [table.service_type, table.service]|select|join(' · ') }}</dd></div>
+    {% endif %}
+    {% if table.table_type %}<div><dt>{{ _('Table type') }}</dt><dd>{{ table.table_type }}</dd></div>{% endif %}
+    {% if table.owners %}
+      <div><dt>{{ _('Technical owner') }}</dt><dd>{{ table.owners|map(attribute='name')|join(', ') }}</dd></div>
+    {% endif %}
+    {% if table.domains %}<div><dt>{{ _('OpenMetadata domain') }}</dt><dd>{{ table.domains|join(', ') }}</dd></div>{% endif %}
+    {% if table.tier %}<div><dt>{{ _('Tier') }}</dt><dd>{{ table.tier }}</dd></div>{% endif %}
+    {% if om.profile and om.profile.rows is number %}
+      <div><dt>{{ _('Rows') }}</dt>
+        <dd>{{ h.evn_number(om.profile.rows) }}{% if om.profile.at %} <span class="evn-muted">· {{ _('profiled {ago}').format(ago=h.time_ago_from_timestamp(om.profile.at)) }}</span>{% endif %}</dd></div>
+    {% endif %}
+    {% if table.weekly_queries is number %}
+      <div><dt>{{ _('Queries last week') }}</dt><dd>{{ h.evn_number(table.weekly_queries) }}</dd></div>
+    {% endif %}
+    {% set changed = table.updated_at or om.updated_at %}
+    {% if changed %}<div><dt>{{ _('Metadata changed') }}</dt><dd>{{ h.time_ago_from_timestamp(changed) }}</dd></div>{% endif %}
+  </dl>
+  {% if table.tags %}
+    <ul class="evn-tags lh-om__tags" aria-label="{{ _('OpenMetadata tags') }}">
+      {% for tag in table.tags %}<li><span class="evn-tag">{{ tag }}</span></li>{% endfor %}
+    </ul>
+  {% endif %}
+</section>
+
+{% if not om.error %}
+<section class="evn-card evn-card--pad-lg" aria-labelledby="lh-om-quality">
+  <h2 class="evn-card__title" id="lh-om-quality">{{ _('Data quality checks') }}</h2>
+  {% if om.tests is none %}
+    <p class="evn-muted">{{ _('The data quality results could not be loaded.') }}</p>
+  {% elif not om.tests.total %}
+    <p class="evn-muted">{{ _('No data quality check is defined for this table yet.') }}</p>
+  {% else %}
+    <p class="lh-om__counts">
+      {% for status in ['Success', 'Failed', 'Aborted', 'Queued'] if om.tests.counts[status] %}
+        <span class="evn-badge evn-badge--{{ status_styles[status] }}">{{ status_labels[status] }}: {{ om.tests.counts[status] }}</span>
+      {% endfor %}
+      <span class="evn-muted">{{ ungettext('{n} check in total', '{n} checks in total', om.tests.total).format(n=om.tests.total) }}</span>
+    </p>
+    <div class="evn-table-wrap">
+      <table class="evn-table">
+        <thead><tr><th scope="col">{{ _('Check') }}</th><th scope="col">{{ _('Column') }}</th><th scope="col">{{ _('Result') }}</th><th scope="col">{{ _('Last run') }}</th></tr></thead>
+        <tbody>
+          {% for test in om.tests['items'] %}
+            <tr>
+              <td>{{ test.name }}{% if test.test and test.test != test.name %}<br><span class="evn-muted">{{ test.test }}</span>{% endif %}</td>
+              <td>{% if test.column %}<code>{{ test.column }}</code>{% else %}<span class="evn-muted">{{ _('whole table') }}</span>{% endif %}</td>
+              <td><span class="evn-badge evn-badge--{{ status_styles.get(test.status, 'outline') }}">{{ status_labels.get(test.status, test.status) }}</span></td>
+              <td>{% if test.at %}{{ h.time_ago_from_timestamp(test.at) }}{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</section>
+
+<section class="evn-card evn-card--pad-lg" aria-labelledby="lh-om-lineage">
+  <h2 class="evn-card__title" id="lh-om-lineage">{{ _('Where the data comes from and goes to') }}</h2>
+  {% if om.lineage is none %}
+    <p class="evn-muted">{{ _('The lineage could not be loaded.') }}</p>
+  {% elif not om.lineage.upstream and not om.lineage.downstream %}
+    <p class="evn-muted">{{ _('OpenMetadata has no lineage for this table.') }}</p>
+  {% else %}
+    <div class="lh-lineage">
+      {% for side, title in [('upstream', _('Built from')), ('downstream', _('Used by'))] %}
+        <div class="lh-lineage__side">
+          <h3 class="lh-lineage__title">{{ title }}</h3>
+          {% if om.lineage[side] %}
+            <ul class="lh-lineage__list">
+              {% for node in om.lineage[side] %}
+                <li class="lh-lineage__node">
+                  <span class="lh-lineage__type">{{ node.type }}</span>
+                  {% if node.dataset %}
+                    <a href="{{ h.url_for('dataset.read', id=node.dataset.name) }}">{{ node.dataset.title or node.name }}</a>
+                  {% elif node.om_url %}
+                    <a href="{{ node.om_url }}" target="_blank" rel="noopener">{{ node.name }}</a>
+                  {% else %}
+                    {{ node.name }}
+                  {% endif %}
+                  {% if node.fqn %}<code class="lh-om__fqn">{{ node.fqn }}</code>{% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="evn-muted">{{ _('None') }}</p>
+          {% endif %}
+        </div>
+        {% if loop.first %}<div class="lh-lineage__self" aria-hidden="true"><span>{{ table.name or om.fqn.split('.')[-1] }}</span></div>{% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="evn-card evn-card--pad-lg" aria-labelledby="lh-om-columns">
+  <h2 class="evn-card__title" id="lh-om-columns">
+    {{ _('Columns') }} <span class="evn-muted">({{ om.columns|length }})</span>
+  </h2>
+  {% if om.columns %}
+    <div class="evn-table-wrap">
+      <table class="evn-table">
+        <thead><tr><th scope="col">{{ _('Column') }}</th><th scope="col">{{ _('Type') }}</th><th scope="col">{{ _('Description') }}</th></tr></thead>
+        <tbody>
+          {% for col in om.columns %}
+            <tr>
+              <td><code>{{ col.name }}</code>{% if col.constraint %} <span class="evn-badge evn-badge--outline">{{ col.constraint }}</span>{% endif %}</td>
+              <td class="lh-om__type">{{ col.type }}</td>
+              <td>{% if col.description %}{{ h.markdown_extract(col.description, 300) }}{% else %}<span class="evn-muted">—</span>{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="evn-muted">{{ _('OpenMetadata lists no columns for this table.') }}</p>
+  {% endif %}
+</section>
