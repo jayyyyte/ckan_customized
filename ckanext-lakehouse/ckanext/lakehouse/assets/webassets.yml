@@ -1,0 +1,15 @@
+# Assets of the "Technical catalog" tab, included by templates/lakehouse/om_tab.html.
+# The tab reuses the theme's classes (evn-card, evn-table, evn-badge); this only adds layout.
+lakehouse-css:
+  output: ckanext-lakehouse/%(version)s-lakehouse.css
+  contents:
+    - lakehouse.css
+
+lakehouse-js:
+  filters: rjsmin
+  output: ckanext-lakehouse/%(version)s-lakehouse.js
+  extra:
+    preload:
+      - base/main
+  contents:
+    - lakehouse-om-panel.js

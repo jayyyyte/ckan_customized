@@ -1,0 +1,143 @@
+# Demo structure of the EVN data portal for `ckan lakehouse bootstrap` (local development and
+# the kind rehearsal). Same organization and group names as ckanext-evntheme demo/portal.json,
+# so `ckan evntheme seed-demo` puts its 12 demo datasets into these organizations.
+# Every person below is fictional. For the company cluster copy this file, list the real units,
+# people and OpenMetadata teams/domains (see `ckan lakehouse om check`), and keep the copy outside
+# git if it holds personal e-mail addresses.
+#
+#   ckan -c ckan.ini lakehouse bootstrap portal.yaml --credentials ~/ckan/backup/new-users.csv
+#
+# Roles: organization admin | editor | member, group admin | member (docs/phase-4-content-openmetadata.md).
+# `openmetadata:` tells the OpenMetadata sync which organization owns a table (owner team, or
+# table FQN pattern) and which group (data domain) an OpenMetadata domain becomes.
+
+users:
+  - name: quantri-portal
+    fullname: "Quản trị Cổng dữ liệu"
+    email: quantri-portal@evn.example
+    about: "Quản trị toàn hệ thống (sysadmin)."
+    sysadmin: true
+  - name: npc-quantri
+    fullname: "Quản trị dữ liệu EVNNPC"
+    email: npc-quantri@evn.example
+    about: "Quản trị đơn vị EVNNPC: thêm/bớt thành viên, sửa mọi bộ dữ liệu của đơn vị."
+  - name: npc-bientap
+    fullname: "Biên tập viên EVNNPC"
+    email: npc-bientap@evn.example
+    about: "Biên tập viên EVNNPC: tạo và sửa bộ dữ liệu của đơn vị."
+  - name: kd-bientap
+    fullname: "Biên tập viên Ban Kinh doanh"
+    email: kd-bientap@evn.example
+    about: "Biên tập viên Ban Kinh doanh; thành viên miền Kinh doanh & DVKH."
+  - name: ktsx-bientap
+    fullname: "Biên tập viên Kỹ thuật – Sản xuất"
+    email: ktsx-bientap@evn.example
+    about: "Biên tập hai đơn vị kỹ thuật (Ban KTSX, A0)."
+  - name: a0-thanhvien
+    fullname: "Thành viên A0"
+    email: a0-thanhvien@evn.example
+    about: "Thành viên A0: đọc được dữ liệu riêng tư của đơn vị, không sửa."
+  - name: mien-ktat
+    fullname: "Phụ trách miền Kỹ thuật – An toàn"
+    email: mien-ktat@evn.example
+    about: "Quản trị nhóm (miền dữ liệu) Kỹ thuật – An toàn."
+  - name: nguoidung-xem
+    fullname: "Người dùng đã đăng nhập"
+    email: nguoidung-xem@evn.example
+    about: "Không thuộc đơn vị nào: chỉ thấy dữ liệu công khai."
+  - name: om-sync
+    fullname: "Đồng bộ OpenMetadata"
+    email: om-sync@evn.example
+    about: "Tài khoản kỹ thuật của job đồng bộ OpenMetadata (ckanext.lakehouse.om.sync_user)."
+
+organizations:
+  - name: trung-tam-dieu-do-htd-qg
+    title: "Trung tâm Điều độ Hệ thống điện Quốc gia"
+    description: "Điều độ vận hành hệ thống điện quốc gia, công bố thông số vận hành lưới truyền tải."
+    extras: {org_type: "affiliate", abbreviation: "A0", domain: "ky-thuat-an-toan"}
+    openmetadata:
+      teams: ["DieuDo"]
+      fqn: ["trino_lakehouse.iceberg_curated.van_hanh.*"]
+    members:
+      ktsx-bientap: editor
+      a0-thanhvien: member
+  - name: evnnpc
+    title: "Tổng công ty Điện lực miền Bắc"
+    description: "Phân phối và kinh doanh điện năng tại 27 tỉnh, thành phố miền Bắc."
+    extras: {org_type: "corporation", abbreviation: "NPC", domain: "kinh-doanh-dvkh"}
+    members:
+      npc-quantri: admin
+      npc-bientap: editor
+  - name: evncpc
+    title: "Tổng công ty Điện lực miền Trung"
+    description: "Phân phối và kinh doanh điện năng tại 13 tỉnh, thành phố miền Trung – Tây Nguyên."
+    extras: {org_type: "corporation", abbreviation: "CPC", domain: "kinh-doanh-dvkh"}
+  - name: ban-ky-thuat-san-xuat
+    title: "Ban Kỹ thuật – Sản xuất"
+    description: "Quản lý kỹ thuật, định mức và an toàn sản xuất."
+    extras: {org_type: "department", abbreviation: "KTSX", domain: "ky-thuat-an-toan"}
+    openmetadata:
+      teams: ["KyThuatSanXuat"]
+    members:
+      ktsx-bientap: editor
+  - name: ban-quan-ly-dau-thau
+    title: "Ban Quản lý đấu thầu"
+    description: "Quản lý mua sắm, danh mục vật tư và nhà cung cấp."
+    extras: {org_type: "department", abbreviation: "QLĐT", domain: "tai-chinh-vat-tu"}
+  - name: ban-tai-chinh-ke-toan
+    title: "Ban Tài chính – Kế toán"
+    description: "Quản lý tài chính, tồn kho và chi phí."
+    extras: {org_type: "department", abbreviation: "TCKT", domain: "tai-chinh-vat-tu"}
+    openmetadata:
+      teams: ["TaiChinh"]
+  - name: ban-kinh-doanh
+    title: "Ban Kinh doanh"
+    description: "Theo dõi sản lượng, doanh thu và dịch vụ khách hàng."
+    extras: {org_type: "department", abbreviation: "KD", domain: "kinh-doanh-dvkh"}
+    openmetadata:
+      teams: ["KinhDoanh"]
+      fqn: ["trino_lakehouse.iceberg_curated.kinh_doanh.*"]
+    members:
+      kd-bientap: editor
+      npc-quantri: member
+  - name: ban-quan-ly-dau-tu-xay-dung
+    title: "Ban Quản lý đầu tư xây dựng"
+    description: "Quản lý dự án, tiến độ và giải ngân đầu tư."
+    extras: {org_type: "department", abbreviation: "ĐTXD", domain: "dau-tu-xay-dung"}
+  - name: ban-to-chuc-nhan-su
+    title: "Ban Tổ chức & Nhân sự"
+    description: "Quản lý cơ cấu tổ chức, định biên và đào tạo."
+    extras: {org_type: "department", abbreviation: "TCNS", domain: "to-chuc-nhan-su"}
+
+groups:
+  - name: kinh-doanh-dvkh
+    title: "Kinh doanh & DVKH"
+    description: "Khách hàng, hóa đơn, chăm sóc khách hàng"
+    extras: {tone: blue}
+    openmetadata:
+      domains: ["KinhDoanh"]
+    members:
+      kd-bientap: member
+  - name: ky-thuat-an-toan
+    title: "Kỹ thuật – An toàn"
+    description: "Lưới điện, vận hành, sự cố"
+    extras: {tone: orange}
+    openmetadata:
+      domains: ["KyThuat", "VanHanh"]
+    members:
+      mien-ktat: admin
+      ktsx-bientap: member
+  - name: dau-tu-xay-dung
+    title: "Đầu tư xây dựng"
+    description: "Dự án, tiến độ, giải ngân"
+    extras: {tone: green}
+  - name: tai-chinh-vat-tu
+    title: "Tài chính – Vật tư"
+    description: "Kho, mua sắm, chi phí"
+    extras: {tone: sky}
+    openmetadata:
+      domains: ["TaiChinh"]
+  - name: to-chuc-nhan-su
+    title: "Tổ chức – Nhân sự"
+    description: "Đơn vị, định biên, đào tạo"
+    extras: {tone: sand}

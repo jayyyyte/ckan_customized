@@ -1,0 +1,163 @@
+# Vietnamese translations for ckanext-lakehouse (English msgids).
+# Extract: pybabel extract -F babel.cfg -k N_ -o /tmp/lh.pot ckanext   (README, "Translations")
+# Compile: pybabel compile -d ckanext/lakehouse/i18n -D ckanext-lakehouse
+msgid ""
+msgstr ""
+"Project-Id-Version: ckanext-lakehouse 0.1.0
+"
+"Language: vi
+"
+"MIME-Version: 1.0
+"
+"Content-Type: text/plain; charset=UTF-8
+"
+"Content-Transfer-Encoding: 8bit
+"
+"Plural-Forms: nplurals=1; plural=0;
+"
+
+msgid "Dataset not found"
+msgstr "Không tìm thấy bộ dữ liệu"
+
+msgid "Not authorized to see this page"
+msgstr "Bạn không có quyền xem trang này"
+
+msgid "Passed"
+msgstr "Đạt"
+
+msgid "Failed"
+msgstr "Không đạt"
+
+msgid "Aborted"
+msgstr "Bị hủy"
+
+msgid "Queued"
+msgstr "Đang chờ"
+
+msgid "Technical catalog"
+msgstr "Danh mục kỹ thuật"
+
+msgid "Open in OpenMetadata"
+msgstr "Mở trên OpenMetadata"
+
+msgid ""
+"This dataset describes a Lakehouse table registered in OpenMetadata, the technical catalog of the"
+" platform."
+msgstr ""
+"Bộ dữ liệu này mô tả một bảng của Lakehouse đã đăng ký trong OpenMetadata, danh mục kỹ thuật của "
+"nền tảng."
+
+msgid "OpenMetadata no longer knows this table. The information below is from the last synchronisation."
+msgstr "OpenMetadata không còn bảng này. Thông tin dưới đây lấy từ lần đồng bộ gần nhất."
+
+msgid ""
+"The portal is not connected to OpenMetadata. The information below is from the last "
+"synchronisation."
+msgstr "Cổng dữ liệu chưa kết nối OpenMetadata. Thông tin dưới đây lấy từ lần đồng bộ gần nhất."
+
+msgid "OpenMetadata cannot be reached right now. The information below is from the last synchronisation."
+msgstr "Hiện không kết nối được OpenMetadata. Thông tin dưới đây lấy từ lần đồng bộ gần nhất."
+
+msgid "Live from OpenMetadata, {time}."
+msgstr "Lấy trực tiếp từ OpenMetadata ({time})."
+
+msgid "Source table"
+msgstr "Bảng nguồn"
+
+msgid "Source system"
+msgstr "Hệ thống nguồn"
+
+msgid "Table type"
+msgstr "Loại bảng"
+
+msgid "Technical owner"
+msgstr "Đơn vị phụ trách kỹ thuật"
+
+msgid "OpenMetadata domain"
+msgstr "Miền trên OpenMetadata"
+
+msgid "Tier"
+msgstr "Mức độ quan trọng (Tier)"
+
+msgid "Rows"
+msgstr "Số dòng"
+
+msgid "profiled {ago}"
+msgstr "đo {ago}"
+
+msgid "Queries last week"
+msgstr "Lượt truy vấn tuần qua"
+
+msgid "Metadata changed"
+msgstr "Metadata cập nhật"
+
+msgid "OpenMetadata tags"
+msgstr "Nhãn trên OpenMetadata"
+
+msgid "Data quality checks"
+msgstr "Kiểm định chất lượng dữ liệu"
+
+msgid "The data quality results could not be loaded."
+msgstr "Không tải được kết quả kiểm định chất lượng."
+
+msgid "No data quality check is defined for this table yet."
+msgstr "Bảng này chưa có phép kiểm định chất lượng nào."
+
+msgid "{n} check in total"
+msgid_plural "{n} checks in total"
+msgstr[0] "tổng cộng {n} phép kiểm định"
+
+msgid "Check"
+msgstr "Phép kiểm định"
+
+msgid "Column"
+msgstr "Cột"
+
+msgid "Result"
+msgstr "Kết quả"
+
+msgid "Last run"
+msgstr "Lần chạy gần nhất"
+
+msgid "whole table"
+msgstr "cả bảng"
+
+msgid "Where the data comes from and goes to"
+msgstr "Dữ liệu đến từ đâu và đi về đâu"
+
+msgid "The lineage could not be loaded."
+msgstr "Không tải được dòng dữ liệu (lineage)."
+
+msgid "OpenMetadata has no lineage for this table."
+msgstr "OpenMetadata chưa có dòng dữ liệu (lineage) của bảng này."
+
+msgid "Built from"
+msgstr "Được tạo từ"
+
+msgid "Used by"
+msgstr "Được dùng bởi"
+
+msgid "None"
+msgstr "Không có"
+
+msgid "Columns"
+msgstr "Các cột"
+
+msgid "Type"
+msgstr "Kiểu"
+
+msgid "Description"
+msgstr "Mô tả"
+
+msgid "OpenMetadata lists no columns for this table."
+msgstr "OpenMetadata không có danh sách cột của bảng này."
+
+msgid "Could not load the technical catalog. Reload the page to try again."
+msgstr "Không tải được danh mục kỹ thuật. Hãy tải lại trang để thử lại."
+
+msgid "Loading the technical catalog…"
+msgstr "Đang tải danh mục kỹ thuật…"
+
+msgid "Show the technical catalog"
+msgstr "Xem danh mục kỹ thuật"
+
