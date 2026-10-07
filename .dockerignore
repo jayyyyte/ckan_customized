@@ -11,6 +11,7 @@ CKAN Custom Theme UI Mockup
 README.md
 CLAUDE.md
 setup_step*.sh
+tools
 
 # Never ship secrets or images
 .env
@@ -20,6 +21,8 @@ secrets.env
 *.kubeconfig
 *.tar
 *.tar.gz
+*.om-snapshot.json
+*-users*.csv
 
 # Build leftovers of the local (WSL) install; the image builds its own
 **/__pycache__

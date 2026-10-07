@@ -62,6 +62,20 @@ ckan -c ~/ckan/etc/ckan.ini evntheme seed-demo --reset    # xóa sạch rồi n�
 
 Đăng nhập bằng tài khoản `admin` đã tạo ở bước cài đặt.
 
+## Người dùng, phân quyền và OpenMetadata (GĐ4)
+
+```bash
+# Org, group, user demo và vai trò (chạy lại an toàn). Mật khẩu user mới ghi ra file CSV
+ckan -c ~/ckan/etc/ckan.ini lakehouse bootstrap   ckanext-lakehouse/ckanext/lakehouse/demo/portal.yaml --credentials ~/ckan/backup/users.csv
+
+# OpenMetadata giả lập (laptop không vào được OM thật), rồi đồng bộ bảng thành dataset
+python3 tools/openmetadata/om_mock.py tools/openmetadata/sample-snapshot.json --token dev-token &
+ckan -c ~/ckan/etc/ckan.ini lakehouse om check
+ckan -c ~/ckan/etc/ckan.ini lakehouse om sync --dry-run
+```
+
+Chi tiết: [docs/phase-4-content-openmetadata.md](docs/phase-4-content-openmetadata.md).
+
 ## Chạy bằng Docker (GĐ2)
 
 Toàn bộ portal (Postgres + Solr + Redis + CKAN + worker XLoader) chạy bằng `docker compose`, dùng đúng image sẽ deploy lên K8s:
@@ -109,6 +123,8 @@ Cluster công ty (dùng chung, **mọi lệnh ghi cần xác nhận**): làm đ�
 |---|---|
 | `docs/` | Roadmap, tài liệu từng giai đoạn, gotchas — xem [mục lục](docs/README.md) |
 | `ckanext-evntheme/` | Theme "Cổng dữ liệu EVN" — xem [README](ckanext-evntheme/README.md) |
+| `ckanext-lakehouse/` | Khai báo org/user/vai trò, đồng bộ và tab OpenMetadata — xem [README](ckanext-lakehouse/README.md) |
+| `tools/openmetadata/` | Ghi snapshot OpenMetadata (máy công ty) và mock API (laptop) |
 | `docker/` | Dockerfile, compose, entrypoint và script sinh `.env` cho GĐ2 |
 | `k8s/` | Manifest kustomize (base + overlay `lab`/`kind`), script audit / sinh secret / tạo DB, smoke test cho GĐ3 |
 | `setup_step*.sh` | Script cài đặt/chuyển đổi môi trường local (user tự chạy) |

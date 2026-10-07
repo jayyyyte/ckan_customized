@@ -14,3 +14,11 @@ ckan.ini
 # Image tarballs exported for the cluster (docker save)
 *.tar
 *.tar.gz
+
+# OpenMetadata snapshots recorded on the company network (tools/openmetadata/README.md):
+# real table names and owners. Only the fictional sample-snapshot.json is committed.
+*.om-snapshot.json
+tools/openmetadata/snapshots/
+
+# Passwords written by `ckan lakehouse bootstrap --credentials`
+*-users*.csv
