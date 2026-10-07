@@ -1,0 +1,794 @@
+{
+ "format": "lakehouse-om-snapshot/1",
+ "recorded_at": "2026-10-06T00:00:00Z",
+ "source": "synthetic (tools/openmetadata/README.md): fictional data, not from any real OpenMetadata",
+ "version": {
+  "version": "1.6.2"
+ },
+ "tables": [
+  {
+   "id": "b213236c-45ff-5cf9-bca1-99962d687017",
+   "name": "curated_outage_summary",
+   "fullyQualifiedName": "trino_lakehouse.iceberg_curated.van_hanh.curated_outage_summary",
+   "description": "Tổng hợp sự cố mất điện theo ngày, tỉnh và xuất tuyến; tính chỉ số **SAIDI/SAIFI**. Do DAG Airflow `curated_outage_summary` tạo mỗi đêm từ sự kiện SCADA/OMS.",
+   "tableType": "Iceberg",
+   "serviceType": "Trino",
+   "service": {
+    "id": "23be2008-4828-5f54-b00c-858e1f578cd7",
+    "type": "databaseService",
+    "name": "trino_lakehouse",
+    "displayName": "Trino Lakehouse"
+   },
+   "columns": [
+    {
+     "name": "outage_date",
+     "dataType": "DATE",
+     "dataTypeDisplay": "date",
+     "description": "Ngày xảy ra sự cố (giờ Việt Nam).",
+     "tags": []
+    },
+    {
+     "name": "province_code",
+     "dataType": "VARCHAR",
+     "dataTypeDisplay": "varchar(3)",
+     "description": "Mã tỉnh theo danh mục chuẩn DM_TINH.",
+     "tags": []
+    },
+    {
+     "name": "feeder_id",
+     "dataType": "VARCHAR",
+     "dataTypeDisplay": "varchar(20)",
+     "description": "Mã xuất tuyến trung áp.",
+     "tags": []
+    },
+    {
+     "name": "outage_count",
+     "dataType": "INT",
+     "dataTypeDisplay": "int",
+     "description": "Số lần mất điện trong ngày.",
+     "tags": []
+    },
+    {
+     "name": "saidi_minutes",
+     "dataType": "DOUBLE",
+     "dataTypeDisplay": "double",
+     "description": "Thời gian mất điện trung bình của khách hàng (phút).",
+     "tags": []
+    },
+    {
+     "name": "saifi",
+     "dataType": "DOUBLE",
+     "dataTypeDisplay": "double",
+     "description": "Số lần mất điện trung bình của khách hàng.",
+     "tags": []
+    }
+   ],
+   "owners": [
+    {
+     "type": "team",
+     "name": "DieuDo",
+     "displayName": "Trung tâm Điều độ"
+    }
+   ],
+   "domains": [
+    {
+     "id": "f60c2d86-9d67-5218-864f-7ff2986244b1",
+     "type": "domain",
+     "name": "VanHanh",
+     "displayName": "Vận hành",
+     "fullyQualifiedName": "VanHanh"
+    }
+   ],
+   "tags": [
+    {
+     "tagFQN": "Tier.Tier1",
+     "source": "Classification"
+    },
+    {
+     "tagFQN": "DataLayer.Gold",
+     "source": "Classification"
+    }
+   ],
+   "followers": [
+    {},
+    {},
+    {}
+   ],
+   "updatedAt": 1791129600000,
+   "version": 0.3,
+   "deleted": false,
+   "displayName": "Tổng hợp sự cố mất điện theo ngày",
+   "usageSummary": {
+    "weeklyStats": {
+     "count": 412
+    }
+   }
+  },
+  {
+   "id": "93b7af76-3b42-5908-87c1-89dfa1fa3bb0",
+   "name": "grid_loss_monthly",
+   "fullyQualifiedName": "trino_lakehouse.iceberg_curated.van_hanh.grid_loss_monthly",
+   "description": "Tổn thất điện năng lưới phân phối theo tháng và đơn vị.",
+   "tableType": "Iceberg",
+   "serviceType": "Trino",
+   "service": {
+    "id": "23be2008-4828-5f54-b00c-858e1f578cd7",
+    "type": "databaseService",
+    "name": "trino_lakehouse",
+    "displayName": "Trino Lakehouse"
+   },
+   "columns": [
+    {
+     "name": "month",
+     "dataType": "DATE",
+     "dataTypeDisplay": "date",
+     "description": "Tháng (ngày đầu tháng).",
+     "tags": []
+    },
+    {
+     "name": "unit_code",
+     "dataType": "VARCHAR",
+     "dataTypeDisplay": "varchar",
+     "description": "Mã đơn vị.",
+     "tags": []
+    },
+    {
+     "name": "energy_received_mwh",
+     "dataType": "DOUBLE",
+     "dataTypeDisplay": "double",
+     "description": "Điện nhận đầu nguồn (MWh).",
+     "tags": []
+    },
+    {
+     "name": "loss_percent",
+     "dataType": "DOUBLE",
+     "dataTypeDisplay": "double",
+     "description": "Tỷ lệ tổn thất (%).",
+     "tags": []
+    }
+   ],
+   "owners": [
+    {
+     "type": "user",
+     "name": "nguyen.van.an",
+     "displayName": "Nguyễn Văn An"
+    }
+   ],
+   "domains": [
+    {
+     "id": "f60c2d86-9d67-5218-864f-7ff2986244b1",
+     "type": "domain",
+     "name": "VanHanh",
+     "displayName": "Vận hành",
+     "fullyQualifiedName": "VanHanh"
+    }
+   ],
+   "tags": [
+    {
+     "tagFQN": "DataLayer.Gold",
+     "source": "Classification"
+    }
+   ],
+   "followers": [
+    {},
+    {},
+    {}
+   ],
+   "updatedAt": 1790438400000,
+   "version": 0.3,
+   "deleted": false,
+   "usageSummary": {
+    "weeklyStats": {
+     "count": 57
+    }
+   }
+  },
+  {
+   "id": "135699de-70c6-5e79-b05e-fcb56e62b651",
+   "name": "fact_electricity_sales",
+   "fullyQualifiedName": "trino_lakehouse.iceberg_curated.kinh_doanh.fact_electricity_sales",
+   "description": "Sản lượng điện thương phẩm và doanh thu theo tháng, nhóm khách hàng và tỉnh.",
+   "tableType": "Iceberg",
+   "serviceType": "Trino",
+   "service": {
+    "id": "23be2008-4828-5f54-b00c-858e1f578cd7",
+    "type": "databaseService",
+    "name": "trino_lakehouse",
+    "displayName": "Trino Lakehouse"
+   },
+   "columns": [
+    {
+     "name": "month",
+     "dataType": "DATE",
+     "dataTypeDisplay": "date",
+     "description": "Tháng.",
+     "tags": []
+    },
+    {
+     "name": "customer_group",
+     "dataType": "VARCHAR",
+     "dataTypeDisplay": "varchar",
+     "description": "Nhóm khách hàng (sinh hoạt, SX, KD...).",
+     "tags": []
+    },
+    {
+     "name": "province_code",
+     "dataType": "VARCHAR",
+     "dataTypeDisplay": "varchar",
+     "description": "Mã tỉnh.",
+     "tags": []
+    },
+    {
+     "name": "kwh_sold",
+     "dataType": "BIGINT",
+     "dataTypeDisplay": "bigint",
+     "description": "Điện thương phẩm (kWh).",
+     "tags": []
+    },
+    {
+     "name": "revenue_vnd",
+     "dataType": "DECIMAL",
+     "dataTypeDisplay": "decimal(18,0)",
+     "description": "Doanh thu (đồng).",
+     "tags": []
+    }
+   ],
+   "owners": [
+    {
+     "type": "team",
+     "name": "KinhDoanh",
+     "displayName": "Ban Kinh doanh"
+    }
+   ],
+   "domains": [
+    {
+     "id": "04393052-e7ea-57e5-915e-ce16367623aa",
+     "type": "domain",
+     "name": "KinhDoanh",
+     "displayName": "Kinh doanh",
+     "fullyQualifiedName": "KinhDoanh"
+    }
+   ],
+   "tags": [
+    {
+     "tagFQN": "Tier.Tier2",
+     "source": "Classification"
+    },
+    {
+     "tagFQN": "DataLayer.Gold",
+     "source": "Classification"
+    }
+   ],
+   "followers": [
+    {},
+    {},
+    {}
+   ],
+   "updatedAt": 1790956800000,
+   "version": 0.3,
+   "deleted": false,
+   "displayName": "Điện thương phẩm và doanh thu theo tháng",
+   "usageSummary": {
+    "weeklyStats": {
+     "count": 230
+    }
+   }
+  },
+  {
+   "id": "7dfafbe1-1199-5cc5-bb23-6812cc2ca676",
+   "name": "dim_customer",
+   "fullyQualifiedName": "trino_lakehouse.iceberg_curated.kinh_doanh.dim_customer",
+   "description": "Danh mục khách hàng dùng điện (đã chuẩn hóa). Chứa dữ liệu cá nhân: chỉ chia sẻ nội bộ.",
+   "tableType": "Iceberg",
+   "serviceType": "Trino",
+   "service": {
+    "id": "23be2008-4828-5f54-b00c-858e1f578cd7",
+    "type": "databaseService",
+    "name": "trino_lakehouse",
+    "displayName": "Trino Lakehouse"
+   },
+   "columns": [
+    {
+     "name": "customer_id",
+     "dataType": "VARCHAR",
+     "dataTypeDisplay": "varchar",
+     "description": "Mã khách hàng.",
+     "tags": [],
+     "constraint": "PRIMARY_KEY"
+    },
+    {
+     "name": "customer_name",
+     "dataType": "VARCHAR",
+     "dataTypeDisplay": "varchar",
+     "description": "Tên khách hàng.",
+     "tags": [
+      {
+       "tagFQN": "PII.Sensitive"
+      }
+     ]
+    },
+    {
+     "name": "address",
+     "dataType": "VARCHAR",
+     "dataTypeDisplay": "varchar",
+     "description": "Địa chỉ sử dụng điện.",
+     "tags": [
+      {
+       "tagFQN": "PII.Sensitive"
+      }
+     ]
+    },
+    {
+     "name": "tariff_code",
+     "dataType": "VARCHAR",
+     "dataTypeDisplay": "varchar",
+     "description": "Mã biểu giá.",
+     "tags": []
+    },
+    {
+     "name": "province_code",
+     "dataType": "VARCHAR",
+     "dataTypeDisplay": "varchar",
+     "description": "Mã tỉnh.",
+     "tags": []
+    }
+   ],
+   "owners": [
+    {
+     "type": "team",
+     "name": "KinhDoanh",
+     "displayName": "Ban Kinh doanh"
+    }
+   ],
+   "domains": [
+    {
+     "id": "04393052-e7ea-57e5-915e-ce16367623aa",
+     "type": "domain",
+     "name": "KinhDoanh",
+     "displayName": "Kinh doanh",
+     "fullyQualifiedName": "KinhDoanh"
+    }
+   ],
+   "tags": [
+    {
+     "tagFQN": "DataLayer.Silver",
+     "source": "Classification"
+    },
+    {
+     "tagFQN": "PII.Sensitive",
+     "source": "Classification"
+    }
+   ],
+   "followers": [
+    {},
+    {},
+    {}
+   ],
+   "updatedAt": 1790697600000,
+   "version": 0.3,
+   "deleted": false,
+   "usageSummary": {
+    "weeklyStats": {
+     "count": 88
+    }
+   }
+  },
+  {
+   "id": "54b88af9-4171-5ad2-9515-663698ef53b9",
+   "name": "dim_substation",
+   "fullyQualifiedName": "trino_lakehouse.iceberg_curated.ky_thuat.dim_substation",
+   "description": "Danh mục trạm biến áp 110kV–500kV: vị trí, cấp điện áp, công suất đặt.",
+   "tableType": "Iceberg",
+   "serviceType": "Trino",
+   "service": {
+    "id": "23be2008-4828-5f54-b00c-858e1f578cd7",
+    "type": "databaseService",
+    "name": "trino_lakehouse",
+    "displayName": "Trino Lakehouse"
+   },
+   "columns": [
+    {
+     "name": "substation_id",
+     "dataType": "VARCHAR",
+     "dataTypeDisplay": "varchar",
+     "description": "Mã trạm.",
+     "tags": [],
+     "constraint": "PRIMARY_KEY"
+    },
+    {
+     "name": "name",
+     "dataType": "VARCHAR",
+     "dataTypeDisplay": "varchar",
+     "description": "Tên trạm.",
+     "tags": []
+    },
+    {
+     "name": "voltage_kv",
+     "dataType": "INT",
+     "dataTypeDisplay": "int",
+     "description": "Cấp điện áp (kV).",
+     "tags": []
+    },
+    {
+     "name": "capacity_mva",
+     "dataType": "DOUBLE",
+     "dataTypeDisplay": "double",
+     "description": "Tổng công suất đặt (MVA).",
+     "tags": []
+    },
+    {
+     "name": "lat",
+     "dataType": "DOUBLE",
+     "dataTypeDisplay": "double",
+     "description": "",
+     "tags": []
+    },
+    {
+     "name": "lon",
+     "dataType": "DOUBLE",
+     "dataTypeDisplay": "double",
+     "description": "",
+     "tags": []
+    }
+   ],
+   "owners": [
+    {
+     "type": "team",
+     "name": "KyThuatSanXuat",
+     "displayName": "Ban Kỹ thuật – Sản xuất"
+    }
+   ],
+   "domains": [
+    {
+     "id": "bdac6c92-d6fa-5e2e-bf5e-6196d9dd6a0a",
+     "type": "domain",
+     "name": "KyThuat",
+     "displayName": "Kỹ thuật",
+     "fullyQualifiedName": "KyThuat"
+    }
+   ],
+   "tags": [
+    {
+     "tagFQN": "Tier.Tier2",
+     "source": "Classification"
+    },
+    {
+     "tagFQN": "DataLayer.Gold",
+     "source": "Classification"
+    }
+   ],
+   "followers": [
+    {},
+    {},
+    {}
+   ],
+   "updatedAt": 1789488000000,
+   "version": 0.3,
+   "deleted": false,
+   "usageSummary": {
+    "weeklyStats": {
+     "count": 34
+    }
+   }
+  },
+  {
+   "id": "24293a24-4d2d-5e7f-88db-9c0d53a9eb93",
+   "name": "fact_inventory",
+   "fullyQualifiedName": "trino_lakehouse.iceberg_curated.tai_chinh.fact_inventory",
+   "description": "Tồn kho vật tư theo kho và tháng. Chưa giao đơn vị phụ trách trên CKAN.",
+   "tableType": "Iceberg",
+   "serviceType": "Trino",
+   "service": {
+    "id": "23be2008-4828-5f54-b00c-858e1f578cd7",
+    "type": "databaseService",
+    "name": "trino_lakehouse",
+    "displayName": "Trino Lakehouse"
+   },
+   "columns": [
+    {
+     "name": "month",
+     "dataType": "DATE",
+     "dataTypeDisplay": "date",
+     "description": "",
+     "tags": []
+    },
+    {
+     "name": "warehouse_code",
+     "dataType": "VARCHAR",
+     "dataTypeDisplay": "varchar",
+     "description": "",
+     "tags": []
+    },
+    {
+     "name": "material_code",
+     "dataType": "VARCHAR",
+     "dataTypeDisplay": "varchar",
+     "description": "",
+     "tags": []
+    },
+    {
+     "name": "quantity",
+     "dataType": "DOUBLE",
+     "dataTypeDisplay": "double",
+     "description": "",
+     "tags": []
+    },
+    {
+     "name": "value_vnd",
+     "dataType": "DECIMAL",
+     "dataTypeDisplay": "decimal(18,0)",
+     "description": "",
+     "tags": []
+    }
+   ],
+   "owners": [
+    {
+     "type": "team",
+     "name": "DataPlatform",
+     "displayName": "Data Platform"
+    }
+   ],
+   "domains": [],
+   "tags": [
+    {
+     "tagFQN": "DataLayer.Gold",
+     "source": "Classification"
+    }
+   ],
+   "followers": [
+    {},
+    {},
+    {}
+   ],
+   "updatedAt": 1791043200000,
+   "version": 0.3,
+   "deleted": false
+  },
+  {
+   "id": "6055f728-1af7-52b5-ac9d-e27b236f320e",
+   "name": "raw_outage_events",
+   "fullyQualifiedName": "trino_lakehouse.iceberg_raw.ingest.raw_outage_events",
+   "description": "Sự kiện mất điện thô từ OMS (tầng raw, không công bố).",
+   "tableType": "Iceberg",
+   "serviceType": "Trino",
+   "service": {
+    "id": "23be2008-4828-5f54-b00c-858e1f578cd7",
+    "type": "databaseService",
+    "name": "trino_lakehouse",
+    "displayName": "Trino Lakehouse"
+   },
+   "columns": [
+    {
+     "name": "event_id",
+     "dataType": "VARCHAR",
+     "dataTypeDisplay": "varchar",
+     "description": "",
+     "tags": []
+    },
+    {
+     "name": "event_time",
+     "dataType": "TIMESTAMP",
+     "dataTypeDisplay": "timestamp",
+     "description": "",
+     "tags": []
+    },
+    {
+     "name": "feeder_id",
+     "dataType": "VARCHAR",
+     "dataTypeDisplay": "varchar",
+     "description": "",
+     "tags": []
+    },
+    {
+     "name": "payload",
+     "dataType": "JSON",
+     "dataTypeDisplay": "json",
+     "description": "",
+     "tags": []
+    }
+   ],
+   "owners": [
+    {
+     "type": "team",
+     "name": "DataPlatform",
+     "displayName": "Data Platform"
+    }
+   ],
+   "domains": [],
+   "tags": [
+    {
+     "tagFQN": "DataLayer.Bronze",
+     "source": "Classification"
+    }
+   ],
+   "followers": [
+    {},
+    {},
+    {}
+   ],
+   "updatedAt": 1791216000000,
+   "version": 0.3,
+   "deleted": false
+  }
+ ],
+ "profiles": {
+  "trino_lakehouse.iceberg_curated.van_hanh.curated_outage_summary": {
+   "timestamp": 1791198000000,
+   "rowCount": 1284530,
+   "columnCount": 6
+  },
+  "trino_lakehouse.iceberg_curated.kinh_doanh.fact_electricity_sales": {
+   "timestamp": 1791108000000,
+   "rowCount": 18240,
+   "columnCount": 5
+  },
+  "trino_lakehouse.iceberg_curated.ky_thuat.dim_substation": {
+   "timestamp": 1790956800000,
+   "rowCount": 1046,
+   "columnCount": 6
+  }
+ },
+ "lineage": {
+  "trino_lakehouse.iceberg_curated.van_hanh.curated_outage_summary": {
+   "nodes": [
+    {
+     "id": "6055f728-1af7-52b5-ac9d-e27b236f320e",
+     "type": "table",
+     "name": "raw_outage_events",
+     "fullyQualifiedName": "trino_lakehouse.iceberg_raw.ingest.raw_outage_events"
+    },
+    {
+     "id": "5441caca-459d-520b-b5ae-52e68aedd807",
+     "type": "pipeline",
+     "name": "curated_outage_summary",
+     "fullyQualifiedName": "airflow_lakehouse.curated_outage_summary"
+    },
+    {
+     "id": "13867fcc-c58f-5d8e-bc9e-f3940d943894",
+     "type": "dashboard",
+     "name": "Báo cáo độ tin cậy cung cấp điện",
+     "fullyQualifiedName": "superset.reliability_report"
+    },
+    {
+     "id": "93b7af76-3b42-5908-87c1-89dfa1fa3bb0",
+     "type": "table",
+     "name": "grid_loss_monthly",
+     "fullyQualifiedName": "trino_lakehouse.iceberg_curated.van_hanh.grid_loss_monthly"
+    }
+   ],
+   "upstreamEdges": [
+    {
+     "fromEntity": "6055f728-1af7-52b5-ac9d-e27b236f320e",
+     "toEntity": "b213236c-45ff-5cf9-bca1-99962d687017"
+    },
+    {
+     "fromEntity": "5441caca-459d-520b-b5ae-52e68aedd807",
+     "toEntity": "b213236c-45ff-5cf9-bca1-99962d687017"
+    }
+   ],
+   "downstreamEdges": [
+    {
+     "fromEntity": "b213236c-45ff-5cf9-bca1-99962d687017",
+     "toEntity": "13867fcc-c58f-5d8e-bc9e-f3940d943894"
+    },
+    {
+     "fromEntity": "b213236c-45ff-5cf9-bca1-99962d687017",
+     "toEntity": "93b7af76-3b42-5908-87c1-89dfa1fa3bb0"
+    }
+   ]
+  },
+  "trino_lakehouse.iceberg_curated.kinh_doanh.fact_electricity_sales": {
+   "nodes": [
+    {
+     "id": "7dfafbe1-1199-5cc5-bb23-6812cc2ca676",
+     "type": "table",
+     "name": "dim_customer",
+     "fullyQualifiedName": "trino_lakehouse.iceberg_curated.kinh_doanh.dim_customer"
+    }
+   ],
+   "upstreamEdges": [
+    {
+     "fromEntity": "7dfafbe1-1199-5cc5-bb23-6812cc2ca676",
+     "toEntity": "135699de-70c6-5e79-b05e-fcb56e62b651"
+    }
+   ],
+   "downstreamEdges": []
+  }
+ },
+ "testCases": {
+  "trino_lakehouse.iceberg_curated.van_hanh.curated_outage_summary": [
+   {
+    "name": "outage_date_not_null",
+    "displayName": "outage_date_not_null",
+    "entityLink": "<#E::table::trino_lakehouse.iceberg_curated.van_hanh.curated_outage_summary::columns::outage_date>",
+    "testDefinition": {
+     "id": "80aab53a-04a9-5147-afcb-f3199d11da96",
+     "type": "testDefinition",
+     "name": "columnValuesToBeNotNull",
+     "displayName": "columnValuesToBeNotNull"
+    },
+    "testCaseResult": {
+     "testCaseStatus": "Success",
+     "timestamp": 1791198000000
+    }
+   },
+   {
+    "name": "saidi_non_negative",
+    "displayName": "saidi_non_negative",
+    "entityLink": "<#E::table::trino_lakehouse.iceberg_curated.van_hanh.curated_outage_summary::columns::saidi_minutes>",
+    "testDefinition": {
+     "id": "ba21e302-1516-5ee2-a0f4-154b045cea22",
+     "type": "testDefinition",
+     "name": "columnValuesToBeBetween",
+     "displayName": "columnValuesToBeBetween"
+    },
+    "testCaseResult": {
+     "testCaseStatus": "Success",
+     "timestamp": 1791198000000
+    }
+   },
+   {
+    "name": "province_in_code_list",
+    "displayName": "province_in_code_list",
+    "entityLink": "<#E::table::trino_lakehouse.iceberg_curated.van_hanh.curated_outage_summary::columns::province_code>",
+    "testDefinition": {
+     "id": "ea9880c9-380d-50cc-9b05-03812f00019f",
+     "type": "testDefinition",
+     "name": "columnValuesToBeInSet",
+     "displayName": "columnValuesToBeInSet"
+    },
+    "testCaseResult": {
+     "testCaseStatus": "Failed",
+     "timestamp": 1791198000000
+    }
+   },
+   {
+    "name": "row_count_daily",
+    "displayName": "row_count_daily",
+    "entityLink": "<#E::table::trino_lakehouse.iceberg_curated.van_hanh.curated_outage_summary>",
+    "testDefinition": {
+     "id": "8f2bfbd0-5057-5cae-a07f-0fbf7f44fe64",
+     "type": "testDefinition",
+     "name": "tableRowCountToBeBetween",
+     "displayName": "tableRowCountToBeBetween"
+    },
+    "testCaseResult": {
+     "testCaseStatus": "Success",
+     "timestamp": 1791198000000
+    }
+   }
+  ],
+  "trino_lakehouse.iceberg_curated.kinh_doanh.fact_electricity_sales": [
+   {
+    "name": "kwh_sold_not_null",
+    "displayName": "kwh_sold_not_null",
+    "entityLink": "<#E::table::trino_lakehouse.iceberg_curated.kinh_doanh.fact_electricity_sales::columns::kwh_sold>",
+    "testDefinition": {
+     "id": "80aab53a-04a9-5147-afcb-f3199d11da96",
+     "type": "testDefinition",
+     "name": "columnValuesToBeNotNull",
+     "displayName": "columnValuesToBeNotNull"
+    },
+    "testCaseResult": {
+     "testCaseStatus": "Success",
+     "timestamp": 1791108000000
+    }
+   },
+   {
+    "name": "unique_month_group_province",
+    "displayName": "unique_month_group_province",
+    "entityLink": "<#E::table::trino_lakehouse.iceberg_curated.kinh_doanh.fact_electricity_sales>",
+    "testDefinition": {
+     "id": "98cbf5f7-d19f-5192-beba-35728da5d16a",
+     "type": "testDefinition",
+     "name": "tableColumnCombinationToBeUnique",
+     "displayName": "tableColumnCombinationToBeUnique"
+    },
+    "testCaseResult": {
+     "testCaseStatus": "Aborted",
+     "timestamp": 1791108000000
+    }
+   }
+  ]
+ }
+}
