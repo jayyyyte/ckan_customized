@@ -34,9 +34,16 @@ RUN git clone --depth 1 --branch "${XLOADER_VERSION}" \
 COPY --chown=ckan-sys:ckan-sys ckanext-evntheme "${SRC_DIR}/ckanext-evntheme"
 RUN pip3 install --no-cache-dir -e "${SRC_DIR}/ckanext-evntheme" && \
     pybabel compile -d "${SRC_DIR}/ckanext-evntheme/ckanext/evntheme/i18n" -D ckanext-evntheme && \
-    chown -R ckan-sys:ckan-sys "${SRC_DIR}/ckanext-evntheme" && \
+    chown -R ckan-sys:ckan-sys "${SRC_DIR}/ckanext-evntheme"
+
+# Organizations/users bootstrap and the OpenMetadata integration
+# (docs/phase-4-content-openmetadata.md). Same rules as the theme: editable, .mo built here.
+COPY --chown=ckan-sys:ckan-sys ckanext-lakehouse "${SRC_DIR}/ckanext-lakehouse"
+RUN pip3 install --no-cache-dir -e "${SRC_DIR}/ckanext-lakehouse" && \
+    pybabel compile -d "${SRC_DIR}/ckanext-lakehouse/ckanext/lakehouse/i18n" -D ckanext-lakehouse && \
+    chown -R ckan-sys:ckan-sys "${SRC_DIR}/ckanext-lakehouse" && \
     pip3 check && \
-    python3 -c "import ckanext.evntheme, ckanext.xloader"
+    python3 -c "import ckanext.evntheme, ckanext.lakehouse, ckanext.xloader"
 
 # Startup hooks of the web container: start_ckan.sh sources /docker-entrypoint.d/*.sh
 # after prerun.py. The worker container has its own entrypoint (it must not run prerun).
@@ -45,7 +52,7 @@ COPY --chown=ckan-sys:ckan-sys docker/worker-entrypoint.sh /srv/app/worker-entry
 RUN chmod 0755 /srv/app/worker-entrypoint.sh /docker-entrypoint.d/*.sh
 
 # Same plugin list as the local install, plus envvars last (it must load last to win).
-ENV CKAN__PLUGINS="evntheme activity tracking datastore xloader text_view image_view datatables_view envvars"
+ENV CKAN__PLUGINS="evntheme lakehouse activity tracking datastore xloader text_view image_view datatables_view envvars"
 # Write the list into the image's ini as well. prerun.py applies CKAN__PLUGINS only in the
 # web container; ckan.plugins is read before plugins load, so the envvars plugin cannot
 # switch plugins on by itself. Without this the worker would run stock CKAN.
