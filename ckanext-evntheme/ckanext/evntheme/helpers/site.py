@@ -7,6 +7,7 @@ from typing import Any
 import requests
 
 import ckan.plugins.toolkit as tk
+from ckan.lib.search import SearchError
 
 from ckanext.evntheme import config, formatting, public, stats
 from ckanext.evntheme.cache import ttl_cache
@@ -24,11 +25,41 @@ from ckanext.evntheme.vocab import (
 log = logging.getLogger(__name__)
 
 
+def visible_dataset_count() -> int:
+    """Number of datasets the viewer finds on the search page (/dataset/).
+
+    Anonymous visitors only see public datasets: reuse the cached portal count. A logged-in
+    user also sees the private datasets of their organisations (all of them for a sysadmin),
+    so run the search page's own query as that user, with rows=0. Not cached: it depends on
+    the user and must follow their changes at once.
+    """
+    public_count = stats.portal_stats().datasets
+    if not tk.current_user.is_authenticated:
+        return public_count
+    try:
+        result = tk.get_action("package_search")(
+            {"user": tk.current_user.name, "auth_user_obj": tk.current_user},
+            {
+                "rows": 0,
+                "fq": f"+dataset_type:{tk.h.default_package_type()}",
+                "include_private": tk.config.get("ckan.search.default_include_private"),
+            },
+        )
+    except (tk.NotAuthorized, SearchError):  # deleted user, search down: keep the header working
+        log.warning("evntheme: cannot count the datasets visible to %s", tk.current_user.name, exc_info=True)
+        return public_count
+    return result["count"]
+
+
 def counts() -> dict[str, int]:
-    """Public counters shown in the header badges and the home hero."""
+    """Counters shown in the header badges and the home hero.
+
+    `datasets` is what the viewer can find (private ones included for members), so the header
+    badge matches the search page total; the other counters do not depend on the viewer.
+    """
     portal = stats.portal_stats()
     return {
-        "datasets": portal.datasets,
+        "datasets": visible_dataset_count(),
         "organizations": stats.organization_count(),
         "apis": portal.api_datasets,
         "catalogs": mds.summary().catalogs,

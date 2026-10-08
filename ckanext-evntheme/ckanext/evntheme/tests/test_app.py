@@ -138,6 +138,22 @@ def test_home_shows_counters_and_recent_dataset(app, dataset):
     assert "Tài chính – Vật tư" in body  # data domain card
 
 
+def _nav_counts(body: str) -> list[str]:
+    return re.findall(r'<span class="evn-nav__count">([^<]+)</span>', body)
+
+
+def test_header_dataset_badge_counts_what_the_viewer_can_see(app, dataset):
+    member = factories.UserWithToken()
+    org = factories.Organization(users=[{"name": member["name"], "capacity": "editor"}])
+    factories.Dataset(owner_org=org["id"], private=True)
+
+    assert _nav_counts(_text(app.get("/")))[0] == "1"  # anonymous: public only
+    body = _text(app.get("/", headers={"Authorization": member["token"]}))
+    assert _nav_counts(body)[0] == "2"  # member: public + their organisation's private one
+    search = _text(app.get("/dataset/", headers={"Authorization": member["token"]}))
+    assert _nav_counts(search)[0] == "2"
+
+
 @pytest.mark.parametrize("tab", ["overview", "preview", "api", "activity"])
 def test_dataset_tabs(app, dataset, tab):
     response = app.get(f"/dataset/{dataset['name']}", query_string={"tab": tab})
