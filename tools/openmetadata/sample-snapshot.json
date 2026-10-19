@@ -342,11 +342,11 @@
    ],
    "domains": [
     {
-     "id": "04393052-e7ea-57e5-915e-ce16367623aa",
+     "id": "b86bef54-e398-5c57-a528-a7c5440ad633",
      "type": "domain",
-     "name": "KinhDoanh",
-     "displayName": "Kinh doanh",
-     "fullyQualifiedName": "KinhDoanh"
+     "name": "DichVuKhachHang",
+     "displayName": "Dịch vụ khách hàng",
+     "fullyQualifiedName": "KinhDoanh.DichVuKhachHang"
     }
    ],
    "tags": [
@@ -790,5 +790,374 @@
     }
    }
   ]
- }
+ },
+ "teams": [
+  {
+   "id": "1cc87446-5baa-5557-b47a-105684edd749",
+   "name": "Organization",
+   "displayName": "Organization",
+   "fullyQualifiedName": "Organization",
+   "teamType": "Organization",
+   "parents": [],
+   "children": [
+    {
+     "name": "EVN"
+    }
+   ],
+   "users": [],
+   "owners": [],
+   "defaultRoles": []
+  },
+  {
+   "id": "85bc3312-3dcf-57be-a6c6-3c176b96ab1e",
+   "name": "EVN",
+   "displayName": "Tập đoàn Điện lực Việt Nam",
+   "fullyQualifiedName": "EVN",
+   "teamType": "BusinessUnit",
+   "parents": [
+    {
+     "name": "Organization"
+    }
+   ],
+   "children": [
+    {
+     "name": "DieuDo"
+    },
+    {
+     "name": "KinhDoanh"
+    },
+    {
+     "name": "KyThuatSanXuat"
+    },
+    {
+     "name": "TaiChinh"
+    },
+    {
+     "name": "DataPlatform"
+    }
+   ],
+   "users": [],
+   "owners": [],
+   "defaultRoles": []
+  },
+  {
+   "id": "a33b43fe-99bc-5417-88f2-227124d78677",
+   "name": "DieuDo",
+   "displayName": "Trung tâm Điều độ",
+   "fullyQualifiedName": "DieuDo",
+   "teamType": "Group",
+   "description": "Điều độ vận hành hệ thống điện quốc gia.",
+   "parents": [
+    {
+     "name": "EVN"
+    }
+   ],
+   "children": [],
+   "users": [
+    {
+     "name": "nguyen.van.an",
+     "displayName": "Nguyễn Văn An"
+    },
+    {
+     "name": "do.thi.hoa",
+     "displayName": "Đỗ Thị Hoa"
+    }
+   ],
+   "owners": [
+    {
+     "type": "user",
+     "name": "nguyen.van.an",
+     "displayName": "Nguyễn Văn An"
+    }
+   ],
+   "defaultRoles": []
+  },
+  {
+   "id": "e06aa97f-74d5-562d-a393-45655c7e24d1",
+   "name": "KinhDoanh",
+   "displayName": "Ban Kinh doanh",
+   "fullyQualifiedName": "KinhDoanh",
+   "teamType": "Group",
+   "parents": [
+    {
+     "name": "EVN"
+    }
+   ],
+   "children": [],
+   "users": [
+    {
+     "name": "tran.thi.binh",
+     "displayName": "Trần Thị Bình"
+    },
+    {
+     "name": "le.van.cuong",
+     "displayName": "Lê Văn Cường"
+    },
+    {
+     "name": "hoang.van.em",
+     "displayName": "Hoàng Văn Em"
+    }
+   ],
+   "owners": [
+    {
+     "type": "user",
+     "name": "tran.thi.binh",
+     "displayName": "Trần Thị Bình"
+    }
+   ],
+   "defaultRoles": []
+  },
+  {
+   "id": "28943950-bfb4-5817-acd4-fba0e60a5eaf",
+   "name": "KyThuatSanXuat",
+   "displayName": "Ban Kỹ thuật – Sản xuất",
+   "fullyQualifiedName": "KyThuatSanXuat",
+   "teamType": "Group",
+   "parents": [
+    {
+     "name": "EVN"
+    }
+   ],
+   "children": [],
+   "users": [
+    {
+     "name": "pham.thi.dung",
+     "displayName": "Phạm Thị Dung"
+    }
+   ],
+   "owners": [],
+   "defaultRoles": [
+    {
+     "name": "DataSteward"
+    }
+   ]
+  },
+  {
+   "id": "e7cd44d8-86e0-5c37-a7f9-2c53f2e17cff",
+   "name": "TaiChinh",
+   "displayName": "Ban Tài chính – Kế toán",
+   "fullyQualifiedName": "TaiChinh",
+   "teamType": "Group",
+   "parents": [
+    {
+     "name": "EVN"
+    }
+   ],
+   "children": [],
+   "users": [],
+   "owners": [],
+   "defaultRoles": []
+  },
+  {
+   "id": "cda710f6-6022-5fa7-baed-8f620e6d95ef",
+   "name": "DataPlatform",
+   "displayName": "Data Platform",
+   "fullyQualifiedName": "DataPlatform",
+   "teamType": "Group",
+   "parents": [
+    {
+     "name": "EVN"
+    }
+   ],
+   "children": [],
+   "users": [
+    {
+     "name": "hoang.van.em",
+     "displayName": "Hoàng Văn Em"
+    }
+   ],
+   "owners": [],
+   "defaultRoles": []
+  }
+ ],
+ "domains": [
+  {
+   "id": "f60c2d86-9d67-5218-864f-7ff2986244b1",
+   "name": "VanHanh",
+   "displayName": "Vận hành",
+   "fullyQualifiedName": "VanHanh",
+   "domainType": "Source-aligned",
+   "parent": null,
+   "owners": [
+    {
+     "type": "user",
+     "name": "nguyen.van.an",
+     "displayName": "Nguyễn Văn An"
+    }
+   ],
+   "experts": [
+    {
+     "name": "do.thi.hoa",
+     "displayName": "Đỗ Thị Hoa"
+    }
+   ]
+  },
+  {
+   "id": "04393052-e7ea-57e5-915e-ce16367623aa",
+   "name": "KinhDoanh",
+   "displayName": "Kinh doanh",
+   "fullyQualifiedName": "KinhDoanh",
+   "domainType": "Source-aligned",
+   "description": "Sản lượng, doanh thu, khách hàng.",
+   "parent": null,
+   "owners": [
+    {
+     "type": "user",
+     "name": "tran.thi.binh",
+     "displayName": "Trần Thị Bình"
+    }
+   ],
+   "experts": [
+    {
+     "name": "le.van.cuong",
+     "displayName": "Lê Văn Cường"
+    }
+   ]
+  },
+  {
+   "id": "b86bef54-e398-5c57-a528-a7c5440ad633",
+   "name": "DichVuKhachHang",
+   "displayName": "Dịch vụ khách hàng",
+   "fullyQualifiedName": "KinhDoanh.DichVuKhachHang",
+   "domainType": "Source-aligned",
+   "parent": {
+    "id": "5f8e879d-4d63-5232-83da-e0e07288911b",
+    "type": "domain",
+    "name": "KinhDoanh",
+    "fullyQualifiedName": "KinhDoanh"
+   },
+   "owners": [],
+   "experts": [
+    {
+     "name": "le.van.cuong",
+     "displayName": "Lê Văn Cường"
+    }
+   ]
+  },
+  {
+   "id": "bdac6c92-d6fa-5e2e-bf5e-6196d9dd6a0a",
+   "name": "KyThuat",
+   "displayName": "Kỹ thuật",
+   "fullyQualifiedName": "KyThuat",
+   "domainType": "Source-aligned",
+   "parent": null,
+   "owners": [],
+   "experts": [
+    {
+     "name": "pham.thi.dung",
+     "displayName": "Phạm Thị Dung"
+    }
+   ]
+  },
+  {
+   "id": "bbf9c546-0acd-5427-8005-44fa8936c2a2",
+   "name": "TaiChinh",
+   "displayName": "Tài chính",
+   "fullyQualifiedName": "TaiChinh",
+   "domainType": "Aggregate",
+   "parent": null,
+   "owners": [],
+   "experts": []
+  }
+ ],
+ "users": [
+  {
+   "id": "7116ea3e-0bc2-5c38-93e2-98df30118c51",
+   "name": "nguyen.van.an",
+   "displayName": "Nguyễn Văn An",
+   "email": "nguyen.van.an@evn.example",
+   "isAdmin": false,
+   "teams": [
+    {
+     "name": "DieuDo"
+    }
+   ],
+   "roles": [
+    {
+     "name": "DataSteward"
+    }
+   ]
+  },
+  {
+   "id": "99d93fad-7e03-5128-a54f-965da556acdc",
+   "name": "do.thi.hoa",
+   "displayName": "Đỗ Thị Hoa",
+   "email": "do.thi.hoa@evn.example",
+   "isAdmin": false,
+   "teams": [
+    {
+     "name": "DieuDo"
+    }
+   ],
+   "roles": []
+  },
+  {
+   "id": "c8c9a996-434c-5735-a870-d505506395a2",
+   "name": "tran.thi.binh",
+   "displayName": "Trần Thị Bình",
+   "email": "tran.thi.binh@evn.example",
+   "isAdmin": false,
+   "teams": [
+    {
+     "name": "KinhDoanh"
+    }
+   ],
+   "roles": []
+  },
+  {
+   "id": "420ea5f1-f07b-527b-91df-959aab7fa526",
+   "name": "le.van.cuong",
+   "displayName": "Lê Văn Cường",
+   "email": "le.van.cuong@evn.example",
+   "isAdmin": false,
+   "teams": [
+    {
+     "name": "KinhDoanh"
+    }
+   ],
+   "roles": [
+    {
+     "name": "DataConsumer"
+    }
+   ]
+  },
+  {
+   "id": "adf6c68d-835a-50c8-a1f8-96ac2b79ea99",
+   "name": "pham.thi.dung",
+   "displayName": "Phạm Thị Dung",
+   "email": "pham.thi.dung@evn.example",
+   "isAdmin": false,
+   "teams": [
+    {
+     "name": "KyThuatSanXuat"
+    }
+   ],
+   "roles": []
+  },
+  {
+   "id": "b36d8406-2078-52bb-9467-9d9e94efee9c",
+   "name": "hoang.van.em",
+   "displayName": "Hoàng Văn Em",
+   "email": "hoang.van.em@evn.example",
+   "isAdmin": false,
+   "teams": [
+    {
+     "name": "DataPlatform"
+    },
+    {
+     "name": "KinhDoanh"
+    }
+   ],
+   "roles": []
+  },
+  {
+   "id": "eeedeed6-4c5e-5e06-92c6-81b352ab73b9",
+   "name": "admin",
+   "displayName": "admin",
+   "email": "admin@open-metadata.org",
+   "isAdmin": true,
+   "teams": [],
+   "roles": []
+  }
+ ]
 }

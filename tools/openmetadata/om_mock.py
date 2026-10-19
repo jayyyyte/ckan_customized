@@ -7,9 +7,10 @@ there with om_snapshot.py, copy it here, and point CKAN at this server:
     python3 tools/openmetadata/om_mock.py SNAPSHOT.json --port 8585 [--token T] [--legacy]
     ckanext.lakehouse.om.url = http://localhost:8585
 
-It answers the endpoints ckanext-lakehouse calls, with OpenMetadata's paging and its
+It answers the endpoints ckanext-lakehouse calls (tables, profiles, lineage, test cases,
+and teams/domains/users for `om scaffold` and user owners), with OpenMetadata's paging and its
 400 "Invalid field name" for unknown `fields`. `--legacy` mimics releases before 1.5
-(`owner`/`domain` instead of `owners`/`domains`). Read-only; anything else is 404.
+(`owner`/`domain` instead of `owners`/`domains`, also on teams and domains). Read-only; anything else is 404.
 """
 from __future__ import annotations
 
@@ -23,6 +24,10 @@ TABLE_FIELDS = {"columns", "tags", "tableConstraints", "usageSummary", "follower
                 "tablePartition", "customMetrics", "joins", "schemaDefinition", "dataModel", "testSuite",
                 "dataProducts", "lifeCycle", "sourceHash", "votes"}
 TEST_CASE_FIELDS = {"testCaseResult", "testDefinition", "testSuite", "owners", "tags", "incidentId"}
+TEAM_FIELDS = {"users", "defaultRoles", "parents", "children", "policies", "userCount", "childrenCount",
+               "owns", "profile", "domains"}
+DOMAIN_FIELDS = {"experts", "parent", "children", "tags", "followers"}
+USER_FIELDS = {"teams", "roles", "profile", "owns", "follows", "personas", "defaultPersona", "domains"}
 
 
 class Snapshot:
@@ -34,6 +39,24 @@ class Snapshot:
         self.profiles = data.get("profiles", {})
         self.lineage = data.get("lineage", {})
         self.test_cases = data.get("testCases", {})
+        self.teams = [self._owned(t) for t in data.get("teams", [])]
+        self.domains = [self._owned(d) for d in data.get("domains", [])]
+        self.users = data.get("users", [])
+        self.users_by_name = {u["name"]: u for u in self.users}
+
+    def _owned(self, entity: dict) -> dict:
+        """Teams and domains: `owners`, or `owner` with --legacy."""
+        entity = dict(entity)
+        owners = entity.pop("owners", None) or ([entity.pop("owner")] if entity.get("owner") else [])
+        if self.legacy:
+            if owners:
+                entity["owner"] = owners[0]
+        else:
+            entity["owners"] = owners
+        return entity
+
+    def owner_fields(self) -> set:
+        return {"owner"} if self.legacy else {"owners"}
 
     def _shape(self, table: dict) -> dict:
         table = dict(table)
@@ -79,7 +102,15 @@ class Handler(BaseHTTPRequestHandler):
                 return False
         return True
 
-    def do_GET(self) -> None:  # noqa: N802 - http.server API
+    def _page(self, query: dict, items: list) -> None:
+        limit = int(query.get("limit", ["10"])[0])
+        start = int(query.get("after", ["0"])[0])
+        paging = {"total": len(items)}
+        if start + limit < len(items):
+            paging["after"] = str(start + limit)
+        self._send(200, {"data": items[start:start + limit], "paging": paging})
+
+    def do_GET(self) -> None:  # http.server API
         if self.token and self.headers.get("Authorization") != f"Bearer {self.token}":
             return self._error(401, "Not authorized; missing or wrong bearer token")
         url = urlsplit(self.path)
@@ -102,13 +133,7 @@ class Handler(BaseHTTPRequestHandler):
                 if param in query:
                     head = query[param][0] + "."
                     tables = [t for t in tables if t["fullyQualifiedName"].startswith(head)]
-            limit = int(query.get("limit", ["10"])[0])
-            start = int(query.get("after", ["0"])[0])
-            page = tables[start:start + limit]
-            paging = {"total": len(tables)}
-            if start + limit < len(tables):
-                paging["after"] = str(start + limit)
-            return self._send(200, {"data": page, "paging": paging})
+            return self._page(query, tables)
 
         if path.startswith("/tables/name/"):
             if not self._check_fields(query, snap.table_fields()):
@@ -145,6 +170,27 @@ class Handler(BaseHTTPRequestHandler):
             cases = snap.test_cases.get(fqn, [])
             limit = int(query.get("limit", ["10"])[0])
             return self._send(200, {"data": cases[:limit], "paging": {"total": len(cases)}})
+
+        if path == "/teams":
+            if not self._check_fields(query, TEAM_FIELDS | snap.owner_fields()):
+                return None
+            return self._page(query, snap.teams)
+
+        if path == "/domains":
+            if not self._check_fields(query, DOMAIN_FIELDS | snap.owner_fields()):
+                return None
+            return self._page(query, snap.domains)
+
+        if path == "/users":
+            if not self._check_fields(query, USER_FIELDS):
+                return None
+            return self._page(query, snap.users)  # the snapshot holds no bots
+
+        if path.startswith("/users/name/"):
+            if not self._check_fields(query, USER_FIELDS):
+                return None
+            user = snap.users_by_name.get(unquote(path[len("/users/name/"):]))
+            return self._send(200, user) if user else self._error(404, "user instance not found")
 
         return self._error(404, f"no mock for {path}")
 

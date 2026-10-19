@@ -15,10 +15,13 @@ OpenMetadata thật chỉ vào được từ máy công ty (Remote Desktop). Hai
 
    ```powershell
    $env:OM_TOKEN = "<dán JWT>"
-   python om_snapshot.py --url http://<địa chỉ OM>:8585 `
+   python om_snapshot.py --url https://openmetadata-stag.evn.com.vn `
        --include "trino_lakehouse.iceberg_curated.*" --out lakehouse.om-snapshot.json
    Remove-Item Env:OM_TOKEN
    ```
+
+   - `openmetadata-stag.evn.com.vn` chỉ phân giải được trên máy có dòng tương ứng trong file hosts (máy RDP, 2026-10-15).
+   - Báo `CERTIFICATE_VERIFY_FAILED` thì thêm `--insecure`: chứng chỉ do CA nội bộ cấp mà Python không tin, dù trình duyệt có thể vẫn tin.
 
    - Không đặt `OM_TOKEN` thì script sẽ hỏi token, và token không hiện ra khi gõ.
    - Muốn xem mọi bảng thì bỏ `--include`. Mặc định script dừng ở 300 bảng (`--max-tables`).
@@ -29,7 +32,8 @@ OpenMetadata thật chỉ vào được từ máy công ty (Remote Desktop). Hai
 - bảng: mô tả, cột, owner, domain, tag, số lượt truy vấn;
 - số dòng và số cột của lần profile gần nhất;
 - lineage một bậc;
-- trạng thái các test chất lượng.
+- trạng thái các test chất lượng;
+- **team** (cây cha/con, thành viên, owner, default role), **domain/subdomain** (owner, expert), **người** (tên, email, team, role). `ckan lakehouse om scaffold` dùng phần này để sinh org/group/vai trò. Bỏ phần này bằng `--no-people`.
 
 **Không có trong file:**
 - token;
@@ -37,7 +41,8 @@ OpenMetadata thật chỉ vào được từ máy công ty (Remote Desktop). Hai
 - profile cột (min/max/mean là giá trị thật);
 - thông điệp kết quả test;
 - tên người follow;
-- custom property.
+- custom property;
+- bot.
 
 ## 2. Phát lại trên laptop
 
@@ -62,6 +67,7 @@ Mock trả lời đúng các endpoint mà extension gọi:
 - `tables/name/{fqn}`;
 - `tables/{fqn}/tableProfile/latest`;
 - `lineage/table/name/{fqn}`;
-- `dataQuality/testCases`.
+- `dataQuality/testCases`;
+- `teams`, `domains`, `users`, `users/name/{name}` (cho `om scaffold` và bảng do một người đứng tên).
 
 Với `fields` lạ, mock trả 400 "Invalid field name" giống OpenMetadata thật. Endpoint nào khác đều trả 404.

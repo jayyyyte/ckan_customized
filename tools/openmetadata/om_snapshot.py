@@ -13,11 +13,15 @@ The token: OpenMetadata > Settings > Bots (a bot with read access), or your prof
 Access Tokens. It is read from OM_TOKEN (or asked for) and never written to the file.
 
 What is recorded: tables (description, columns, owners, domains, tags, usage count),
-the latest table-level profile (row and column counts), direct lineage, and the
-status of data quality tests. What is NOT: sample data, column profiles (min/max/...
-are real values), test result messages, followers' names, custom properties.
-The file still names tables and people who own them: keep it off git and delete it
-when done (the repo ignores *.om-snapshot.json).
+the latest table-level profile (row and column counts), direct lineage, the status of
+data quality tests, and who's who: teams (hierarchy, members, owners, default roles),
+domains and subdomains (owners, experts), people (name, e-mail, teams, roles) - what
+`ckan lakehouse om scaffold` turns into organizations, groups and roles.
+What is NOT: sample data, column profiles (min/max/... are real values), test result
+messages, followers' names, custom properties, bots.
+The file names real people with their e-mail addresses: keep it off git and delete it
+when done (the repo ignores *.om-snapshot.json). --no-people leaves teams, domains and
+people out.
 """
 from __future__ import annotations
 
@@ -26,6 +30,7 @@ import fnmatch
 import getpass
 import json
 import os
+import ssl
 import sys
 import time
 import urllib.error
@@ -35,12 +40,19 @@ import urllib.request
 TABLE_FIELDS = "columns,tags,tableConstraints,usageSummary,followers"
 TABLE_FIELD_VARIANTS = ("owners,domains", "owners,domain", "owner,domain", "owner")
 TEST_CASE_FIELD_VARIANTS = ("testCaseResult,testDefinition", "testDefinition", "")
+TEAM_FIELDS = "users,defaultRoles,parents,children"
+TEAM_FIELD_VARIANTS = ("owners", "owner", "")
+DOMAIN_FIELD_VARIANTS = ("owners,experts,parent", "owner,experts,parent", "owner,experts", "")
+USER_FIELDS = "teams,roles"
 
 KEEP_TABLE = ("id", "name", "displayName", "fullyQualifiedName", "description", "tableType", "serviceType",
               "updatedAt", "version", "deleted", "tableConstraints")
 KEEP_COLUMN = ("name", "displayName", "dataType", "dataTypeDisplay", "description", "constraint",
                "ordinalPosition")
 KEEP_REF = ("id", "type", "name", "displayName", "fullyQualifiedName")
+KEEP_TEAM = ("id", "name", "displayName", "fullyQualifiedName", "description", "teamType", "deleted")
+KEEP_DOMAIN = ("id", "name", "displayName", "fullyQualifiedName", "description", "domainType")
+KEEP_USER = ("id", "name", "displayName", "email", "isAdmin")
 
 
 class HTTPError(Exception):
@@ -50,18 +62,19 @@ class HTTPError(Exception):
 
 
 class Client:
-    def __init__(self, url: str, token: str, timeout: float) -> None:
+    def __init__(self, url: str, token: str, timeout: float, insecure: bool = False) -> None:
         self.api = url.rstrip("/") + "/api/v1"
         self.token = token
         self.timeout = timeout
         self.fields: dict = {}
+        self.context = ssl._create_unverified_context() if insecure else None
 
     def get(self, path: str, params: dict | None = None) -> dict:
         url = self.api + path + ("?" + urllib.parse.urlencode(params) if params else "")
         request = urllib.request.Request(url, headers={"Authorization": f"Bearer {self.token}",
                                                        "Accept": "application/json"})
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:  # noqa: S310
+            with urllib.request.urlopen(request, timeout=self.timeout, context=self.context) as response:
                 return json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as err:
             body = err.read().decode("utf-8", "replace")[:300]
@@ -82,6 +95,16 @@ class Client:
             self.fields[kind] = variant
             return result
         raise last or HTTPError(400, "no accepted fields")
+
+    def pages(self, kind: str, path: str, params: dict, base: str, variants: tuple) -> list:
+        items, params = [], {"limit": 100, **params}
+        while True:
+            page = self.get_fields(kind, path, params, base, variants)
+            items.extend(page.get("data") or [])
+            after = (page.get("paging") or {}).get("after")
+            if not after:
+                return items
+            params = {**params, "after": after}
 
 
 def q(fqn: str) -> str:
@@ -112,6 +135,40 @@ def clean_table(table: dict) -> dict:
     return result
 
 
+def refs(values: list | None, keep: tuple = ("type", "name", "displayName")) -> list:
+    return [{k: v[k] for k in keep if k in v} for v in values or [] if v]
+
+
+def plural(entity: dict, name: str) -> list:
+    """`owners` (1.5+) or the older single `owner`."""
+    return entity.get(name) or ([entity[name[:-1]]] if entity.get(name[:-1]) else [])
+
+
+def clean_team(team: dict) -> dict:
+    result = {k: team[k] for k in KEEP_TEAM if k in team}
+    result["parents"] = refs(team.get("parents"), ("name",))
+    result["children"] = refs(team.get("children"), ("name",))
+    result["users"] = refs(team.get("users"), ("name", "displayName"))
+    result["owners"] = refs(plural(team, "owners"))
+    result["defaultRoles"] = refs(team.get("defaultRoles"), ("name",))
+    return result
+
+
+def clean_domain(domain: dict) -> dict:
+    result = {k: domain[k] for k in KEEP_DOMAIN if k in domain}
+    result["parent"] = ref(domain.get("parent"))
+    result["owners"] = refs(plural(domain, "owners"))
+    result["experts"] = refs(domain.get("experts"), ("name", "displayName"))
+    return result
+
+
+def clean_user(user: dict) -> dict:
+    result = {k: user[k] for k in KEEP_USER if k in user}
+    result["teams"] = refs(user.get("teams"), ("name",))
+    result["roles"] = refs(user.get("roles"), ("name",))
+    return result
+
+
 def clean_lineage(lineage: dict) -> dict:
     def edge(e: dict) -> dict:
         return {"fromEntity": e.get("fromEntity"), "toEntity": e.get("toEntity")}
@@ -137,10 +194,13 @@ def main() -> None:
     parser.add_argument("--max-tables", type=int, default=300, help="stop after this many tables (default %(default)s)")
     parser.add_argument("--out", default="lakehouse.om-snapshot.json")
     parser.add_argument("--timeout", type=float, default=30)
+    parser.add_argument("--no-people", action="store_true", help="leave teams, domains and people out")
+    parser.add_argument("--insecure", action="store_true",
+                        help="do not verify the TLS certificate (https:// with a company CA the PC does not trust)")
     args = parser.parse_args()
 
     token = os.environ.get("OM_TOKEN") or getpass.getpass("OpenMetadata token (JWT): ")
-    client = Client(args.url, token.strip(), args.timeout)
+    client = Client(args.url, token.strip(), args.timeout, args.insecure)
     version = client.get("/system/version")
     print(f"OpenMetadata {version.get('version')} at {client.api}")
 
@@ -161,6 +221,16 @@ def main() -> None:
     snapshot = {"format": "lakehouse-om-snapshot/1", "recorded_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 "source": args.url, "version": {"version": version.get("version")},
                 "tables": [], "profiles": {}, "lineage": {}, "testCases": {}}
+    if not args.no_people:
+        snapshot["teams"] = [clean_team(t) for t in client.pages(
+            "team", "/teams", {"include": "non-deleted"}, TEAM_FIELDS, TEAM_FIELD_VARIANTS)]
+        snapshot["domains"] = [clean_domain(d) for d in client.pages(
+            "domain", "/domains", {}, "", DOMAIN_FIELD_VARIANTS)]
+        snapshot["users"] = [clean_user(u) for u in client.pages(
+            "user", "/users", {"isBot": "false", "include": "non-deleted"}, USER_FIELDS, ("",))]
+        print(f"{len(snapshot['teams'])} teams (fields: {client.fields.get('team')!r}), "
+              f"{len(snapshot['domains'])} domains (fields: {client.fields.get('domain')!r}), "
+              f"{len(snapshot['users'])} people")
     for n, table in enumerate(tables, 1):
         fqn = table["fullyQualifiedName"]
         snapshot["tables"].append(clean_table(table))
