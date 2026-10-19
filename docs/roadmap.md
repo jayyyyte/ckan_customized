@@ -175,6 +175,8 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 > Tập dượt bắt được một lỗi compose không thể lộ ra: **uWSGI bị OOMKilled vì containerd cấp giới hạn fd 1073741816** (bẫy 21a). Đã sửa bằng ConfigMap, không phải build lại image.
 >
 > **Chặn bởi:** kubeconfig của cluster công ty (Q7; `~/.kube/config` hiện chỉ có context kind), và chủ cluster đồng ý thay stub cùng tạo DB (Q8).
+>
+> **2026-10-15 — ghi nhận:** `https://ckan-stag.evn.com.vn` đã chạy theme EVN (org VTTB, dataset tạo tay `vttb_material_code`). Bản này do đồng nghiệp **deploy qua Rancher, không theo manifest `k8s/` của repo**. Chưa rõ image/tag, config, có plugin `lakehouse` hay không. Chỉ vào được từ máy RDP: file hosts trỏ `*-stag.evn.com.vn` về 10.1.117.247.
 
 - [x] Viết manifest `k8s/` (kustomize base + overlay `lab`/`kind`): Solr, Redis, CKAN, **Deployment worker** (XLoader, không PVC), CronJob `ckan tracking update` (2026-09-25)
 - [x] Script `audit.sh` (read-only), `make-secrets.sh`, `prepare-postgres.sh` (check / `--apply` / `--print`) (2026-09-25)
@@ -222,7 +224,13 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
   - các key OM/auth trong ConfigMap, token trong Secret;
   - `newTag: 0.2.0`;
   - `.gitignore`/`.dockerignore` chặn snapshot thật và file mật khẩu. (2026-10-06)
-- [ ] **User chạy `om_snapshot.py` trên máy công ty** (RDP), chép file về laptop, chạy `om check` trên snapshot thật để viết phần `openmetadata:` của file bootstrap
+- [x] **Map org/group đúng để phân quyền** (2026-10-15):
+  - snapshot ghi thêm team, domain và người (`--no-people` để bỏ), có `--insecure` cho HTTPS nội bộ;
+  - owner là một người → org của team người đó; subdomain chưa ánh xạ → group của domain cha;
+  - lệnh mới `ckan lakehouse om scaffold`: team → org, domain → group, owner/DataSteward/thành viên → admin/editor/member; sinh bản nháp YAML để duyệt rồi `bootstrap`;
+  - mock phục vụ `/teams`, `/domains`, `/users`; sample snapshot có 7 team, 5 domain (1 subdomain), 7 người hư cấu;
+  - unit 40/40, app 19/19 (thêm test đầu-cuối scaffold → bootstrap → sync → kiểm quyền), ruff sạch ([phase-4 §4.3b](phase-4-content-openmetadata.md#43b-sinh-cấu-trúc-từ-openmetadata--om-scaffold))
+- [ ] **User chạy `om_snapshot.py` trên máy công ty** (RDP, `--url https://openmetadata-stag.evn.com.vn`), chép file về laptop, chạy `om check` + `om scaffold` trên snapshot thật, duyệt bản nháp cùng chủ dữ liệu
 - [ ] Danh sách org, user và vai trò thật (Q11). File thật để ngoài repo nếu có email cá nhân
 - [ ] Bot OpenMetadata chỉ đọc và token (Q12); phạm vi công bố `om.include` / `om.require_tags` (Q13)
 - [x] **Tập dượt `0.2.0` trên kind** (`ckan-rehearsal`, nâng cấp tại chỗ từ `0.1.0`): mock OM trong cụm (`om-mock.sh`); `smoke-test-om.sh` **31/31** (chạy 2 lần); `smoke-test.sh` GĐ3 hồi quy **47/47**. `ctr import` chỉ 10–12 s/node nhờ dùng lại layer ([phase-4 §4.6b](phase-4-content-openmetadata.md#46b-tập-dượt-trên-kind--kết-quả-2026-10-06)) (2026-10-06)
@@ -286,6 +294,9 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 | 2026-10-06 | Dataset từ OpenMetadata **mặc định private**; sync không bao giờ đổi lại `private`. `om.include` trên cụm **để trống** đến khi chốt phạm vi | Công bố là quyết định của đơn vị sở hữu dữ liệu. Tránh lỡ đẩy toàn bộ catalog lên portal |
 | 2026-10-06 | Ánh xạ owner **team → org** (`om_teams`), mẫu FQN → org (`om_fqn_patterns`), **domain → group** (`om_domains`), lưu ở extras của org/group do bootstrap ghi | Tên team/domain bên OM khác tên đơn vị bên CKAN; giữ ánh xạ cạnh khai báo đơn vị |
 | 2026-10-06 | Gán group qua `member_create`/`member_delete`, user sync **không phải sysadmin** | `package_*` lặng lẽ bỏ group nếu user không đọc được group (gotchas 28); không muốn cấp sysadmin cho tài khoản kỹ thuật |
+| 2026-10-15 | Org/group/vai trò lấy từ OM bằng **`om scaffold` → người duyệt → `bootstrap`**, không tự tạo theo CronJob. Thành viên team OM thành thành viên org theo vai trò: owner team → `admin`, role `DataSteward` → `editor`, còn lại → `member`. Domain owner → `admin`, expert → `member` của group | User chọn. Cổng dùng chung: team thử nghiệm bên OM không được tự hiện lên portal; quyền đọc dataset private là quyết định cần người duyệt |
+| 2026-10-15 | Owner của bảng là **một người** → org của team người đó (đúng một org, không thì xét mẫu FQN). Subdomain chưa ánh xạ → group của domain cha | Bên CKAN chủ sở hữu luôn là org. Bên OM `owners` có thể là người. Tra team **trước khi ghi**: OM lỗi giữa chừng thì không dataset nào bị đổi org |
+| 2026-10-15 | Org/group đã có trong CKAN giữ tiêu đề/mô tả của CKAN khi scaffold | Tên đơn vị do người đặt; chạy lại scaffold không được ghi đè |
 | 2026-10-06 | Không vào được OM từ laptop → **snapshot (máy RDP) + mock (laptop)**, cùng một client HTTP cho cả mock lẫn OM thật. Snapshot không chứa sample data, profile cột hay token; không commit | Kiểm thử với metadata thật mà không cần mạng công ty, không mang dữ liệu thật ra ngoài |
 | 2026-10-06 | Tab OM: render phía server khi tab được mở bằng URL, lazy-load khi bấm tab; **cache Redis** (600 s, lỗi 60 s). Link lineage tới dataset CKAN chỉ hiện khi người xem có quyền đọc | OM chậm không làm chậm trang; cache dùng chung giữa các worker uWSGI; không lộ tên dataset private |
 | 2026-10-06 | Image **`0.2.0`** (+`ckanext-lakehouse`), CronJob `ckan-om-sync` **phút 40** | Tách khỏi `tracking update` (phút 15); cả hai đều reindex |
@@ -304,6 +315,6 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 | Q8 | Ai sở hữu stub `ckan` trên cluster, được xóa hoặc thay không? | Chủ cluster | Không động vào khi chưa hỏi |
 | Q9 | ~~Theme dựa trên classic hay Midnight Blue?~~ | User, sau khi xem thử cả hai ở GĐ1 | ~~Midnight Blue (2026-09-14)~~ → **classic (2026-09-18)**, vì 2.11 chỉ có classic. Cân nhắc lại nếu sau này lên 2.12+ |
 | Q10 | Extension bên thứ ba cần dùng có hỗ trợ 2.11 không, bản nào? | Agent kiểm tra khi chốt Q4/Q5 | Kiểm tra README/CHANGELOG/CI của từng extension; ghim bản cuối còn hỗ trợ 2.11 |
-| Q11 | Danh sách đơn vị, người dùng thật và vai trò của từng người? Team/domain nào bên OpenMetadata ứng với đơn vị/miền nào? | User / công ty | Dùng `demo/portal.yaml` (hư cấu) cho local/kind. Ánh xạ thật viết sau khi chạy `om check` trên snapshot thật |
+| Q11 | Danh sách đơn vị, người dùng thật và vai trò của từng người? Team/domain nào bên OpenMetadata ứng với đơn vị/miền nào? | User / công ty | Dùng `demo/portal.yaml` (hư cấu) cho local/kind. **Từ 2026-10-15**: bản nháp sinh bằng `om scaffold` từ snapshot thật, chủ dữ liệu duyệt |
 | Q12 | Bot OpenMetadata chỉ đọc cho CKAN và token? | Chủ OpenMetadata | Chưa có thì `CKANEXT__LAKEHOUSE__OM__URL` vẫn đặt nhưng sync lỗi 401 và không ghi gì; tab hiện bản đồng bộ |
 | Q13 | Bảng nào được công bố (mẫu FQN, tag như `Tier.Tier1`)? Có giữ mặc định private không? | User / chủ dữ liệu | `om.include` trống trên cụm (không công bố gì), `om.private = true` |

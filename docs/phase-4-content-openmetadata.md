@@ -11,6 +11,7 @@
 | | Cách làm | Lệnh |
 |---|---|---|
 | Đơn vị, nhóm, người dùng, vai trò | File YAML khai báo, chạy lại an toàn | `ckan lakehouse bootstrap FILE --credentials OUT.csv [--prune]` |
+| …lấy từ team/domain của OpenMetadata | Sinh bản nháp YAML, người duyệt, rồi bootstrap (§4.3b) | `ckan lakehouse om scaffold --out draft.yaml` |
 | Dataset demo | Như cũ, chỉ cho local và kind | `ckan evntheme seed-demo` |
 | Dataset thật | Sinh từ bảng của OpenMetadata | `ckan lakehouse om sync` (CronJob mỗi giờ ở phút 40) |
 | Hiển thị OpenMetadata | Tab **Danh mục kỹ thuật** trên trang dataset, lấy live, có cache | — |
@@ -22,6 +23,7 @@ flowchart LR
     T["Tables + columns<br/>owners (team), domains, tags"]
     L["Lineage, test cases,<br/>table profile"]
   end
+  TD["Teams, domains,<br/>người + role"] -->|om scaffold| D["draft.yaml"] -->|người duyệt| Y
   Y["portal.yaml<br/>org / group / user / role<br/>+ om_teams, om_domains"] -->|ckan lakehouse bootstrap| C
   T -->|"om sync (CronJob)<br/>chỉ ghi khi có thay đổi"| C[("CKAN<br/>dataset private<br/>extras om_*")]
   L -->|"live, cache Redis 10 phút"| P["Tab 'Danh mục kỹ thuật'"]
@@ -130,8 +132,8 @@ Cho cụm công ty: chép file mẫu ra **ngoài repo** nếu nó chứa email t
 | Bảng có FQN khớp `om.include`, không khớp `om.exclude`, có một tag trong `om.require_tags` (nếu đặt) | 1 dataset, tên `om-<fqn đã chuẩn hóa>` | Nhận diện theo **id bảng** (`om_id`): đổi tên bảng không đổi URL |
 | `displayName` / `name` | `title` | |
 | `description` (markdown) | `notes` | OM để trống thì giữ mô tả biên tập viên viết |
-| Owner **team** → org có `om_teams`; không có thì mẫu `om_fqn_patterns`; không có thì `om.default_org` | `owner_org` | Không org nào nhận → bỏ qua, báo trong `Skipped` |
-| Domain → group có `om_domains` | group | Qua `member_create`, không qua `package_patch` (gotchas 28) |
+| Owner **team** → org có `om_teams`; owner là **một người** → org của team người đó; không có thì mẫu `om_fqn_patterns`; không có thì `om.default_org` | `owner_org` | Không org nào nhận → bỏ qua, báo trong `Skipped` kèm lý do của từng owner-người |
+| Domain → group có `om_domains`; **subdomain** chưa ánh xạ → group của domain cha gần nhất | group | Qua `member_create`, không qua `package_patch` (gotchas 28) |
 | Tag (trừ `Tier.*`) | tag | Tag biên tập viên tự thêm được giữ |
 | `Tier.TierN` | extra `om_tier` | |
 | Cột | extra `om_columns` (JSON, tối đa 500) | Tìm kiếm được, và là bản dự phòng khi OM không trả lời |
@@ -146,6 +148,67 @@ Nguyên tắc an toàn:
 - OM lỗi khi đang liệt kê bảng → không ghi gì. Phạm vi rỗng trong khi đang có dataset → **không xóa** (cần `--allow-empty`).
 - Dataset tạo tay trùng tên → bỏ qua, không đè.
 - Activity ghi tên user `om-sync` (`om.sync_user`, không phải sysadmin). Thiếu user này thì dùng site user (bị ẩn khỏi activity).
+
+### Owner là một người
+
+Bên CKAN, chủ sở hữu dataset luôn là **một organization**. Bên OpenMetadata, trường `owners` của bảng có thể là team **hoặc một người** (vd. `admin`). Sync quy người về org như sau:
+- Trước khi ghi bất cứ gì, sync gọi `GET /users/name/{tên}?fields=teams` cho mỗi người đứng tên owner.
+  - Nếu lời gọi lỗi, cả lượt sync dừng và không ghi gì. Nhờ vậy dataset không bao giờ bị chuyển org (tức là đổi người có quyền) chỉ vì OM chập chờn.
+- Các team của người đó ánh xạ ra **đúng một** org → dùng org đó.
+- Ra hai org trở lên (mơ hồ), hoặc không team nào được ánh xạ → bỏ qua bước này, xét tiếp mẫu FQN rồi `om.default_org`.
+- Nếu bảng có cả owner-team lẫn owner-người, owner-team được ưu tiên.
+
+`om check` liệt kê từng owner-người kèm org mà họ được quy về và lý do.
+
+## 4.3b Sinh cấu trúc từ OpenMetadata — `om scaffold`
+
+Mục tiêu là **map đúng org và group để phân quyền**. Cách làm: không tự tạo org mỗi giờ. `om scaffold` đọc team, domain và người của OM rồi sinh một **bản nháp** file bootstrap (§4.2). Người phụ trách duyệt bản nháp, sau đó `bootstrap` áp dụng (quyết định 2026-10-15).
+
+| OpenMetadata | Bản nháp (CKAN) |
+|---|---|
+| Team, trừ team gốc `Organization` | organization, `openmetadata.teams: [team]` |
+| · owner của team (một người) | · `admin`: quản lý thành viên, sửa/xóa mọi dataset của org |
+| · thành viên có role `DataSteward` (của riêng người đó, hoặc default role của team) | · `editor`: tạo/sửa dataset của org. Đổi role bằng `--editor-role` |
+| · thành viên khác | · `member`: **đọc** dataset private của org |
+| Domain / subdomain | group, `openmetadata.domains: [FQN domain]` |
+| · owner của domain | · `admin` của group |
+| · expert | · `member` của group |
+| Người | user. Nếu CKAN đã có tài khoản **cùng email** thì dùng lại tài khoản đó, không sửa gì |
+
+Quy tắc đặt tên:
+- Tên lấy từ tên OM: bỏ dấu, `CamelCase` → `camel-case`, dấu chấm thành gạch. Ví dụ `nguyen.van.an` → `nguyen-van-an`, `Ban Kỹ thuật` → `ban-ky-thuat`.
+- Org và group dùng **chung một không gian tên** trong CKAN (gotchas 42). Domain trùng tên một team thì thêm tiền tố `mien-`; team trùng tên một group thì thêm `to-chuc-`. User trùng tên tài khoản khác email thì thêm `u-`.
+- Org/group **đã có** trong CKAN giữ nguyên tên, tiêu đề và mô tả của CKAN; tiêu đề bên OM chỉ được ghi thành chú thích. Team/domain đã ánh xạ (`om_teams`/`om_domains`) giữ đúng org/group cũ. Nhiều team ánh xạ về một org thì gộp thành **một** mục.
+- Vì vậy chạy scaffold lại, khi OM không đổi gì, sẽ cho file mà `bootstrap` áp vào báo `Nothing to change.` (đã có test).
+
+Mỗi mục có chú thích ghi team gốc, loại team, team cha/con và "subdomain của …". Người duyệt cần:
+1. Gộp các team thuộc cùng một đơn vị (chuyển tên team vào `openmetadata.teams` của mục giữ lại).
+2. Xóa team/domain thử nghiệm. Subdomain bị xóa khỏi file thì bảng của nó tự rơi về group của domain cha.
+3. Soát lại từng vai trò. Đặt `sysadmin: true` bằng tay nếu cần; scaffold không bao giờ cấp sysadmin, kể cả cho admin của OM.
+
+Chạy thế nào:
+
+```bash
+# Laptop, với snapshot thật phát lại bằng mock (4.5); trên cụm thì `kubectl exec ... -- ckan ...` như 4.2
+ckan -c ~/ckan/etc/ckan.ini lakehouse om scaffold --out ~/ckan/backup/portal-from-om.yaml
+#   ...duyệt, sửa file...
+ckan -c ~/ckan/etc/ckan.ini lakehouse bootstrap ~/ckan/backup/portal-from-om.yaml \
+  --credentials ~/ckan/backup/lakehouse-users-$(date +%Y%m%d).csv
+ckan -c ~/ckan/etc/ckan.ini lakehouse om check      # owner/domain nào còn "(not mapped)"
+ckan -c ~/ckan/etc/ckan.ini lakehouse om sync --dry-run
+```
+
+- File nháp có tên và email người thật: để **ngoài git** (ví dụ `~/ckan/backup/`). Lệnh không ghi đè file đã có.
+- Thành viên chỉ đồng bộ khi chạy scaffold → bootstrap, **không** chạy theo CronJob. Ai rời team bên OM vẫn còn quyền bên CKAN cho đến khi chạy lại với `bootstrap --prune`.
+- `--prune` cũng gỡ những thành viên đã thêm tay bên CKAN mà file không liệt kê. Chỉ dùng khi đã coi OM là nguồn sự thật của danh sách thành viên.
+
+Đã kiểm chứng bằng app test `test_scaffolded_structure_gives_openmetadata_teams_their_rights`, chạy trên sample snapshot qua chuỗi scaffold → bootstrap → sync:
+- 6 dataset rơi đúng org, kể cả bảng do một người đứng tên;
+- subdomain vào đúng group;
+- owner team sửa được dataset;
+- member chỉ đọc được dataset private, không sửa được;
+- người của team khác không thấy dataset private;
+- team có default role `DataSteward` thì thành viên là editor.
 
 ## 4.4 Tab "Danh mục kỹ thuật"
 
@@ -163,9 +226,15 @@ Tab này chỉ hiện trên dataset có `om_fqn`, đứng trước tab "Nhật k
 
 ## 4.5 Phát triển khi OpenMetadata chỉ vào được qua Remote Desktop
 
-Laptop không tới được OM thật (10.1.117.91:30858 timeout, 2026-10-06). Quy trình ([tools/openmetadata/README.md](../tools/openmetadata/README.md)):
+Laptop không tới được OM thật (10.1.117.91:30858 timeout, 2026-10-06).
 
-1. Trên máy công ty (RDP): `python om_snapshot.py --url <OM> --include "<mẫu FQN>" --out lakehouse.om-snapshot.json`. Token đọc từ `OM_TOKEN` (hoặc hỏi), không ghi vào file. **Không** lấy sample data, profile cột (min/max là giá trị thật), thông điệp kết quả test, tên người follow.
+Từ 2026-10-15, máy RDP (10.1.117.234) vào OM qua tên miền `https://openmetadata-stag.evn.com.vn`. File hosts của máy đó trỏ các tên `*-stag.evn.com.vn` về 10.1.117.247. Quy trình ([tools/openmetadata/README.md](../tools/openmetadata/README.md)):
+
+1. Trên máy công ty (RDP): `python om_snapshot.py --url https://openmetadata-stag.evn.com.vn --include "<mẫu FQN>" --out lakehouse.om-snapshot.json`.
+   - Thêm `--insecure` nếu báo lỗi chứng chỉ.
+   - Token đọc từ `OM_TOKEN` (hoặc hỏi), không ghi vào file.
+   - Script ghi thêm **team, domain và người** (tên, email, team, role) cho `om scaffold`. Có `--no-people` để bỏ phần này.
+   - Script **không** lấy: sample data, profile cột (min/max là giá trị thật), thông điệp kết quả test, tên người follow, bot.
 2. Chép file về laptop, để ngoài git (`*.om-snapshot.json` đã có trong `.gitignore` và `.dockerignore`).
 3. `python3 tools/openmetadata/om_mock.py lakehouse.om-snapshot.json --port 8585 --token dev-token`, rồi trỏ `ckanext.lakehouse.om.url = http://127.0.0.1:8585`. Có `--legacy` để giả lập OM < 1.5.
 
@@ -214,7 +283,7 @@ Mock OpenMetadata trong kind (`om-mock.yaml` + `om-mock.sh`) chạy bằng chín
 
 ## 4.7 Câu hỏi còn mở
 
-- **Q11:** danh sách đơn vị, người dùng và vai trò thật.
+- **Q11:** danh sách đơn vị, người dùng và vai trò thật. Từ 2026-10-15, bản nháp sinh bằng `om scaffold` từ team/domain của OM (§4.3b); còn cần người duyệt.
 - **Q12:** bot OM chỉ đọc và token.
 - **Q13:** phạm vi bảng được công bố: mẫu FQN, tag, và việc có giữ mặc định private hay không.
 
