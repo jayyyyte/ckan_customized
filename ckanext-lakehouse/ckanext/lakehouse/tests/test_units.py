@@ -1,4 +1,4 @@
-"""Tests without a database: mapping, merge rules, client, panel shaping, bootstrap validation.
+"""Tests without a database: mapping, merge rules, client, panel shaping, bootstrap validation, scaffold.
 
     python -m pytest -o addopts="" -p no:ckan -p no:ckan_fixtures ckanext/lakehouse/tests/test_units.py
 """
@@ -12,7 +12,7 @@ from typing import Any
 import pytest
 
 from ckanext.lakehouse import bootstrap
-from ckanext.lakehouse.om import mapping, panel
+from ckanext.lakehouse.om import mapping, panel, scaffold
 from ckanext.lakehouse.om.client import OMClient, OMError
 
 SAMPLE = Path(__file__).parents[4] / "tools" / "openmetadata" / "sample-snapshot.json"
@@ -83,6 +83,31 @@ def test_org_resolution_order(snapshot, rules):
     assert mapping.resolve_org(inventory, rules) is None
     rules.default_org = "fallback"
     assert mapping.resolve_org(inventory, rules) == "fallback"
+
+
+def test_person_owner_stands_for_their_team(snapshot, rules):
+    grid = _table(snapshot, f"{CUR}.van_hanh.grid_loss_monthly")  # owner: nguyen.van.an
+    rules.fqn_orgs = []
+    assert mapping.resolve_org(grid, rules) is None
+    rules.user_teams = {"nguyen.van.an": ["DieuDo"]}
+    assert mapping.resolve_org(grid, rules) == "a0"
+    assert mapping.user_org("Nguyen.Van.An", rules) == ("a0", "via team DieuDo")
+    # Teams of two organizations: ambiguous, so the FQN patterns / default decide.
+    rules.user_teams = {"nguyen.van.an": ["DieuDo", "KinhDoanh"]}
+    assert mapping.resolve_org(grid, rules) is None
+    assert "several organizations" in mapping.user_org("nguyen.van.an", rules)[1]
+    # An owner team beats an owner person.
+    grid["owners"].append({"type": "team", "name": "KinhDoanh"})
+    assert mapping.resolve_org(grid, rules) == "ban-kinh-doanh"
+
+
+def test_unmapped_subdomain_joins_the_parent_group(snapshot, rules):
+    customer = _table(snapshot, f"{CUR}.kinh_doanh.dim_customer")  # domain KinhDoanh.DichVuKhachHang
+    assert mapping.resolve_groups(customer, rules) == []
+    rules.domain_groups["kinhdoanh"] = "kinh-doanh-dvkh"
+    assert mapping.resolve_groups(customer, rules) == ["kinh-doanh-dvkh"]
+    rules.domain_groups["kinhdoanh.dichvukhachhang"] = "dvkh"
+    assert mapping.resolve_groups(customer, rules) == ["dvkh"]
 
 
 def test_legacy_owner_and_domain(snapshot, rules):
@@ -233,6 +258,13 @@ def test_client_negotiates_fields_and_pages(snapshot):
     assert all(u == "http://om.test/api/v1/tables" for u, _ in session.calls)
 
 
+def test_client_reads_teams_with_the_old_owner_field(snapshot):
+    session = FakeSession(snapshot["teams"])
+    teams = list(OMClient("http://om.test", "t0k", session=session).iter_teams())
+    assert len(teams) == len(snapshot["teams"])
+    assert session.calls[-1][1]["fields"] == "users,defaultRoles,parents,children,owner"
+
+
 def test_client_raises_on_http_errors():
     class Down:
         def get(self, *args, **kwargs):
@@ -300,3 +332,85 @@ def test_demo_file_is_valid():
 def test_bootstrap_rejects_bad_files(text, message):
     with pytest.raises(bootstrap.BootstrapError, match=message):
         bootstrap.load(text)
+
+
+# --- scaffold ------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("text,expected", [
+    ("BanKinhDoanh", "ban-kinh-doanh"),
+    ("Ban Kỹ thuật – Sản xuất", "ban-ky-thuat-san-xuat"),
+    ("Điều độ", "dieu-do"),
+    ("EVNNPC", "evnnpc"),
+    ("nguyen.van.an", "nguyen-van-an"),
+])
+def test_slug(text, expected):
+    assert scaffold.slug(text) == expected
+
+
+def _draft(snapshot: dict[str, Any], ckan: scaffold.Ckan | None = None) -> scaffold.Draft:
+    return scaffold.build(snapshot["teams"], snapshot["domains"], snapshot["users"], ckan)
+
+
+def test_scaffold_turns_teams_into_organizations_with_roles(snapshot):
+    draft = _draft(snapshot)
+    orgs = {o["name"]: o for o in draft.organizations}
+    # The root Organization is not a unit; every other team is, the BusinessUnit included.
+    assert set(orgs) == {"dieu-do", "kinh-doanh", "ky-thuat-san-xuat", "tai-chinh", "data-platform", "evn"}
+    assert orgs["dieu-do"]["openmetadata"] == {"teams": ["DieuDo"]}
+    assert orgs["dieu-do"]["title"] == "Trung tâm Điều độ"
+    # Team owner -> admin; DataSteward (own role, or the team's default role) -> editor.
+    assert orgs["dieu-do"]["members"] == {"do-thi-hoa": "member", "nguyen-van-an": "admin"}
+    assert orgs["ky-thuat-san-xuat"]["members"] == {"pham-thi-dung": "editor"}
+    assert orgs["kinh-doanh"]["members"] == {"hoang-van-em": "member", "le-van-cuong": "member",
+                                             "tran-thi-binh": "admin"}
+    assert "members" not in orgs["tai-chinh"]
+
+
+def test_scaffold_turns_domains_into_groups(snapshot):
+    draft = _draft(snapshot)
+    groups = {g["name"]: g for g in draft.groups}
+    # Organizations and groups share CKAN's namespace: a domain named like a team gets a prefix.
+    assert set(groups) == {"van-hanh", "mien-kinh-doanh", "dich-vu-khach-hang", "ky-thuat", "mien-tai-chinh"}
+    assert groups["dich-vu-khach-hang"]["openmetadata"] == {"domains": ["KinhDoanh.DichVuKhachHang"]}
+    assert groups["mien-kinh-doanh"]["members"] == {"le-van-cuong": "member", "tran-thi-binh": "admin"}
+    assert any("subdomain of KinhDoanh" in c for c in draft.comments[("groups", "dich-vu-khach-hang")])
+
+
+def test_scaffold_output_is_a_valid_bootstrap_file(snapshot):
+    draft = _draft(snapshot)
+    text = scaffold.render(draft, "OpenMetadata test")
+    data = bootstrap.load(text)
+    users = {u["name"] for u in data["users"]}
+    assert users == {"nguyen-van-an", "do-thi-hoa", "tran-thi-binh", "le-van-cuong", "pham-thi-dung", "hoang-van-em"}
+    for section in ("organizations", "groups"):
+        for item in data[section]:
+            assert set(item.get("members") or {}) <= users, item["name"]
+    assert "# OpenMetadata team DieuDo (Group), parent EVN" in text
+    assert data == json.loads(json.dumps(draft.data()))
+
+
+def test_scaffold_reuses_what_ckan_has(snapshot):
+    ckan = scaffold.Ckan(
+        users_by_email={"tran.thi.binh@evn.example": "kd-bientap"},
+        user_names={"kd-bientap", "do-thi-hoa"},          # someone else already is do-thi-hoa
+        orgs={"a0", "ban-kinh-doanh", "tai-chinh"}, groups={"ky-thuat-an-toan"},
+        texts={"a0": {"title": "Trung tâm Điều độ HTĐ Quốc gia", "description": ""}},
+        team_orgs={"dieudo": "a0", "kinhdoanh": "ban-kinh-doanh", "dataplatform": "ban-kinh-doanh"},
+        domain_groups={"vanhanh": "ky-thuat-an-toan"},
+    )
+    draft = _draft(snapshot, ckan)
+    orgs = {o["name"]: o for o in draft.organizations}
+    # Mapped teams keep their organization; two teams of one organization make one entry.
+    assert orgs["a0"]["openmetadata"] == {"teams": ["DieuDo"]}
+    # CKAN's title wins over OpenMetadata's, an empty CKAN description is left alone.
+    assert orgs["a0"]["title"] == "Trung tâm Điều độ HTĐ Quốc gia" and "description" not in orgs["a0"]
+    assert "title in OpenMetadata: Trung tâm Điều độ" in draft.comments[("organizations", "a0")]
+    assert orgs["ban-kinh-doanh"]["openmetadata"] == {"teams": ["DataPlatform", "KinhDoanh"]}
+    assert orgs["ban-kinh-doanh"]["members"] == {"hoang-van-em": "member", "kd-bientap": "admin",
+                                                 "le-van-cuong": "member"}
+    assert orgs["a0"]["members"] == {"nguyen-van-an": "admin", "u-do-thi-hoa": "member"}
+    assert "tai-chinh" in orgs  # an existing unmapped organization of the same name is reused
+    assert {g["name"] for g in draft.groups} >= {"ky-thuat-an-toan", "mien-tai-chinh"}
+    assert "kd-bientap" in {u["name"] for u in draft.users}
+    assert any("existing CKAN account" in c for c in draft.comments[("users", "kd-bientap")])

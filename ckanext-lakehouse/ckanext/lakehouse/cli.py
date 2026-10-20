@@ -117,7 +117,7 @@ def check() -> None:
     """Connection, version, and how the in-scope tables map onto organizations and groups."""
     from ckanext.lakehouse.om import mapping
     from ckanext.lakehouse.om.client import OMError
-    from ckanext.lakehouse.om.sync import client_for_sync, load_rules
+    from ckanext.lakehouse.om.sync import client_for_sync, load_rules, load_user_teams
 
     _require_om()
     client = client_for_sync()
@@ -125,22 +125,30 @@ def check() -> None:
     try:
         click.echo(f"OpenMetadata {client.version()} at {client.api}")
         tables = list(client.iter_tables())
+        in_scope = [t for t in tables if mapping.in_scope(t, rules)]
+        load_user_teams(client, rules, in_scope)
     except OMError as err:
         raise click.ClickException(str(err)) from err
     click.echo(f"{len(tables)} table(s) visible to the token; include={rules.include or '(empty)'}")
 
-    in_scope = [t for t in tables if mapping.in_scope(t, rules)]
     services: collections.Counter[str] = collections.Counter(mapping.service_name(t) for t in tables)
     teams: collections.Counter[str] = collections.Counter()
+    people: collections.Counter[str] = collections.Counter()
     domains: collections.Counter[str] = collections.Counter()
     orgs: collections.Counter[str] = collections.Counter()
+    groups: collections.Counter[str] = collections.Counter()
     for table in in_scope:
         for owner in mapping.owners(table):
             if owner.get("type", "team") == "team":
                 teams[owner.get("name", "?")] += 1
+        for user in mapping.owner_users(table):
+            org, why = mapping.user_org(user, rules)
+            people[f"{user} -> {org or '(none)'}: {why}"] += 1
         for domain in mapping.domains(table):
-            domains[domain.get("name", "?")] += 1
+            domains[domain.get("fullyQualifiedName") or domain.get("name", "?")] += 1
         orgs[mapping.resolve_org(table, rules) or "(none: skipped)"] += 1
+        for group in mapping.resolve_groups(table, rules) or ["(no group)"]:
+            groups[group] += 1
 
     def show(title: str, counter: collections.Counter[str], mapped: dict[str, str] | None = None) -> None:
         click.secho(title, bold=True)
@@ -153,8 +161,47 @@ def check() -> None:
     show("Services (all tables):", services)
     click.secho(f"{len(in_scope)} table(s) in scope", fg="green" if in_scope else "yellow")
     show("Owner teams (in scope):", teams, rules.team_orgs)
-    show("Domains (in scope):", domains, rules.domain_groups)
+    show("Owner people, through their teams (in scope):", people)
+    show("Domains (in scope; an unmapped subdomain falls back to its parent):", domains, rules.domain_groups)
     show("Organizations the sync would use:", orgs)
+    show("Groups the sync would use:", groups)
+
+
+@om.command()
+@click.option("--out", "out_path", default="-", show_default=True, type=click.Path(dir_okay=False, allow_dash=True),
+              help="File to write (must not exist yet); '-' prints the draft.")
+@click.option("--editor-role", "editor_roles", multiple=True, default=["DataSteward"], show_default=True,
+              help="OpenMetadata role making a team member an editor of the organization (repeatable).")
+@_with_request
+def scaffold(out_path: str, editor_roles: tuple[str, ...]) -> None:
+    """Draft a bootstrap file from OpenMetadata teams, domains and people, to review before `bootstrap`."""
+    from ckanext.lakehouse.om import scaffold as draft_mod
+    from ckanext.lakehouse.om.client import OMError
+    from ckanext.lakehouse.om.sync import client_for_sync, load_rules
+
+    _require_om()
+    client = client_for_sync()
+    try:
+        version = client.version()
+        teams, domains, users = list(client.iter_teams()), list(client.iter_domains()), list(client.iter_users())
+    except OMError as err:
+        raise click.ClickException(str(err)) from err
+
+    draft = draft_mod.build(teams, domains, users, draft_mod.ckan_state(load_rules()), editor_roles)
+    text = draft_mod.render(draft, f"OpenMetadata {version} at {client.api}")
+    if out_path == "-":
+        click.echo(text, nl=False)
+    else:
+        try:
+            fd = os.open(out_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except OSError as err:
+            raise click.UsageError(f"cannot create {out_path}: {err.strerror} (it must not exist yet)") from err
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(text)
+    click.secho(f"{len(teams)} team(s), {len(domains)} domain(s), {len(users)} person(s) read: "
+                f"{len(draft.organizations)} organization(s), {len(draft.groups)} group(s), "
+                f"{len(draft.users)} user(s) drafted" + (f", {len(draft.notes)} note(s)" if draft.notes else ""),
+                fg="green", err=True)
 
 
 @om.command()

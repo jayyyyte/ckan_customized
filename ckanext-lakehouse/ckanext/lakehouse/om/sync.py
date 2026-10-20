@@ -70,6 +70,20 @@ def load_rules() -> mapping.Rules:
     return rules
 
 
+def load_user_teams(client: OMClient, rules: mapping.Rules, tables: list[dict[str, Any]]) -> None:
+    """Fill `rules.user_teams` for every person owning one of `tables`. Raises OMError.
+
+    Done before anything is written: a lookup failing half-way must not move datasets to
+    another organization (which would change who may read and edit them).
+    """
+    for name in sorted({u for t in tables for u in mapping.owner_users(t)}):
+        if name.casefold() in rules.user_teams:
+            continue
+        user = client.user(name)
+        teams = [t.get("name") for t in (user or {}).get("teams") or [] if t.get("name")]
+        rules.user_teams[name.casefold()] = teams
+
+
 def client_for_sync() -> OMClient:
     return OMClient(config.get("om.url"), config.get("om.api_token") or "",
                     timeout=config.get("om.sync_timeout"), verify=config.get("om.verify_ssl"))
@@ -122,11 +136,11 @@ class Syncer:
             report.notes.append("ckanext.lakehouse.om.include is empty: nothing is published")
         tables = self._tables() if self.rules.include else []
         report.tables = len(tables)
+        tables = [t for t in tables if mapping.in_scope(t, self.rules)]
+        load_user_teams(self.client, self.rules, tables)
         managed = managed_datasets()
         seen: set[str] = set()
         for table in tables:
-            if not mapping.in_scope(table, self.rules):
-                continue
             report.in_scope += 1
             seen.add(table.get("id", ""))
             try:
@@ -149,7 +163,9 @@ class Syncer:
                 log.info("om sync %s: no profile (%s)", fqn, err)
         want = mapping.desired(table, self.rules, profile)
         if not want["owner_org"]:
-            self.report.skipped.append((fqn, "no organization claims it (om_teams, om_fqn_patterns, om.default_org)"))
+            people = [f"owner {u}: {mapping.user_org(u, self.rules)[1]}" for u in mapping.owner_users(table)]
+            self.report.skipped.append((fqn, "; ".join([
+                "no organization claims it (om_teams, om_fqn_patterns, om.default_org)", *people])))
             return
 
         known = managed.get(table.get("id", ""))

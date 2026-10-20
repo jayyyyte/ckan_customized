@@ -23,6 +23,12 @@ TABLE_FIELDS = "columns,tags,tableConstraints,usageSummary,followers"
 # Renamed fields, newest spelling first.
 TABLE_FIELD_VARIANTS = ("owners,domains", "owners,domain", "owner,domain", "owner")
 TEST_CASE_FIELD_VARIANTS = ("testCaseResult,testDefinition", "testDefinition", "")
+# Who's who, for `om scaffold` and for tables owned by a user. Teams and domains went
+# from `owner` to `owners` like tables did.
+TEAM_FIELDS = "users,defaultRoles,parents,children"
+TEAM_FIELD_VARIANTS = ("owners", "owner", "")
+DOMAIN_FIELD_VARIANTS = ("owners,experts,parent", "owner,experts,parent", "owner,experts", "")
+USER_FIELDS = "teams,roles"
 PAGE_SIZE = 100
 
 
@@ -98,17 +104,41 @@ class OMClient:
     def version(self) -> str:
         return str(self.get("/system/version").get("version", "?"))
 
-    def iter_tables(self, schema_fqn: str | None = None) -> Iterator[dict[str, Any]]:
-        params: dict[str, Any] = {"limit": PAGE_SIZE, "include": "non-deleted"}
-        if schema_fqn:
-            params["databaseSchema"] = schema_fqn
+    def _pages(self, kind: str, path: str, params: dict[str, Any], base: str,
+               variants: Sequence[str]) -> Iterator[dict[str, Any]]:
+        params = {"limit": PAGE_SIZE, **params}
         while True:
-            page = self._get_fields("table", "/tables", params, TABLE_FIELDS, TABLE_FIELD_VARIANTS)
+            page = self._get_fields(kind, path, params, base, variants)
             yield from page.get("data") or []
             after = (page.get("paging") or {}).get("after")
             if not after:
                 return
             params = {**params, "after": after}
+
+    def iter_tables(self, schema_fqn: str | None = None) -> Iterator[dict[str, Any]]:
+        params: dict[str, Any] = {"include": "non-deleted"}
+        if schema_fqn:
+            params["databaseSchema"] = schema_fqn
+        return self._pages("table", "/tables", params, TABLE_FIELDS, TABLE_FIELD_VARIANTS)
+
+    def iter_teams(self) -> Iterator[dict[str, Any]]:
+        return self._pages("team", "/teams", {"include": "non-deleted"}, TEAM_FIELDS, TEAM_FIELD_VARIANTS)
+
+    def iter_domains(self) -> Iterator[dict[str, Any]]:
+        return self._pages("domain", "/domains", {}, "", DOMAIN_FIELD_VARIANTS)
+
+    def iter_users(self) -> Iterator[dict[str, Any]]:
+        """People only: bots (the ingestion bots, CKAN's own) are left out."""
+        return self._pages("user", "/users", {"isBot": "false", "include": "non-deleted"}, USER_FIELDS, ("",))
+
+    def user(self, name: str) -> dict[str, Any] | None:
+        """A user with their teams and roles; None when OpenMetadata does not know the name."""
+        try:
+            return self.get(f"/users/name/{quote_fqn(name)}", {"fields": USER_FIELDS})
+        except OMError as err:
+            if err.status == 404:
+                return None
+            raise
 
     def table(self, fqn: str) -> dict[str, Any]:
         return self._get_fields("table", f"/tables/name/{quote_fqn(fqn)}", {}, TABLE_FIELDS,

@@ -70,6 +70,7 @@ class Rules:
     team_orgs: dict[str, str] = field(default_factory=dict)          # casefolded team -> org name
     fqn_orgs: list[tuple[str, str]] = field(default_factory=list)    # (pattern, org name)
     domain_groups: dict[str, str] = field(default_factory=dict)      # casefolded domain -> group name
+    user_teams: dict[str, list[str]] = field(default_factory=dict)   # casefolded user -> their OM teams
     default_org: str | None = None
     ui_url: str = ""
     trino_jdbc_url: str = ""
@@ -189,13 +190,51 @@ def schema_prefixes(include: list[str]) -> list[str] | None:
     return schemas
 
 
+def owner_users(table: dict[str, Any]) -> list[str]:
+    """Names of the people (not teams) owning a table."""
+    return [o["name"] for o in owners(table) if o.get("type") == "user" and o.get("name")]
+
+
+def _team_org(team: dict[str, Any] | str, rules: Rules) -> str | None:
+    keys = (team,) if isinstance(team, str) else (team.get("name"), team.get("displayName"))
+    for key in keys:
+        if key and key.casefold() in rules.team_orgs:
+            return rules.team_orgs[key.casefold()]
+    return None
+
+
+def user_org(user: str, rules: Rules) -> tuple[str | None, str]:
+    """The organization of a person owning a table, through their OpenMetadata teams.
+
+    Returns (org, why). A person in teams of two different organizations is ambiguous:
+    no organization, so the table falls through to the FQN patterns.
+    """
+    teams = rules.user_teams.get(user.casefold(), [])
+    orgs = {org for org in (_team_org(t, rules) for t in teams) if org}
+    if len(orgs) == 1:
+        (org,) = orgs
+        return org, f"via team {', '.join(t for t in teams if _team_org(t, rules) == org)}"
+    if orgs:
+        return None, f"teams of several organizations ({', '.join(sorted(orgs))})"
+    return None, f"no mapped team ({', '.join(teams) or 'in no team'})"
+
+
 def resolve_org(table: dict[str, Any], rules: Rules) -> str | None:
-    """Owner team first, then table FQN patterns, then the default organization."""
-    for owner in owners(table):
+    """Owner team, then the team of an owner person, then table FQN patterns, then the default.
+
+    In CKAN an organization owns each dataset; in OpenMetadata the owner is a team or a
+    person, so a person stands for the team they belong to.
+    """
+    table_owners = owners(table)
+    for owner in table_owners:
         if owner.get("type", "team") == "team":
-            for key in (owner.get("name"), owner.get("displayName")):
-                if key and key.casefold() in rules.team_orgs:
-                    return rules.team_orgs[key.casefold()]
+            org = _team_org(owner, rules)
+            if org:
+                return org
+    for user in owner_users(table):
+        org, _ = user_org(user, rules)
+        if org:
+            return org
     fqn = table.get("fullyQualifiedName", "")
     for pattern, org in rules.fqn_orgs:
         if fnmatch.fnmatchcase(fqn, pattern):
@@ -203,11 +242,24 @@ def resolve_org(table: dict[str, Any], rules: Rules) -> str | None:
     return rules.default_org or None
 
 
+def _domain_keys(domain: dict[str, Any]) -> list[str]:
+    """Names a domain is mapped by, then those of its parents ('Parent.Sub' -> 'Parent').
+
+    A subdomain nobody mapped joins the group of the nearest mapped parent domain.
+    """
+    keys = [k for k in (domain.get("name"), domain.get("fullyQualifiedName"), domain.get("displayName")) if k]
+    parts = split_fqn(domain.get("fullyQualifiedName") or "")
+    for depth in range(len(parts) - 1, 0, -1):
+        head = parts[:depth]
+        keys += [".".join(f'"{p}"' if "." in p else p for p in head), head[-1]]
+    return keys
+
+
 def resolve_groups(table: dict[str, Any], rules: Rules) -> list[str]:
     result = []
     for domain in domains(table):
-        for key in (domain.get("name"), domain.get("fullyQualifiedName"), domain.get("displayName")):
-            group = rules.domain_groups.get((key or "").casefold())
+        for key in _domain_keys(domain):
+            group = rules.domain_groups.get(key.casefold())
             if group:
                 if group not in result:
                     result.append(group)

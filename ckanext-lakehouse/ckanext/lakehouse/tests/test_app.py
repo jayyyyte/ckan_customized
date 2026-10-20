@@ -18,7 +18,7 @@ import ckan.plugins.toolkit as tk
 from ckan.tests import factories
 
 from ckanext.lakehouse import bootstrap
-from ckanext.lakehouse.om import mapping, panel
+from ckanext.lakehouse.om import mapping, panel, scaffold
 from ckanext.lakehouse.om.client import OMClient, OMError
 from ckanext.lakehouse.om.sync import Syncer, load_rules
 
@@ -72,6 +72,22 @@ class FakeClient(OMClient):
     def test_cases(self, fqn, limit=50):
         self._check()
         return self.snapshot["testCases"].get(fqn, [])
+
+    def user(self, name):
+        self._check()
+        return next((u for u in self.snapshot["users"] if u["name"] == name), None)
+
+    def iter_teams(self):
+        self._check()
+        yield from self.snapshot["teams"]
+
+    def iter_domains(self):
+        self._check()
+        yield from self.snapshot["domains"]
+
+    def iter_users(self):
+        self._check()
+        yield from self.snapshot["users"]
 
 
 @pytest.fixture
@@ -205,6 +221,65 @@ def test_name_taken_by_a_hand_made_dataset_is_skipped(portal):
     report = _sync(FakeClient())
     assert (OUTAGE, f"dataset name {OUTAGE_NAME!r} is taken by a dataset that does not come from OpenMetadata") \
         in report.skipped
+
+
+# --- scaffold: OpenMetadata teams and domains -> organizations, groups, roles --------------
+
+
+def _scaffold_and_bootstrap(client: FakeClient) -> bootstrap.Result:
+    draft = scaffold.build(list(client.iter_teams()), list(client.iter_domains()), list(client.iter_users()),
+                           scaffold.ckan_state(load_rules()))
+    return bootstrap.Bootstrap(bootstrap.load(scaffold.render(draft)), "admin").run()
+
+
+def _can(user: str, action: str, data: dict[str, Any]) -> bool:
+    try:
+        tk.check_access(action, {"user": user}, data)
+    except tk.NotAuthorized:
+        return False
+    return True
+
+
+def test_scaffolded_structure_gives_openmetadata_teams_their_rights():
+    factories.Sysadmin(name="admin")
+    factories.User(name="om-sync")
+    client = FakeClient()
+    created = _scaffold_and_bootstrap(client)
+    assert "organization dieu-do" in created.created and "group dich-vu-khach-hang" in created.created
+
+    report = _sync(client)
+    # fact_inventory, owned by team DataPlatform, now has an organization too.
+    assert len(report.created) == 6 and not report.skipped and not report.errors
+
+    def show(fqn: str) -> dict[str, Any]:
+        return tk.get_action("package_show")({"ignore_auth": True}, {"id": mapping.dataset_name(fqn)})
+
+    outage = show(OUTAGE)
+    grid = show(f"{CUR}.van_hanh.grid_loss_monthly")      # owned by the person nguyen.van.an (team DieuDo)
+    customer = show(f"{CUR}.kinh_doanh.dim_customer")     # subdomain KinhDoanh.DichVuKhachHang
+    assert outage["organization"]["name"] == grid["organization"]["name"] == "dieu-do"
+    assert [g["name"] for g in outage["groups"]] == ["van-hanh"]
+    assert [g["name"] for g in customer["groups"]] == ["dich-vu-khach-hang"]
+
+    # Team owner -> admin, member -> reads the private dataset only, other teams -> nothing.
+    assert _can("nguyen-van-an", "package_update", {"id": outage["id"]})
+    assert _can("do-thi-hoa", "package_show", {"id": outage["id"]})
+    assert not _can("do-thi-hoa", "package_update", {"id": outage["id"]})
+    assert not _can("tran-thi-binh", "package_show", {"id": outage["id"]})
+    assert _can("tran-thi-binh", "package_update", {"id": customer["id"]})
+    # DataSteward as the team's default role -> editor.
+    substation = show(f"{CUR}.ky_thuat.dim_substation")
+    assert _can("pham-thi-dung", "package_update", {"id": substation["id"]})
+    # Domain owner -> admin of the group.
+    assert _can("tran-thi-binh", "group_member_create", {"id": "mien-kinh-doanh"})
+
+
+def test_scaffold_again_changes_nothing():
+    factories.Sysadmin(name="admin")
+    client = FakeClient()
+    _scaffold_and_bootstrap(client)
+    again = _scaffold_and_bootstrap(client)
+    assert not (again.created or again.updated or again.memberships or again.removed), again
 
 
 # --- dataset page ---------------------------------------------------------------------------
