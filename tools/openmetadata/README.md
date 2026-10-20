@@ -13,11 +13,29 @@ OpenMetadata thật chỉ vào được từ máy công ty (Remote Desktop). Hai
 1. Lấy token chỉ đọc. Trên OpenMetadata vào **Settings → Bots**, chọn hoặc tạo một bot có quyền đọc, rồi copy JWT. Hoặc vào **Profile → Access Tokens** để dùng token cá nhân.
 2. Chép `om_snapshot.py` sang máy công ty (copy/paste qua RDP), rồi mở PowerShell:
 
+   Kiểm tra Python trên **máy RDP** trước (Python trong WSL của laptop không dùng được ở đây):
+
+   ```powershell
+   py --version
+   python --version
+   Test-Path .\om_snapshot.py
+   ```
+
+   Chỉ cần một trong hai lệnh phiên bản chạy được. Nếu `python` không được nhận diện nhưng `py` chạy được, dùng `py` thay cho `python` ở lệnh dưới. Nếu cả hai đều không có, cài Python từ [python.org](https://www.python.org/downloads/windows/) trên máy RDP rồi mở lại PowerShell. Nếu máy RDP không có Internet, tải bộ cài trên laptop rồi chép sang. Script chỉ dùng thư viện chuẩn, không cần `pip install` hay cài CKAN. Nếu `Test-Path` trả `False`, chuyển đến thư mục đã chép script trước khi chạy.
+
+   Cách chạy đơn giản nhất là để script hỏi token (nhập ẩn, không lưu JWT vào lịch sử PowerShell):
+
+   ```powershell
+   py .\om_snapshot.py --url https://openmetadata-stag.evn.com.vn --include "trino_lakehouse.iceberg_curated.*" --out lakehouse.om-snapshot.json
+   ```
+
+   Nếu đã dùng biến môi trường thì chạy như sau:
+
    ```powershell
    $env:OM_TOKEN = "<dán JWT>"
    python om_snapshot.py --url https://openmetadata-stag.evn.com.vn `
        --include "trino_lakehouse.iceberg_curated.*" --out lakehouse.om-snapshot.json
-   Remove-Item Env:OM_TOKEN
+   Remove-Item Env:OM_TOKEN -ErrorAction SilentlyContinue
    ```
 
    - `openmetadata-stag.evn.com.vn` chỉ phân giải được trên máy có dòng tương ứng trong file hosts (máy RDP, 2026-10-15).
@@ -60,6 +78,14 @@ ckanext.lakehouse.om.include = trino_lakehouse.iceberg_curated.*
 ```
 
 Rồi chạy `ckan -c ~/ckan/etc/ckan.ini lakehouse om check` và `... om sync`. Với container (compose, kind) thì chạy mock với `--host 0.0.0.0` và trỏ tới `http://host.docker.internal:8585`.
+
+### Khi lệnh CKAN local bị lỗi
+
+- `Connection refused` ở `127.0.0.1:8983`: mở Docker Desktop, chạy `docker start ckan-solr`, rồi kiểm tra `curl -fsS 'http://127.0.0.1:8983/solr/ckan/admin/ping?wt=json'` phải có `"status":"OK"` (có thể có khoảng trắng). Đây là Solr của bản cài WSL, khác service Solr trong compose.
+- `You need to specify the CKAN config`: dùng `ckan -c ~/ckan/etc/ckan.ini lakehouse om check`, hoặc `export CKAN_INI="$HOME/ckan/etc/ckan.ini"` trong terminal WSL hiện tại.
+- `cannot reach OpenMetadata` khi cấu hình trỏ `127.0.0.1:8585`: chạy mock ở một terminal WSL riêng và giữ terminal đó mở. Chưa có snapshot thật thì có thể dùng `tools/openmetadata/sample-snapshot.json` (dữ liệu demo hư cấu).
+- Traceback còn trỏ thư mục repo cũ: sau khi activate venv, chạy `python -m pip install --no-deps --no-build-isolation -e /mnt/c/Users/Tlinh/ckan_customized/ckanext-lakehouse`, rồi restart tiến trình CKAN đang mở. Kiểm tra bằng `python -m pip show ckanext-lakehouse`.
+- Bootstrap lỗi giữa chừng có thể đã tạo một số user; giữ lại CSV mật khẩu của lần đó. Khi cần tạo user còn thiếu, dùng tên file `--credentials` mới vì bootstrap không ghi đè CSV cũ.
 
 Mock trả lời đúng các endpoint mà extension gọi:
 - `system/version`;

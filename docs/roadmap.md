@@ -231,6 +231,7 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
   - mock phục vụ `/teams`, `/domains`, `/users`; sample snapshot có 7 team, 5 domain (1 subdomain), 7 người hư cấu;
   - unit 40/40, app 19/19 (thêm test đầu-cuối scaffold → bootstrap → sync → kiểm quyền), ruff sạch ([phase-4 §4.3b](phase-4-content-openmetadata.md#43b-sinh-cấu-trúc-từ-openmetadata--om-scaffold))
 - [ ] **User chạy `om_snapshot.py` trên máy công ty** (RDP, `--url https://openmetadata-stag.evn.com.vn`), chép file về laptop, chạy `om check` + `om scaffold` trên snapshot thật, duyệt bản nháp cùng chủ dữ liệu
+- [x] Gỡ lỗi môi trường local (2026-10-19): bật lại `ckan-solr` (ping OK), cài editable `ckanext-lakehouse` từ repo `ckan_customized` thay đường dẫn cũ `ckan-evn`; bootstrap chạy lại thành công (`Nothing to change.`). Bổ sung hướng dẫn kiểm tra Python trên RDP và khởi động mock trong `tools/openmetadata/README.md`.
 - [ ] Danh sách org, user và vai trò thật (Q11). File thật để ngoài repo nếu có email cá nhân
 - [ ] Bot OpenMetadata chỉ đọc và token (Q12); phạm vi công bố `om.include` / `om.require_tags` (Q13)
 - [x] **Tập dượt `0.2.0` trên kind** (`ckan-rehearsal`, nâng cấp tại chỗ từ `0.1.0`): mock OM trong cụm (`om-mock.sh`); `smoke-test-om.sh` **31/31** (chạy 2 lần); `smoke-test.sh` GĐ3 hồi quy **47/47**. `ctr import` chỉ 10–12 s/node nhờ dùng lại layer ([phase-4 §4.6b](phase-4-content-openmetadata.md#46b-tập-dượt-trên-kind--kết-quả-2026-10-06)) (2026-10-06)
