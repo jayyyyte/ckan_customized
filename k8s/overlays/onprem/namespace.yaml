@@ -1,0 +1,5 @@
+# Dedicated to this deployment: nothing else in the cluster used `lakehouse` yet.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lakehouse

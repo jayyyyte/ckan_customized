@@ -1,0 +1,53 @@
+# Keeps CKAN datasets in step with OpenMetadata's table catalog (Trino/Iceberg), since that
+# catalog changes often — see ckanext/evntheme/openmetadata.py. Requires
+# ckanext.evntheme.openmetadata_api_url and _owner_org to be set (an overlay's config.env);
+# skips itself otherwise instead of failing the CronJob.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ckan-openmetadata-sync
+  labels:
+    app.kubernetes.io/name: ckan-openmetadata-sync
+spec:
+  schedule: "*/30 * * * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: ckan-openmetadata-sync
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          automountServiceAccountToken: false
+          containers:
+            - name: sync
+              image: ckan-lakehouse
+              imagePullPolicy: IfNotPresent
+              command: ["/bin/bash", "-c"]
+              args:
+                - |
+                  set -euo pipefail
+                  if [ -z "${CKANEXT__EVNTHEME__OPENMETADATA_API_URL:-}" ]; then
+                    echo "ckanext.evntheme.openmetadata_api_url not set, skipping"; exit 0
+                  fi
+                  ckan config-tool "$CKAN_INI" "ckan.plugins = ${CKAN__PLUGINS}"
+                  exec ckan -c "$CKAN_INI" evntheme sync-openmetadata
+              envFrom:
+                - configMapRef:
+                    name: ckan-config
+                - secretRef:
+                    name: ckan-secrets
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: "1"
+                  memory: 512Mi

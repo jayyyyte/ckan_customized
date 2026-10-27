@@ -1,0 +1,43 @@
+# Real on-prem cluster (kubernetes-admin@kubernetes), namespace lakehouse,
+# http://10.1.117.91:30500. Unlike overlays/lab, this cluster has no shared
+# postgres-service yet, so this overlay also brings its own Postgres (postgres.yaml).
+#   bash k8s/scripts/make-secrets.sh onprem
+#   kubectl apply -k k8s/overlays/onprem --dry-run=server   # read before the real apply
+#   kubectl apply -k k8s/overlays/onprem
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: lakehouse
+
+resources:
+  - ../../base
+  - namespace.yaml
+  - postgres.yaml
+  - ckan-openmetadata-sync.yaml
+
+configMapGenerator:
+  - name: ckan-config
+    behavior: merge
+    envs:
+      - config.env
+
+secretGenerator:
+  - name: ckan-secrets
+    envs:
+      - secrets.env
+  - name: postgres-superuser
+    envs:
+      - postgres-secrets.env
+
+images:
+  - name: ckan-lakehouse
+    newTag: 0.2.0-80127e4
+
+patches:
+  - target:
+      kind: CronJob
+      name: ckan-om-sync
+    patch: |-
+      - op: add
+        path: /spec/suspend
+        value: true
