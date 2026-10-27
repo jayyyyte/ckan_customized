@@ -63,6 +63,27 @@ OPTIONS: dict[str, tuple[Any, str]] = {
     "zip_max_mb": (500, "Largest total size served by 'Download all' as one zip."),
     # Caching
     "stats_cache_seconds": (300, "How long portal-wide counters are cached. 0 disables the cache."),
+    # OpenMetadata sync (`ckan evntheme sync-openmetadata`)
+    "openmetadata_api_url": (
+        "", "OpenMetadata REST API base URL, e.g. https://openmetadata-stag.evn.com.vn/api. "
+        "Empty: the sync command refuses to run.",
+    ),
+    "openmetadata_token": ("", "Bearer token for the OpenMetadata API. Empty: no Authorization header."),
+    "openmetadata_owner_org": ("", "CKAN organisation synced datasets belong to. Must already exist."),
+    "openmetadata_trino_host": ("", "host:port used to build each synced dataset's Trino JDBC resource (shown to users)."),
+    "openmetadata_publish_tag": (
+        "", "Only sync tables carrying this OpenMetadata tag (e.g. 'CKAN.Publish' or 'Tier.Gold'). "
+        "Empty: sync every table (or every table of --service, if that is set).",
+    ),
+    "trino_user": ("", "Trino username for the OpenMetadata sync data preview. Empty: JDBC link only, no preview."),
+    "trino_password": ("", "Trino password for the same preview. Put it in secrets.env, not config.env."),
+    "trino_query_host": (
+        "", "host:port used to actually query Trino for the preview (e.g. an in-cluster Service). "
+        "Empty: falls back to openmetadata_trino_host.",
+    ),
+    "openmetadata_preview_rows": (
+        1000, "Rows queried from Trino into DataStore per synced table when a preview is loaded. 0 disables it.",
+    ),
 }
 
 # Core options CKAN reads but does not declare. CKAN 2.11 checks `ckan.upload.admin.*` when a
