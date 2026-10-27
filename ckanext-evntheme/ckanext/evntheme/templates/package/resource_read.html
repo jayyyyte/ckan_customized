@@ -1,0 +1,10 @@
+{% ckan_extends %}
+
+{#- Lakehouse tables published as jdbc:trino:// links get a "How to connect" box. -#}
+{% block resource_read_url %}
+  {{ super() }}
+  {% set trino = h.evn_trino_connection(res.url) %}
+  {% if trino %}
+    {% snippet 'evntheme/dataset/trino_connection.html', trino=trino %}
+  {% endif %}
+{% endblock %}
