@@ -75,6 +75,7 @@ ckan config-tool "$INI" \
   "solr_url = http://127.0.0.1:8983/solr/ckan" \
   "ckan.redis.url = redis://localhost:6379/0" \
   "ckan.storage_path = $HOME/ckan/storage" \
+  "ckan.uploads_enabled = true" \
   "ckan.plugins = evntheme activity tracking text_view image_view" \
   "ckan.base_templates_folder = templates" \
   "ckan.base_public_folder = public" \
