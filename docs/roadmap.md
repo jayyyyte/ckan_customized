@@ -178,14 +178,15 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 >
 > **2026-10-15 — ghi nhận:** `https://ckan-stag.evn.com.vn` đã chạy theme EVN (org VTTB, dataset tạo tay `vttb_material_code`). Bản này do đồng nghiệp **deploy qua Rancher, không theo manifest `k8s/` của repo**. Chưa rõ image/tag, config, có plugin `lakehouse` hay không. Chỉ vào được từ máy RDP: file hosts trỏ `*-stag.evn.com.vn` về 10.1.117.247.
 
+> **2026-10-21 — phương án cập nhật:** đã có đường RDP 234 → Ubuntu 235. Output người dùng cung cấp ngày 2026-10-20 cho thấy OM/CKAN trả 200 qua `--resolve -k`; CKAN báo 2.11.6, danh sách plugin chưa có `lakehouse`. Người dùng nhận định 235 có kubectl và công ty import image thủ công; chưa xác minh quyền/runtime. Xem [phương án triển khai hiện tại](company-openmetadata-deployment-plan.md). Với staging Rancher hiện hữu, các bước bên dưới về **xóa stub/tạo DB/apply overlay lab** là kế hoạch cũ, không được dùng làm hướng dẫn nâng cấp trước khi audit. Chưa thao tác trên cụm công ty.
+
 - [x] Viết manifest `k8s/` (kustomize base + overlay `lab`/`kind`): Solr, Redis, CKAN, **Deployment worker** (XLoader, không PVC), CronJob `ckan tracking update` (2026-09-25)
 - [x] Script `audit.sh` (read-only), `make-secrets.sh`, `prepare-postgres.sh` (check / `--apply` / `--print`) (2026-09-25)
 - [x] **Tập dượt trên kind 1.30** theo đúng quy trình của cluster thật, smoke test đạt đủ 47 kiểm tra; `smoke-test.sh` đã commit (2026-09-25)
-- [x] **Báo cáo kỹ thuật cho EVN** (2026-09-25): [Bao-cao-ky-thuat-Cong-du-lieu-EVN.docx](../Bao-cao-ky-thuat-Cong-du-lieu-EVN.docx) ở gốc repo, 40 trang.
-  - Nội dung: bài toán, công nghệ, 15 use case, triển khai theo 3 giai đoạn, kết quả, tiêu chí nghiệm thu, đánh giá, hướng mở rộng, phụ lục vận hành.
-  - Ảnh chụp lấy từ cụm kind, dùng dữ liệu demo.
-  - Trang bìa đã điền đơn vị và người thực hiện; còn trống ô "Người phê duyệt".
-  - Sau khi deploy thật thì cập nhật mục 6.1 (tiêu chí 12–14) và ra bản 1.1.
+- [x] **Báo cáo kỹ thuật cho EVN** (bản 1.0 ngày 2026-09-25; cập nhật bản 1.1 ngày 2026-10-30): [Bao-cao-ky-thuat-Cong-du-lieu-EVN.docx](../Bao-cao-ky-thuat-Cong-du-lieu-EVN.docx) ở gốc repo.
+  - Nội dung: bài toán, công nghệ, 19 use case, triển khai theo 4 giai đoạn (bổ sung GĐ4: RBAC bootstrap, đồng bộ & tab OpenMetadata, image 0.2.0, công cụ snapshot/mock), kết quả kiểm thử, tiêu chí nghiệm thu (19 tiêu chí), đánh giá, hướng mở rộng, phương án triển khai staging (trạm 234 → 235), phụ lục cấu hình & vận hành.
+  - Ảnh chụp lấy từ cụm kind, dùng dữ liệu demo; giữ nguyên toàn bộ 14 hình ảnh minh họa gốc.
+  - Trang bìa đã điền đơn vị và người thực hiện; cập nhật trạng thái GĐ4 và phương án staging.
 - [ ] Nhận kubeconfig (lưu **ngoài** repo)
 - [ ] Audit read-only (`k8s/scripts/audit.sh`), ghi kết quả vào [cluster-context.md](cluster-context.md)
 - [ ] Chốt với chủ cluster: xóa stub `ckan`/`ckan-service` (bắt buộc, bẫy 21b), tạo **hai** DB trên `postgres-service` (`prepare-postgres.sh --apply`, hoặc chủ Postgres chạy file `--print`)
@@ -233,6 +234,7 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 - [ ] **User chạy `om_snapshot.py` trên máy công ty** (RDP, `--url https://openmetadata-stag.evn.com.vn`), chép file về laptop, chạy `om check` + `om scaffold` trên snapshot thật, duyệt bản nháp cùng chủ dữ liệu
 - [x] Gỡ lỗi môi trường local (2026-10-19): bật lại `ckan-solr` (ping OK), cài editable `ckanext-lakehouse` từ repo `ckan_customized` thay đường dẫn cũ `ckan-evn`; bootstrap chạy lại thành công (`Nothing to change.`). Bổ sung hướng dẫn kiểm tra Python trên RDP và khởi động mock trong `tools/openmetadata/README.md`.
 - [ ] Danh sách org, user và vai trò thật (Q11). File thật để ngoài repo nếu có email cá nhân
+- [x] Lập phương án tích hợp/deploy qua 234 → 235, tận dụng plugin hiện có và quy trình import image thủ công dự kiến (2026-10-21); chi tiết ở [company-openmetadata-deployment-plan.md](company-openmetadata-deployment-plan.md). Chưa triển khai thật.
 - [ ] Bot OpenMetadata chỉ đọc và token (Q12); phạm vi công bố `om.include` / `om.require_tags` (Q13)
 - [x] **Tập dượt `0.2.0` trên kind** (`ckan-rehearsal`, nâng cấp tại chỗ từ `0.1.0`): mock OM trong cụm (`om-mock.sh`); `smoke-test-om.sh` **31/31** (chạy 2 lần); `smoke-test.sh` GĐ3 hồi quy **47/47**. `ctr import` chỉ 10–12 s/node nhờ dùng lại layer ([phase-4 §4.6b](phase-4-content-openmetadata.md#46b-tập-dượt-trên-kind--kết-quả-2026-10-06)) (2026-10-06)
 - [ ] `docker/.env` của stack compose đang có (sinh trước GĐ4) chưa có `lakehouse` trong `CKAN__PLUGINS`: thêm tay hoặc sinh lại bằng `make-env.sh` trước khi chạy image `0.2.0`

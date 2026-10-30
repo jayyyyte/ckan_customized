@@ -128,7 +128,7 @@ Cluster công ty (dùng chung, **mọi lệnh ghi cần xác nhận**): làm đ�
 | `docker/` | Dockerfile, compose, entrypoint và script sinh `.env` cho GĐ2 |
 | `k8s/` | Manifest kustomize (base + overlay `lab`/`kind`), script audit / sinh secret / tạo DB, smoke test cho GĐ3 |
 | `setup_step*.sh` | Script cài đặt/chuyển đổi môi trường local (user tự chạy) |
-| `Bao-cao-ky-thuat-Cong-du-lieu-EVN.docx` | Báo cáo kỹ thuật cho EVN (bài toán → triển khai → nghiệm thu → hướng mở rộng), trạng thái ngày 2026-09-25 |
+| `Bao-cao-ky-thuat-Cong-du-lieu-EVN.docx` | Báo cáo kỹ thuật cho EVN (bài toán → triển khai → nghiệm thu → hướng mở rộng), phiên bản 1.1, trạng thái ngày 2026-10-30 |
 | `~/ckan/` (ngoài repo, trong WSL) | venv, source CKAN, config `ckan.ini`, storage upload |
 
 Code CKAN gốc và `ckan.ini` (chứa mật khẩu) nằm ngoài repo này, dưới `~/ckan/` trong WSL — không commit.
