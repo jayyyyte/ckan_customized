@@ -185,10 +185,9 @@ def domains() -> list[dict[str, Any]]:
 
 
 def top_organizations(limit: int = 5) -> list[dict[str, Any]]:
-    return public.action(
-        "organization_list",
-        {"all_fields": True, "include_extras": True, "sort": "package_count desc", "limit": limit},
-    )
+    from ckanext.evntheme.helpers import organization
+
+    return [o for o in organization._all_orgs() if (o.get("package_count") or 0) > 0][:limit]
 
 
 HOME_SORTS = {"recent": "metadata_modified desc", "popular": "views_recent desc"}

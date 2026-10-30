@@ -72,18 +72,25 @@ def org_domain(org: dict[str, Any]) -> str:
 
 @ttl_cache(lambda: config.get("stats_cache_seconds"))
 def _all_orgs() -> list[dict[str, Any]]:
-    """Every organisation with extras; organization_list caps all_fields pages, so page through it."""
+    """Every organisation with extras; organization_list caps all_fields pages, so page through it.
+
+    Sort by 'name asc' in the API query because CKAN's 'package_count' sort uses an inner join
+    against active packages, which filters out organizations with 0 datasets. After fetching all
+    organizations, sort them by package count descending (then alphabetically by title/name).
+    """
     page_size = 25
     orgs: list[dict[str, Any]] = []
     while True:
         batch = public.action(
             "organization_list",
-            {"all_fields": True, "include_extras": True, "sort": "package_count desc",
+            {"all_fields": True, "include_extras": True, "sort": "name asc",
              "limit": page_size, "offset": len(orgs)},
         )
         orgs.extend(batch)
         if len(batch) < page_size:
-            return orgs
+            break
+    orgs.sort(key=lambda o: (-(o.get("package_count") or 0), (o.get("title") or o.get("name") or "").casefold()))
+    return orgs
 
 
 def _matches(org: dict[str, Any], query: str) -> bool:
