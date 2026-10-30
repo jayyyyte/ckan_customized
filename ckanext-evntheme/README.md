@@ -125,6 +125,40 @@ ckan -c ckan.ini evntheme seed-demo --reset    # xóa sạch rồi nạp lại
 
 Lệnh chạy với quyền `admin` để các thay đổi hiện trong nhật ký. Khi có plugin tracking, lệnh còn giả lập lượt xem và lượt tải, cho đi qua đúng pipeline `tracking update`.
 
+## Đồng bộ từ OpenMetadata
+
+Mỗi table đã catalog trong OpenMetadata (Trino/Iceberg) thành một dataset CKAN, resource duy nhất là **kết nối Trino JDBC** (không copy dữ liệu). Chạy lại nhiều lần vẫn an toàn: dataset được tìm và cập nhật theo tên suy ra từ `fullyQualifiedName` của table, không tạo trùng.
+
+```bash
+ckan -c ckan.ini evntheme sync-openmetadata                 # mọi database service
+ckan -c ckan.ini evntheme sync-openmetadata --service trino # chỉ service này
+ckan -c ckan.ini evntheme sync-openmetadata --tag CKAN.Publish # chỉ bảng có tag này
+ckan -c ckan.ini evntheme sync-openmetadata --dry-run        # xem trước, không ghi gì
+```
+
+**Chọn dữ liệu nào được đồng bộ:** gắn tag (vd. classification `CKAN.Publish`, hoặc tier có sẵn như `Tier.Gold`) cho bảng muốn công bố ngay trong OpenMetadata — không cần sửa gì bên CKAN để thêm/bớt bảng. Đặt tag mặc định bằng `ckanext.evntheme.openmetadata_publish_tag` (hoặc cờ `--tag` mỗi lần chạy); để trống thì đồng bộ mọi bảng khớp `--service`.
+
+Cấu hình bắt buộc trước khi chạy (`ckanext.evntheme.*`, đổi được bằng env var `CKANEXT__EVNTHEME__*`):
+
+| Key | Ý nghĩa |
+|---|---|
+| `openmetadata_api_url` | Base URL REST API của OpenMetadata, ví dụ `https://openmetadata-stag.evn.com.vn/api` |
+| `openmetadata_owner_org` | Tổ chức CKAN sở hữu dataset đồng bộ — **phải tồn tại sẵn** |
+| `openmetadata_trino_host` | `host:port` của Trino, dùng để dựng URL `jdbc:trino://…` |
+| `openmetadata_token` | Bearer token, nếu OpenMetadata bật xác thực API (để trống nếu không cần) |
+| `openmetadata_publish_tag` | Chỉ đồng bộ bảng có tag này. Để trống thì lấy mọi bảng |
+| `trino_user`, `trino_password` | Đăng nhập Trino để nạp dữ liệu xem trước và tải toàn bộ (mật khẩu để trong `secrets.env`, không phải `config.env`) |
+| `trino_query_host` | `host:port` CKAN thực sự kết nối để query (vd. Service nội bộ trong cluster). Để trống thì dùng `openmetadata_trino_host` |
+| `openmetadata_preview_rows` | Số dòng nạp vào DataStore mỗi bảng (mặc định 1000). `0` để tắt, resource chỉ còn là link JDBC |
+
+**Đặc tả cột + xem trước dữ liệu thật:** mô tả cột lấy từ OpenMetadata luôn được ghi vào **Data Dictionary** của resource (tab "Data Dictionary" trong trang quản lý resource), không cần cấu hình Trino. Nếu có `trino_user`/`trino_password`, lệnh còn tự `SELECT ... LIMIT <openmetadata_preview_rows>` trên Trino và nạp thẳng vào DataStore của resource đó, kèm tự tạo view **"Xem trước"** (`datatables_view`) nếu chưa có — CKAN không tự gắn view cho resource format `JDBC`. Mỗi lần sync sẽ **xóa và nạp lại toàn bộ** dữ liệu preview (không cộng dồn), nên số dòng luôn phản ánh đúng `openmetadata_preview_rows` dòng đầu mới nhất. Lỗi khi query một bảng (vd. Trino down, bảng đổi tên) chỉ bỏ qua preview của bảng đó, không làm hỏng cả lượt đồng bộ.
+
+**Tải toàn bộ dữ liệu gốc:** `GET /dataset/<id>/resource/<resource_id>/download-full` tự query Trino **không giới hạn** (không phải bản preview 1000 dòng) và trả về CSV dạng stream — không lưu vào DataStore/DB của CKAN, nên không tốn thêm dung lượng dù bảng rất lớn. Cần `trino_user` đã cấu hình; nút "Tải dữ liệu đầy đủ" tự hiện trong danh sách resource khi resource đó là link Trino JDBC. **Không phân trang, có thể chậm với bảng rất lớn** — dùng khi cần bản đầy đủ, không phải để duyệt nhanh (dùng tab Xem trước cho việc đó).
+
+Hộp "Kết nối bằng Trino JDBC" trên trang resource **đã bỏ** (2026-09-29): giờ đây dữ liệu mẫu thật và nút tải đầy đủ thay thế cho thông tin kết nối kỹ thuật thô.
+
+Trên K8s, CronJob `ckan-openmetadata-sync` (mỗi 30 phút, xem `k8s/base/ckan-openmetadata-sync.yaml`) tự chạy lệnh này; nó tự bỏ qua nếu chưa cấu hình `openmetadata_api_url`. Table bị xóa khỏi OpenMetadata **không** làm mất dataset CKAN tương ứng — chỉ đơn giản là không còn được cập nhật.
+
 ## Phát triển
 
 ```

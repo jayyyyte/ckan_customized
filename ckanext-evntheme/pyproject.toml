@@ -16,7 +16,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 keywords = ["CKAN", "theme", "EVN", "data portal"]
-dependencies = []
+dependencies = ["trino"]
 
 [project.urls]
 Homepage = "https://github.com/jayyyyte/ckan_customized"

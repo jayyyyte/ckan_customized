@@ -28,7 +28,7 @@
         <a class="evn-btn evn-btn--primary evn-btn--sm resource-url-analytics" href="{{ res.url }}" rel="noreferrer">{{ ui.icon('external') }}{{ _('Open') }}</a>
       {% endif %}
     {% elif h.evn_trino_connection(res.url) %}
-      <a class="evn-btn evn-btn--primary evn-btn--sm" href="{{ details_url }}#connect">{{ ui.icon('plug') }}{{ _('Connect') }}</a>
+      <a class="evn-btn evn-btn--primary evn-btn--sm" href="{{ h.url_for('evntheme_dataset.download_full', id=pkg.name, resource_id=res.id) }}">{{ ui.icon('download') }}{{ _('Tải dữ liệu đầy đủ') }}</a>
     {% endif %}
   </div>
 </li>
