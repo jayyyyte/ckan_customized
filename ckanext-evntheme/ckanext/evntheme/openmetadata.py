@@ -301,6 +301,22 @@ def open_cursor(cfg: TrinoConfig, catalog: str, schema: str, table_name: str) ->
     return conn, columns, cur
 
 
+def _datastore_col_names(columns: list[str]) -> list[str]:
+    """CKAN DataStore rejects column names starting with '_' (e.g. OLake/CDC '_olake_id', '_cdc_timestamp')."""
+    result: list[str] = []
+    seen: set[str] = set()
+    for i, col in enumerate(columns):
+        base = col.lstrip("_") or f"col_{i}"
+        candidate = base
+        suffix = 2
+        while candidate in seen:
+            candidate = f"{base}_{suffix}"
+            suffix += 1
+        seen.add(candidate)
+        result.append(candidate)
+    return result
+
+
 def refresh_datastore_preview(
     action: Callable[[str, dict[str, Any]], Any],
     trino: TrinoConfig,
@@ -311,6 +327,7 @@ def refresh_datastore_preview(
     """Query up to `preview_rows` rows from Trino and (re)load them into `resource_id`'s
     DataStore, with column descriptions from OpenMetadata as the Data Dictionary."""
     columns, rows = _query_trino(trino, table, preview_rows)
+    ds_columns = _datastore_col_names(columns)
     notes = {c.name.lower(): c.description for c in table.columns if c.description}
     types = ["text"] * len(columns)
     for row in rows:
@@ -318,10 +335,10 @@ def refresh_datastore_preview(
             if value is not None and types[i] == "text":
                 types[i] = _field_type(value)
     fields = [
-        {"id": name, "type": ftype, "info": {"notes": notes.get(name.lower(), "")}}
-        for name, ftype in zip(columns, types, strict=False)
+        {"id": ds_name, "type": ftype, "info": {"notes": notes.get(raw_name.lower(), "")}}
+        for raw_name, ds_name, ftype in zip(columns, ds_columns, types, strict=False)
     ]
-    records = [dict(zip(columns, (_json_safe(v) for v in row), strict=False)) for row in rows]
+    records = [dict(zip(ds_columns, (_json_safe(v) for v in row), strict=False)) for row in rows]
     try:
         action("datastore_delete", {"resource_id": resource_id, "force": True})
     except tk.ObjectNotFound:
