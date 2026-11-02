@@ -54,12 +54,12 @@ def seed_demo(username: str, usage: bool, reset: bool) -> None:
               help="Sysadmin the sync runs as (shown in activity streams).")
 @click.option("--service", default="",
               help="Limit to one OpenMetadata database service (e.g. trino). Empty: every service.")
-@click.option("--tag", "publish_tag", default="",
+@click.option("--tag", "publish_tag", default=None,
               help="Only tables carrying this OpenMetadata tag (e.g. CKAN.Publish, Tier.Gold). "
-                   "Empty: ckanext.evntheme.openmetadata_publish_tag, or every table if that is empty too.")
+                   "Pass --tag '' to sync every table even when openmetadata_publish_tag is set.")
 @click.option("--dry-run", is_flag=True, help="List what would change, without writing anything.")
 @_with_request
-def sync_openmetadata(username: str, service: str, publish_tag: str, dry_run: bool) -> None:
+def sync_openmetadata(username: str, service: str, publish_tag: str | None, dry_run: bool) -> None:
     """Create/update one CKAN dataset per table catalogued in OpenMetadata (Trino/Iceberg)."""
     import ckan.plugins.toolkit as tk
 
@@ -93,7 +93,7 @@ def sync_openmetadata(username: str, service: str, publish_tag: str, dry_run: bo
 
     token = config.get("openmetadata_token") or tk.config.get("ckanext.lakehouse.om.api_token") or ""
     client = OpenMetadataClient(api_url, token)
-    tag = publish_tag or config.get("openmetadata_publish_tag")
+    tag = config.get("openmetadata_publish_tag") if publish_tag is None else publish_tag
     counts = {"create": 0, "update": 0}
     try:
         for table in client.tables(service, tag):
