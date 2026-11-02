@@ -61,6 +61,7 @@ def counts() -> dict[str, int]:
     return {
         "datasets": visible_dataset_count(),
         "organizations": stats.organization_count(),
+        "groups": len(all_groups()),
         "apis": portal.api_datasets,
         "catalogs": mds.summary().catalogs,
     }
@@ -81,6 +82,7 @@ def nav_items() -> list[dict[str, Any]]:
     blueprint = blueprint or ""
     dataset_type = tk.h.default_package_type()
     org_type = tk.h.default_group_type("organization")
+    group_type = tk.h.default_group_type("group")
     total = counts()
     return [
         {
@@ -102,10 +104,10 @@ def nav_items() -> list[dict[str, Any]]:
             "active": blueprint == org_type,
         },
         {
-            "label": tk._("Code lists"),
-            "url": tk.url_for("evntheme_mds.index"),
-            "count": total["catalogs"],
-            "active": blueprint == "evntheme_mds",
+            "label": tk._("Data domains"),
+            "url": tk.url_for(f"{group_type}.index"),
+            "count": total["groups"],
+            "active": blueprint == group_type,
         },
     ]
 

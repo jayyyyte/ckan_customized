@@ -1,0 +1,56 @@
+{% ckan_extends %}
+{% import 'evntheme/macros/ui.html' as ui %}
+
+{#- Directory of data domains (CKAN groups). Uses h.evn_domains() (sorted by title asc)
+    so domains with 0 datasets are shown too, unlike core's package_count join. -#}
+{% block content %}
+  {% set domains = h.evn_domains() %}
+  {% set counts = h.evn_counts() %}
+  <div class="evn-page evn-orgs">
+    <section class="evn-page-hero">
+      <div class="evn-container evn-page-hero__grid">
+        <div>
+          {{ ui.breadcrumb([(_('Home'), h.url_for('home.index')), (_('Data domains'), none)]) }}
+          <h1 class="evn-page-hero__title">{{ _('Data domains') }}</h1>
+          <p class="evn-page-hero__lead">
+            {{ _('{n} main data domains, matching the fields the Group works in.').format(n=h.evn_number(domains|length)) }}
+          </p>
+        </div>
+        <dl class="evn-hero-cards">
+          {{ ui.stat(h.evn_number(domains|length), _('Data domains'), 'navy', 'evn-hero-card') }}
+          {{ ui.stat(h.evn_number(counts.datasets), _('Datasets'), 'blue', 'evn-hero-card') }}
+        </dl>
+      </div>
+    </section>
+    <div class="evn-container evn-flash">{{ self.flash() }}</div>
+
+    <div class="evn-container evn-orgs__body">
+      {% if h.check_access('group_create') %}
+        <div class="evn-toolbar">
+          <div></div>
+          <div class="evn-toolbar__end">
+            <a class="evn-btn evn-btn--primary" href="{{ h.url_for(group_type ~ '.new') }}">{{ ui.icon('plus') }}{{ h.humanize_entity_type('group', group_type, 'add link') or _('Add Group') }}</a>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if domains %}
+        <ul class="evn-domain-grid">
+          {% for domain in domains %}
+            <li>
+              <a class="evn-domain" href="{{ domain.url }}">
+                <span class="evn-domain__icon evn-tone--{{ domain.tone }}" aria-hidden="true"><span></span></span>
+                <span class="evn-domain__title">{{ domain.title }}</span>
+                {% if domain.description %}<span class="evn-domain__desc">{{ domain.description }}</span>{% endif %}
+                <span class="evn-domain__count">{{ ungettext('{n} dataset', '{n} datasets', domain.count).format(n=h.evn_number(domain.count)) }}</span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        {{ ui.empty(_('No datasets have been published yet.')) }}
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
+
