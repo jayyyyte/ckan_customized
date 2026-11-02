@@ -31,7 +31,7 @@ secretGenerator:
 
 images:
   - name: ckan-lakehouse
-    newTag: 0.2.0-80127e4
+    newTag: 0.2.1
 
 patches:
   - target:

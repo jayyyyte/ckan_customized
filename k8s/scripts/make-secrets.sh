@@ -3,13 +3,13 @@
 # k8s/secrets.env.example, generating every password and secret:
 #   bash k8s/scripts/make-secrets.sh lab
 #   PG_HOST=postgres-service:5432 bash k8s/scripts/make-secrets.sh lab   # the default
-# For the kind overlay it also writes postgres-secrets.env (superuser of the stand-in).
+# For overlays with their own Postgres (kind, onprem) it also writes postgres-secrets.env.
 #
 # It never overwrites: a new secrets.env means new database passwords (the roles on
 # postgres-service keep the old ones), and every session and API token becomes void.
 set -euo pipefail
 
-overlay="${1:?usage: make-secrets.sh <overlay>   (lab | kind)}"
+overlay="${1:?usage: make-secrets.sh <overlay>   (lab | kind | onprem)}"
 k8s_dir="$(cd "$(dirname "$0")/.." && pwd)"
 dir="$k8s_dir/overlays/$overlay"
 out="$dir/secrets.env"
@@ -66,7 +66,7 @@ print(f"{out} written, {len(filled)} generated values")
 PY
 chmod 600 "$out"
 
-if [ "$overlay" = kind ] && [ ! -e "$dir/postgres-secrets.env" ]; then
+if [ -e "$dir/postgres.yaml" ] && [ ! -e "$dir/postgres-secrets.env" ]; then
     python3 -c 'import secrets; print("POSTGRES_PASSWORD=" + secrets.token_urlsafe(24))' \
         > "$dir/postgres-secrets.env"
     chmod 600 "$dir/postgres-secrets.env"
