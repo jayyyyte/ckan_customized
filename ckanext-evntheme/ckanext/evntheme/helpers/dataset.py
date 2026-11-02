@@ -121,11 +121,11 @@ def _contact(pkg: dict[str, Any]) -> str:
     return " · ".join(part for part in (name, email) if part)
 
 
-# Extras rendered by name in `info_rows`; any other extra is listed after them.
+# Extras rendered by name in `info_rows` (or hidden internal bookkeeping); any other extra is listed after them.
 _KNOWN_EXTRAS = {
     Extra.DATA_TYPE, Extra.FREQUENCY, Extra.SOURCE_SYSTEM, Extra.RECORD_COUNT, Extra.GOLDEN_RECORD,
     Extra.METADATA_STANDARD, Extra.SPATIAL, Extra.TEMPORAL, Extra.OPEN_LEVEL, Extra.RATING_AVERAGE,
-    Extra.RATING_COUNT, Extra.SOURCE_TABLE, *(m.code for m in QUALITY_METRICS),
+    Extra.RATING_COUNT, Extra.SOURCE_TABLE, "openmetadata_fqn", "synced_from", *(m.code for m in QUALITY_METRICS),
 }
 
 
@@ -136,9 +136,10 @@ def info_rows(pkg: dict[str, Any]) -> list[dict[str, Any]]:
     """
     org = pkg.get("organization") or {}
     groups = ", ".join(g.get("display_name") or g.get("title") or g["name"] for g in pkg.get("groups") or [])
+    source_table = field(pkg, Extra.SOURCE_TABLE) or field(pkg, "openmetadata_fqn")
     rows = [
         (tk._("Identifier"), pkg.get("name")),
-        (tk._("Source table"), field(pkg, Extra.SOURCE_TABLE)),
+        (tk._("Source table"), source_table),
         (tk._("Data domain"), groups),
         (tk._("Publisher"), org.get("title") or org.get("name")),
         (tk._("Contact"), _contact(pkg)),

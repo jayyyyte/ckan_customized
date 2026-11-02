@@ -70,7 +70,9 @@ OPTIONS: dict[str, tuple[Any, str]] = {
     ),
     "openmetadata_token": ("", "Bearer token for the OpenMetadata API. Empty: no Authorization header."),
     "openmetadata_owner_org": ("", "CKAN organisation synced datasets belong to. Must already exist."),
-    "openmetadata_trino_host": ("", "host:port used to build each synced dataset's Trino JDBC resource (shown to users)."),
+    "openmetadata_trino_host": (
+        "", "host:port used to build each synced dataset's Trino JDBC resource (shown to users).",
+    ),
     "openmetadata_publish_tag": (
         "", "Only sync tables carrying this OpenMetadata tag (e.g. 'CKAN.Publish' or 'Tier.Gold'). "
         "Empty: sync every table (or every table of --service, if that is set).",

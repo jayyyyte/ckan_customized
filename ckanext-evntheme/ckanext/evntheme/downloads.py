@@ -78,9 +78,16 @@ def download_all(id: str) -> Any:
 
 
 def _trino_table(pkg: dict[str, Any]) -> tuple[str, str, str] | None:
-    """(catalog, schema, table) from the `openmetadata_fqn` extra `sync-openmetadata` writes
-    (service.database.schema.table); None for datasets not synced from OpenMetadata."""
-    fqn = next((e["value"] for e in pkg.get("extras", []) if e["key"] == "openmetadata_fqn"), None)
+    """(catalog, schema, table) from the `openmetadata_fqn` or `om_fqn` extra;
+    None for datasets not synced from OpenMetadata."""
+    fqn = next(
+        (
+            e["value"]
+            for e in pkg.get("extras", [])
+            if e.get("key") in ("openmetadata_fqn", "om_fqn") and e.get("value")
+        ),
+        None,
+    )
     if not fqn or fqn.count(".") < 2:
         return None
     catalog, schema, table = fqn.split(".")[-3:]

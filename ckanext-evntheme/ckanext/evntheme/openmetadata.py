@@ -7,6 +7,10 @@ from OpenMetadata are written to the resource's Data Dictionary. If Trino creden
 configured, up to `openmetadata_preview_rows` rows are also queried live and loaded into the
 resource's DataStore, so the dataset page shows a real preview instead of just the JDBC link.
 
+Also writes `om_fqn`, `om_id`, `om_columns` and related `om_*` extras so the dataset page
+automatically displays the "Danh mục kỹ thuật" (Technical catalog) tab from `ckanext-lakehouse`
+with live lineage, data quality test results, table profile and offline column fallback.
+
 Safe to run repeatedly, e.g. from a CronJob: datasets are looked up and updated by a name
 derived from the table's fully qualified name, never duplicated, and a table removed from
 OpenMetadata simply stops being touched (its CKAN dataset is left in place).
@@ -15,11 +19,13 @@ from __future__ import annotations
 
 import datetime as dt
 import decimal
+import json
 import logging
 import re
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from typing import Any
+from urllib.parse import quote
 
 import requests
 
@@ -30,6 +36,8 @@ log = logging.getLogger(__name__)
 
 TABLE_FIELDS = "description,tags,database,databaseSchema,columns"
 PAGE_SIZE = 100
+MAX_COLUMNS = 500
+TIER_PREFIX = "tier."
 
 
 class OpenMetadataError(Exception):
@@ -45,6 +53,8 @@ class TrinoError(Exception):
 class Column:
     name: str
     description: str
+    data_type: str = ""
+    constraint: str = ""
 
 
 @dataclass
@@ -58,6 +68,11 @@ class Table:
     tags: list[str]
     tag_fqns: list[str]
     columns: list[Column] = field(default_factory=list)
+    id: str = ""
+    service: str = ""
+    service_type: str = ""
+    table_type: str = ""
+    updated_at: str = ""
 
     @property
     def dataset_name(self) -> str:
@@ -65,10 +80,61 @@ class Table:
         slug = re.sub(r"[^a-z0-9_-]+", "-", self.fqn.lower()).strip("-")
         return slug[:100] or "table"
 
+    @property
+    def tier(self) -> str:
+        for fqn in self.tag_fqns:
+            if fqn.lower().startswith(TIER_PREFIX):
+                return fqn.split(".", 1)[1]
+        return ""
+
+    @property
+    def source_system(self) -> str:
+        return " · ".join(filter(None, (self.service_type, self.service)))
+
+    def om_columns_json(self) -> str:
+        """Compact column list stored in `om_columns` for the Technical catalog tab's offline fallback."""
+        items = []
+        for col in self.columns[:MAX_COLUMNS]:
+            item: dict[str, str] = {"name": col.name, "type": col.data_type}
+            if col.description:
+                item["description"] = col.description
+            if col.constraint:
+                item["constraint"] = col.constraint
+            items.append(item)
+        return json.dumps(items, ensure_ascii=False, separators=(",", ":"))
+
+    def om_extras(self, ui_url: str = "") -> dict[str, str]:
+        """Extras written by the sync so both evntheme and ckanext-lakehouse's Technical catalog tab work."""
+        om_url = f"{ui_url.rstrip('/')}/table/{quote(self.fqn, safe='')}" if ui_url else ""
+        candidates = {
+            "synced_from": "openmetadata",
+            "openmetadata_fqn": self.fqn,
+            "om_fqn": self.fqn,
+            "om_id": self.id,
+            "om_url": om_url,
+            "om_service": self.service,
+            "om_service_type": self.service_type,
+            "om_table_type": self.table_type,
+            "om_tier": self.tier,
+            "om_updated_at": self.updated_at,
+            "om_columns": self.om_columns_json(),
+            "data_type": "Bảng dữ liệu (Trino/Iceberg)",
+        }
+        return {k: v for k, v in candidates.items() if v != ""}
+
+
+def _normalize_api_url(base_url: str) -> str:
+    base = base_url.rstrip("/")
+    if base.endswith("/api/v1"):
+        return base[:-3]
+    if not base.endswith("/api"):
+        return f"{base}/api"
+    return base
+
 
 class OpenMetadataClient:
     def __init__(self, base_url: str, token: str = "") -> None:
-        self.base_url = base_url.rstrip("/")
+        self.base_url = _normalize_api_url(base_url)
         self._headers = {"Authorization": f"Bearer {token}"} if token else {}
 
     def _get(self, path: str, **params: Any) -> dict[str, Any]:
@@ -107,14 +173,30 @@ class OpenMetadataClient:
                 return
 
 
+def _format_updated_at(millis: Any) -> str:
+    if not isinstance(millis, int | float):
+        return ""
+    return dt.datetime.fromtimestamp(millis / 1000, tz=dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def _to_table(entity: dict[str, Any]) -> Table:
     database = entity.get("database") or {}
     schema = entity.get("databaseSchema") or {}
+    service = entity.get("service") or {}
+    fqn = entity["fullyQualifiedName"]
     tag_fqns = [t["tagFQN"] for t in entity.get("tags", []) if t.get("tagFQN")]
-    tags = [fqn.rsplit(".", 1)[-1] for fqn in tag_fqns]
-    columns = [Column(c["name"], c.get("description") or "") for c in entity.get("columns", [])]
+    tags = [t_fqn.rsplit(".", 1)[-1] for t_fqn in tag_fqns]
+    columns = [
+        Column(
+            name=c["name"],
+            description=c.get("description") or "",
+            data_type=c.get("dataTypeDisplay") or c.get("dataType") or "",
+            constraint=c.get("constraint") or "",
+        )
+        for c in entity.get("columns", [])
+    ]
     return Table(
-        fqn=entity["fullyQualifiedName"],
+        fqn=fqn,
         name=entity["name"],
         display_name=entity.get("displayName") or entity["name"],
         description=entity.get("description") or "",
@@ -123,6 +205,11 @@ def _to_table(entity: dict[str, Any]) -> Table:
         tags=tags,
         tag_fqns=tag_fqns,
         columns=columns,
+        id=str(entity.get("id") or ""),
+        service=service.get("name") or fqn.split(".", 1)[0],
+        service_type=entity.get("serviceType") or "",
+        table_type=entity.get("tableType") or "",
+        updated_at=_format_updated_at(entity.get("updatedAt")),
     )
 
 
@@ -214,6 +301,40 @@ def open_cursor(cfg: TrinoConfig, catalog: str, schema: str, table_name: str) ->
     return conn, columns, cur
 
 
+def refresh_datastore_preview(
+    action: Callable[[str, dict[str, Any]], Any],
+    trino: TrinoConfig,
+    resource_id: str,
+    table: Table,
+    preview_rows: int,
+) -> None:
+    """Query up to `preview_rows` rows from Trino and (re)load them into `resource_id`'s
+    DataStore, with column descriptions from OpenMetadata as the Data Dictionary."""
+    columns, rows = _query_trino(trino, table, preview_rows)
+    notes = {c.name.lower(): c.description for c in table.columns if c.description}
+    types = ["text"] * len(columns)
+    for row in rows:
+        for i, value in enumerate(row):
+            if value is not None and types[i] == "text":
+                types[i] = _field_type(value)
+    fields = [
+        {"id": name, "type": ftype, "info": {"notes": notes.get(name.lower(), "")}}
+        for name, ftype in zip(columns, types, strict=False)
+    ]
+    records = [dict(zip(columns, (_json_safe(v) for v in row), strict=False)) for row in rows]
+    try:
+        action("datastore_delete", {"resource_id": resource_id, "force": True})
+    except tk.ObjectNotFound:
+        pass
+    action("datastore_create", {
+        "resource_id": resource_id, "force": True, "fields": fields, "records": records,
+    })
+    existing = action("resource_view_list", {"id": resource_id})
+    if not any(v["view_type"] == "datatables_view" for v in existing):
+        action("resource_view_create", {
+            "resource_id": resource_id, "view_type": "datatables_view", "title": tk._("Xem trước"),
+        })
+
 
 class Syncer:
     """Upserts one CKAN dataset per OpenMetadata table, run as a real sysadmin so the change
@@ -221,7 +342,7 @@ class Syncer:
 
     def __init__(
         self, username: str, owner_org: str, trino_host: str,
-        trino: TrinoConfig | None = None, preview_rows: int = 1000,
+        trino: TrinoConfig | None = None, preview_rows: int = 1000, ui_url: str = "",
     ) -> None:
         if model.User.by_name(username) is None:
             raise ValueError(f"user {username!r} does not exist; pass --user <sysadmin>")
@@ -234,6 +355,7 @@ class Syncer:
         self.trino_host = trino_host
         self.trino = trino
         self.preview_rows = preview_rows
+        self.ui_url = ui_url
         try:
             self._action("organization_show", {"id": owner_org})
         except tk.ObjectNotFound as err:
@@ -256,17 +378,23 @@ class Syncer:
         if dry_run:
             return action
 
+        om_extras = table.om_extras(self.ui_url)
+        kept_extras = {
+            e["key"]: e.get("value", "")
+            for e in (existing.get("extras") or [])
+            if e.get("key") and e["key"] not in om_extras and not e["key"].startswith("om_")
+        } if existing else {}
+        if table.source_system and not kept_extras.get("source_system"):
+            kept_extras["source_system"] = table.source_system
+        merged_extras = {**kept_extras, **om_extras}
+
         data = {
             "name": name,
             "title": table.display_name,
-            "notes": table.description,
+            "notes": table.description or (existing.get("notes") or "" if existing else ""),
             "owner_org": self.owner_org,
             "tags": [{"name": t} for t in table.tags],
-            "extras": [
-                {"key": "synced_from", "value": "openmetadata"},
-                {"key": "openmetadata_fqn", "value": table.fqn},
-                {"key": "data_type", "value": "Bảng dữ liệu (Trino/Iceberg)"},
-            ],
+            "extras": [{"key": k, "value": v} for k, v in sorted(merged_extras.items())],
         }
         pkg = self._action("package_patch", {**data, "id": existing["id"]}) if existing else self._action(
             "package_create", data,
@@ -298,26 +426,7 @@ class Syncer:
         """Query up to `preview_rows` rows from Trino and (re)load them into the resource's
         DataStore, with column descriptions from OpenMetadata as the Data Dictionary."""
         assert self.trino is not None
-        columns, rows = _query_trino(self.trino, table, self.preview_rows)
-        notes = {c.name.lower(): c.description for c in table.columns if c.description}
-        types = ["text"] * len(columns)
-        for row in rows:
-            for i, value in enumerate(row):
-                if value is not None and types[i] == "text":
-                    types[i] = _field_type(value)
-        fields = [
-            {"id": name, "type": ftype, "info": {"notes": notes.get(name.lower(), "")}}
-            for name, ftype in zip(columns, types)
-        ]
-        records = [dict(zip(columns, (_json_safe(v) for v in row))) for row in rows]
-        try:
-            self._action("datastore_delete", {"resource_id": resource["id"], "force": True})
-        except tk.ObjectNotFound:
-            pass
-        self._action("datastore_create", {
-            "resource_id": resource["id"], "force": True, "fields": fields, "records": records,
-        })
-        self._ensure_grid_view(resource["id"])
+        refresh_datastore_preview(self._action, self.trino, resource["id"], table, self.preview_rows)
 
     def _ensure_grid_view(self, resource_id: str) -> None:
         """CKAN only auto-creates a preview view by resource format (`ckan.views.default_views`),
