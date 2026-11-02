@@ -49,12 +49,20 @@ def entity_link(fqn: str) -> str:
     return f"<#E::table::{fqn}>"
 
 
+def _strip_api_suffix(url: str) -> str:
+    url = url.rstrip("/")
+    for suffix in ("/api/v1", "/api"):
+        if url.endswith(suffix):
+            return url[: -len(suffix)]
+    return url
+
+
 class OMClient:
     def __init__(self, base_url: str, token: str = "", timeout: float = 10, verify: bool = True,
                  session: Any = None) -> None:
         if not base_url:
             raise OMError("OpenMetadata is not configured (ckanext.lakehouse.om.url)")
-        self.api = base_url.rstrip("/") + "/api/v1"
+        self.api = _strip_api_suffix(base_url) + "/api/v1"
         self.timeout = timeout
         self.verify = verify
         self.session = session or requests.Session()

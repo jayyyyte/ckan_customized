@@ -42,15 +42,19 @@ def extra(pkg: dict[str, Any], key: str) -> str:
     return str(pkg.get(key) or "")
 
 
+def _dataset_fqn(pkg: dict[str, Any]) -> str:
+    return extra(pkg, mapping.Ext.FQN) or extra(pkg, "openmetadata_fqn")
+
+
 def has_panel(pkg: dict[str, Any]) -> bool:
-    return bool(extra(pkg, mapping.Ext.FQN))
+    return bool(_dataset_fqn(pkg))
 
 
 # --- fetching (cached) ------------------------------------------------------------------
 
 
 def _client() -> OMClient:
-    return OMClient(config.get("om.url"), config.get("om.api_token") or "",
+    return OMClient(config.om_url(), config.om_token(),
                     timeout=config.get("om.timeout"), verify=config.get("om.verify_ssl"))
 
 
@@ -218,7 +222,7 @@ def ui_link(entity_type: str, fqn: str) -> str:
 
 def panel(pkg: dict[str, Any]) -> dict[str, Any] | None:
     """Template data for the tab; None when the dataset does not come from OpenMetadata."""
-    fqn = extra(pkg, mapping.Ext.FQN)
+    fqn = _dataset_fqn(pkg)
     if not fqn:
         return None
     live = _cached(fqn)

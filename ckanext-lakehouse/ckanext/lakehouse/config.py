@@ -70,9 +70,33 @@ def get_list(name: str) -> list[str]:
     return [item for item in (get(name) or "").split() if item]
 
 
+def _strip_api_suffix(url: str) -> str:
+    url = url.rstrip("/")
+    for suffix in ("/api/v1", "/api"):
+        if url.endswith(suffix):
+            return url[: -len(suffix)]
+    return url
+
+
+def om_url() -> str:
+    """OpenMetadata server root URL, falling back to `ckanext.evntheme.openmetadata_api_url`."""
+    raw = get("om.url") or tk.config.get("ckanext.evntheme.openmetadata_api_url") or ""
+    return _strip_api_suffix(str(raw)) if raw else ""
+
+
+def om_token() -> str:
+    """OpenMetadata API token, falling back to `ckanext.evntheme.openmetadata_token`."""
+    return str(get("om.api_token") or tk.config.get("ckanext.evntheme.openmetadata_token") or "")
+
+
 def om_enabled() -> bool:
-    return bool(get("om.url"))
+    return bool(om_url())
 
 
 def om_ui_url() -> str:
-    return (get("om.ui_url") or get("om.url") or "").rstrip("/")
+    return (
+        get("om.ui_url")
+        or tk.config.get("ckanext.evntheme.openmetadata_url")
+        or om_url()
+        or ""
+    ).rstrip("/")

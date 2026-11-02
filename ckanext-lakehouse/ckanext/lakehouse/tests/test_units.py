@@ -414,3 +414,12 @@ def test_scaffold_reuses_what_ckan_has(snapshot):
     assert {g["name"] for g in draft.groups} >= {"ky-thuat-an-toan", "mien-tai-chinh"}
     assert "kd-bientap" in {u["name"] for u in draft.users}
     assert any("existing CKAN account" in c for c in draft.comments[("users", "kd-bientap")])
+
+
+def test_panel_and_client_accept_evntheme_sync_shapes():
+    assert panel.has_panel({"extras": [{"key": "om_fqn", "value": OUTAGE}]})
+    assert panel.has_panel({"extras": [{"key": "openmetadata_fqn", "value": OUTAGE}]})
+    assert not panel.has_panel({"extras": []})
+    for url in ("http://om.test:8585", "http://om.test:8585/api", "http://om.test:8585/api/v1/"):
+        assert OMClient(url).api == "http://om.test:8585/api/v1"
+

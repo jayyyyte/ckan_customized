@@ -47,13 +47,18 @@ def _json_list(value: Any) -> list[str]:
 
 def load_rules() -> mapping.Rules:
     """Scope from config, ownership from the extras `ckan lakehouse bootstrap` put on orgs and groups."""
+    trino_jdbc = config.get("om.trino_jdbc_url") or ""
+    if not trino_jdbc:
+        trino_host = tk.config.get("ckanext.evntheme.openmetadata_trino_host") or ""
+        if trino_host:
+            trino_jdbc = f"jdbc:trino://{trino_host}"
     rules = mapping.Rules(
         include=config.get_list("om.include"),
         exclude=config.get_list("om.exclude"),
         require_tags=config.get_list("om.require_tags"),
-        default_org=config.get("om.default_org") or None,
+        default_org=config.get("om.default_org") or tk.config.get("ckanext.evntheme.openmetadata_owner_org") or None,
         ui_url=config.om_ui_url(),
-        trino_jdbc_url=config.get("om.trino_jdbc_url") or "",
+        trino_jdbc_url=trino_jdbc,
         trino_catalogs=dict(p.split("=", 1) for p in config.get_list("om.trino_catalogs") if "=" in p),
     )
     groups = model.Session.query(model.Group).filter(model.Group.state == "active")
@@ -85,7 +90,7 @@ def load_user_teams(client: OMClient, rules: mapping.Rules, tables: list[dict[st
 
 
 def client_for_sync() -> OMClient:
-    return OMClient(config.get("om.url"), config.get("om.api_token") or "",
+    return OMClient(config.om_url(), config.om_token(),
                     timeout=config.get("om.sync_timeout"), verify=config.get("om.verify_ssl"))
 
 
@@ -180,23 +185,64 @@ class Syncer:
             if not self.dry_run:
                 pkg = self._action("package_create", payload)
                 self._set_groups(pkg["id"], set(), groups)
+                self._maybe_refresh_trino_preview(pkg, table)
             self.report.created.append(want["name"])
             return
 
         pkg = self._action("package_show", {"id": known["name"]})
         patch = mapping.update_payload(pkg, want)
         if not patch:
+            if not self.dry_run:
+                self._maybe_refresh_trino_preview(pkg, table)
             self.report.unchanged += 1
             return
         changed = sorted(patch)
         groups = patch.pop("groups", None)
         if not self.dry_run:
             if patch:
-                self._action("package_patch", {**patch, "id": pkg["id"]})
+                pkg = self._action("package_patch", {**patch, "id": pkg["id"]})
             if groups is not None:
                 self._set_groups(pkg["id"], {g["name"] for g in pkg.get("groups") or []},
                                  {g["name"] for g in groups})
+            self._maybe_refresh_trino_preview(pkg, table)
         self.report.updated.append(f"{pkg['name']} ({', '.join(changed)})")
+
+    def _maybe_refresh_trino_preview(self, pkg: dict[str, Any], table: dict[str, Any]) -> None:
+        """If Trino preview credentials are configured in evntheme, populate the JDBC resource's DataStore."""
+        try:
+            from ckanext.evntheme import config as evn_config
+            from ckanext.evntheme.openmetadata import (
+                TrinoConfig,
+                TrinoError,
+                _to_table,
+                refresh_datastore_preview,
+            )
+        except ImportError:
+            return
+        trino_user = evn_config.get("trino_user")
+        preview_rows = evn_config.get("openmetadata_preview_rows")
+        query_host = evn_config.get("trino_query_host") or evn_config.get("openmetadata_trino_host")
+        if not (trino_user and preview_rows > 0 and query_host):
+            return
+        res = next(
+            (r for r in (pkg.get("resources") or []) if (r.get("url") or "").startswith("jdbc:trino://")),
+            None,
+        )
+        if res is None:
+            return
+        parts = mapping.split_fqn(table.get("fullyQualifiedName", ""))
+        if len(parts) != 4:
+            return
+        evn_table = _to_table(table)
+        if not evn_table.catalog:
+            evn_table.catalog = parts[1]
+        if not evn_table.schema:
+            evn_table.schema = parts[2]
+        trino = TrinoConfig(query_host, trino_user, evn_config.get("trino_password"))
+        try:
+            refresh_datastore_preview(self._action, trino, res["id"], evn_table, preview_rows)
+        except TrinoError as err:
+            log.warning("om sync preview for %s skipped: %s", table.get("fullyQualifiedName"), err)
 
     def _set_groups(self, pkg_id: str, old: set[str], new: set[str]) -> None:
         """Group membership through member_create/delete, not package_create/patch.
