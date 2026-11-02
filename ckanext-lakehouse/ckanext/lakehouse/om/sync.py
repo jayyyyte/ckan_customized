@@ -135,10 +135,52 @@ class Syncer:
                 self.report.notes.append(f"schema {schema} not found in OpenMetadata")
         return tables
 
+    def _sync_domains(self) -> None:
+        """Automatically create/map CKAN Groups from OpenMetadata Domains so no manual group creation is needed."""
+        if not hasattr(self.client, "iter_domains"):
+            return
+        from ckanext.lakehouse.om import scaffold
+
+        try:
+            domains = list(self.client.iter_domains())
+        except OMError as err:
+            log.warning("om sync: could not list domains (%s)", err)
+            return
+        existing = {
+            g.name: g
+            for g in model.Session.query(model.Group).filter(model.Group.state != "deleted").all()
+        }
+        for domain in domains:
+            name = domain.get("name") or ""
+            fqn = domain.get("fullyQualifiedName") or name
+            if not fqn:
+                continue
+            if fqn.casefold() in self.rules.domain_groups or name.casefold() in self.rules.domain_groups:
+                continue
+            base = scaffold.slug(name) or "domain"
+            grp = existing.get(base)
+            if grp is not None and grp.is_organization:
+                base = f"mien-{base}"
+                grp = existing.get(base)
+            if grp is None and not self.dry_run:
+                created = self._action("group_create", {
+                    "name": base,
+                    "title": domain.get("displayName") or name,
+                    "description": domain.get("description") or "",
+                    "extras": [{"key": mapping.GROUP_DOMAINS, "value": json.dumps([fqn], ensure_ascii=False)}],
+                })
+                base = created["name"]
+            self.rules.domain_groups[fqn.casefold()] = base
+            if name:
+                self.rules.domain_groups[name.casefold()] = base
+            if domain.get("displayName"):
+                self.rules.domain_groups[domain["displayName"].casefold()] = base
+
     def run(self, allow_empty: bool = False) -> Report:
         report = self.report
         if not self.rules.include:
             report.notes.append("ckanext.lakehouse.om.include is empty: nothing is published")
+        self._sync_domains()
         tables = self._tables() if self.rules.include else []
         report.tables = len(tables)
         tables = [t for t in tables if mapping.in_scope(t, self.rules)]
