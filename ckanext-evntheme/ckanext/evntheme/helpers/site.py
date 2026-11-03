@@ -172,8 +172,12 @@ def all_groups() -> list[dict[str, Any]]:
 def domains() -> list[dict[str, Any]]:
     """Data domains (CKAN groups) with their public dataset count and colour."""
     dataset_type = tk.h.default_package_type()
+    configured = tuple(config.get_list("domain_groups"))
+    groups = _groups(configured) if configured else []
+    if not groups:
+        groups = all_groups()
     result = []
-    for i, group in enumerate(_groups(tuple(config.get_list("domain_groups")))):
+    for i, group in enumerate(groups):
         tone = field(group, GroupExtra.TONE)
         result.append({
             "name": group["name"],
