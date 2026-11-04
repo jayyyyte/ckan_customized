@@ -14,6 +14,7 @@ import pytest
 from ckanext.lakehouse import bootstrap
 from ckanext.lakehouse.om import mapping, panel, scaffold
 from ckanext.lakehouse.om.client import OMClient, OMError
+from ckanext.lakehouse.permissions import service as perm_service
 
 SAMPLE = Path(__file__).parents[4] / "tools" / "openmetadata" / "sample-snapshot.json"
 CUR = "trino_lakehouse.iceberg_curated"
@@ -423,3 +424,101 @@ def test_panel_and_client_accept_evntheme_sync_shapes():
     for url in ("http://om.test:8585", "http://om.test:8585/api", "http://om.test:8585/api/v1/"):
         assert OMClient(url).api == "http://om.test:8585/api/v1"
 
+
+
+# --- permissions unit tests -----------------------------------------------------------------
+
+
+def test_compute_access_preview_for_roles():
+    orgs = [
+        perm_service.UnitInfo(id="1", name="a0", title="A0", description="", is_org=True,
+                              public_datasets=2, private_datasets=4),
+        perm_service.UnitInfo(id="2", name="evnnpc", title="EVNNPC", description="", is_org=True,
+                              public_datasets=3, private_datasets=6),
+        perm_service.UnitInfo(id="3", name="kd", title="Ban KD", description="", is_org=True,
+                              public_datasets=1, private_datasets=5),
+    ]
+    groups = [
+        perm_service.UnitInfo(id="g1", name="kt-at", title="KT-AT", description="", is_org=False,
+                              public_datasets=3, private_datasets=4),
+    ]
+
+    # Regular user: member of A0 (4 private), editor of EVNNPC (6 private), admin of group KT-AT.
+    # Does NOT see Ban KD's 5 private datasets even if some are in KT-AT.
+    preview = perm_service.compute_access_preview(
+        is_sysadmin=False,
+        is_active=True,
+        org_roles={"a0": "member", "evnnpc": "editor"},
+        group_roles={"kt-at": "admin"},
+        organizations=orgs,
+        groups=groups,
+        total_public_datasets=6,
+        total_private_datasets=15,
+    )
+    assert preview.total_public_datasets == 6
+    assert preview.accessible_private_datasets == 10
+    assert preview.total_accessible_datasets == 16
+    assert [o.name for o in preview.read_private_orgs] == ["a0", "evnnpc"]
+    assert [o.name for o in preview.edit_orgs] == ["evnnpc"]
+    assert preview.manage_orgs == []
+    assert [g.name for g in preview.manage_groups] == ["kt-at"]
+
+    # Sysadmin sees all 15 private datasets and manages all 3 orgs.
+    sys_preview = perm_service.compute_access_preview(
+        is_sysadmin=True,
+        is_active=True,
+        org_roles={},
+        group_roles={},
+        organizations=orgs,
+        groups=groups,
+        total_public_datasets=6,
+        total_private_datasets=15,
+    )
+    assert sys_preview.accessible_private_datasets == 15
+    assert sys_preview.total_accessible_datasets == 21
+    assert len(sys_preview.manage_orgs) == 3
+
+    # Locked user sees 0 datasets.
+    locked = perm_service.compute_access_preview(
+        is_sysadmin=True,
+        is_active=False,
+        org_roles={"a0": "admin"},
+        group_roles={},
+        organizations=orgs,
+        groups=groups,
+        total_public_datasets=6,
+        total_private_datasets=15,
+    )
+    assert locked.total_accessible_datasets == 0 and locked.read_private_orgs == []
+
+
+def test_filter_users_and_validation():
+    u_sys = perm_service.UserRow(
+        id="1", name="quantri", fullname="Quản trị", display_name="Quản trị",
+        email="qt@evn.example", about="", sysadmin=True, state="active", created=None,
+    )
+    u_member = perm_service.UserRow(
+        id="2", name="npc-user", fullname="Cán bộ NPC", display_name="Cán bộ NPC",
+        email="npc@evn.example", about="", sysadmin=False, state="active", created=None,
+        org_roles={"evnnpc": "member"},
+    )
+    u_guest = perm_service.UserRow(
+        id="3", name="khach", fullname="Người xem", display_name="Người xem",
+        email="khach@evn.example", about="", sysadmin=False, state="active", created=None,
+    )
+    u_locked = perm_service.UserRow(
+        id="4", name="bi-khoa", fullname="Đã nghỉ", display_name="Đã nghỉ",
+        email="old@evn.example", about="", sysadmin=False, state="deleted", created=None,
+    )
+    users = [u_sys, u_member, u_guest, u_locked]
+
+    assert [u.name for u in perm_service.filter_users(users, role_filter="sysadmin")] == ["quantri"]
+    assert [u.name for u in perm_service.filter_users(users, role_filter="unassigned")] == ["khach"]
+    assert [u.name for u in perm_service.filter_users(users, role_filter="inactive")] == ["bi-khoa"]
+    assert [u.name for u in perm_service.filter_users(users, q="NPC")] == ["npc-user"]
+
+    assert perm_service.validate_username_and_email("  user-01 ", " u@evn.vn ") == ("user-01", "u@evn.vn")
+    with pytest.raises(perm_service.PermissionFormError):
+        perm_service.validate_username_and_email("bad.name", "u@evn.vn")
+    with pytest.raises(perm_service.PermissionFormError):
+        perm_service.validate_username_and_email("good-name", "not-an-email")

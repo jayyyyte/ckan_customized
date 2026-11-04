@@ -333,3 +333,130 @@ def test_hand_made_dataset_has_no_tab(app, portal):
     body = app.get(f"/dataset/{pkg['name']}").get_data(as_text=True)
     assert 'id="tab-openmetadata"' not in body
     app.get(f"/dataset/{pkg['name']}/openmetadata", status=404)
+
+
+
+# --- sysadmin permissions UI (/ckan-admin/permissions) --------------------------------------
+
+
+def test_permissions_ui_requires_sysadmin(app, synced):
+    url = "/ckan-admin/permissions"
+    assert app.get(url, status=403).status_code == 403
+    assert app.get(url, headers=_login_headers("npc-quantri"), status=403).status_code == 403
+
+    # Sysadmin renders users tab, units tab, and matrix tab, plus the link in the header menu.
+    body_users = app.get(url, query_string={"user": "a0-thanhvien"},
+                         headers=_login_headers("quantri-portal")).get_data(as_text=True)
+    assert "Phân quyền người dùng" in body_users
+    assert "Trung tâm Điều độ Hệ thống điện Quốc gia" in body_users
+
+    body_units = app.get(url, query_string={"tab": "units", "kind": "organization", "unit": "evnnpc"},
+                         headers=_login_headers("quantri-portal")).get_data(as_text=True)
+    assert "npc-quantri" in body_units and "npc-bientap" in body_units
+
+    body_matrix = app.get(url, query_string={"tab": "matrix"},
+                          headers=_login_headers("quantri-portal")).get_data(as_text=True)
+    assert "Ma trận phân quyền" in body_matrix
+
+
+def test_permissions_ui_create_user_update_roles_reset_password_and_lock(app, synced):
+    headers = _login_headers("quantri-portal")
+
+    # 1. Create a new user with editor role in EVNNPC and member role in domain ky-thuat-an-toan.
+    res = app.post(
+        "/ckan-admin/permissions/users/new",
+        data={
+            "name": "canbo-moi",
+            "fullname": "Cán bộ mới",
+            "email": "canbo-moi@evn.example",
+            "about": "Thử nghiệm phân quyền",
+            "org_role__evnnpc": "editor",
+            "group_role__ky-thuat-an-toan": "member",
+        },
+        headers=headers,
+        follow_redirects=True,
+    )
+    body = res.get_data(as_text=True)
+    assert res.status_code == 200
+    assert 'id="lh-cred-password"' in body  # one-time generated password shown once
+    assert _can("canbo-moi", "package_create", {"owner_org": "evnnpc"})
+    assert not _can("canbo-moi", "package_show", {"id": OUTAGE_NAME})  # private dataset of A0
+
+    # Reloading does not show the one-time password again.
+    reload_body = app.get("/ckan-admin/permissions", query_string={"user": "canbo-moi"},
+                          headers=headers).get_data(as_text=True)
+    assert 'id="lh-cred-password"' not in reload_body
+
+    # 2. Grant member role in A0 -> user can now read A0's private dataset.
+    app.post(
+        "/ckan-admin/permissions/users/canbo-moi/roles",
+        data={
+            "org_role__evnnpc": "editor",
+            "org_role__trung-tam-dieu-do-htd-qg": "member",
+            "group_role__ky-thuat-an-toan": "member",
+        },
+        headers=headers,
+        follow_redirects=True,
+    )
+    assert _can("canbo-moi", "package_show", {"id": OUTAGE_NAME})
+    assert not _can("canbo-moi", "package_update", {"id": OUTAGE_NAME})
+
+    # 3. Reset password with a custom password and verify it validates.
+    pw_res = app.post(
+        "/ckan-admin/permissions/users/canbo-moi/password",
+        data={"new_password": "NewSecretPassword123"},
+        headers=headers,
+        follow_redirects=True,
+    )
+    assert "NewSecretPassword123" in pw_res.get_data(as_text=True)
+    assert model.User.by_name("canbo-moi").validate_password("NewSecretPassword123")
+
+    # 4. Self-protection: quantri-portal cannot demote or lock themselves.
+    app.post(
+        "/ckan-admin/permissions/users/quantri-portal/roles",
+        data={},
+        headers=headers,
+        follow_redirects=True,
+    )
+    assert model.User.by_name("quantri-portal").sysadmin is True
+
+    app.post(
+        "/ckan-admin/permissions/users/quantri-portal/state",
+        data={"active": "0"},
+        headers=headers,
+        follow_redirects=True,
+    )
+    assert model.User.by_name("quantri-portal").state == "active"
+
+    # 5. Lock and reactivate canbo-moi.
+    app.post(
+        "/ckan-admin/permissions/users/canbo-moi/state",
+        data={"active": "0"},
+        headers=headers,
+        follow_redirects=True,
+    )
+    assert model.User.by_name("canbo-moi").state == "deleted"
+    assert not _can("canbo-moi", "package_create", {"owner_org": "evnnpc"})
+
+    app.post(
+        "/ckan-admin/permissions/users/canbo-moi/state",
+        data={"active": "1"},
+        headers=headers,
+        follow_redirects=True,
+    )
+    assert model.User.by_name("canbo-moi").state == "active"
+
+    # 6. Manage members from the unit tab (add canbo-moi to A0 as editor, remove a0-thanhvien).
+    app.post(
+        "/ckan-admin/permissions/units/organization/trung-tam-dieu-do-htd-qg",
+        data={
+            "member_role__ktsx-bientap": "editor",
+            "member_role__a0-thanhvien": "",
+            "add_username": "canbo-moi",
+            "add_role": "editor",
+        },
+        headers=headers,
+        follow_redirects=True,
+    )
+    assert _can("canbo-moi", "package_update", {"id": OUTAGE_NAME})
+    assert not _can("a0-thanhvien", "package_show", {"id": OUTAGE_NAME})
