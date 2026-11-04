@@ -3,11 +3,11 @@
 | File | Nội dung | Khi nào đọc |
 |---|---|---|
 | [roadmap.md](roadmap.md) | Kế hoạch 3 giai đoạn, trạng thái, decision log, câu hỏi mở | **Luôn đọc đầu tiên** |
-| [company-openmetadata-deployment-plan.md](company-openmetadata-deployment-plan.md) | Phương án ngày 2026-10-21: audit từ Ubuntu 235, nâng cấp CKAN Rancher hiện hữu, tích hợp OM và phát hành image qua import thủ công | Khi làm trên staging công ty |
+| [company-openmetadata-deployment-plan.md](company-openmetadata-deployment-plan.md) | Phương án deploy staging công ty: điều khiển từ Master 91, nạp image vào 2 worker (88 & 235), tích hợp OpenMetadata và giao diện phân quyền sysadmin (/ckan-admin/permissions) | Khi làm trên staging công ty |
 | [phase-1-local-source.md](phase-1-local-source.md) | Cài CKAN 2.11 từ source trên WSL2 (+ chuyển từ bản cài 2.12) + scaffold theme | Giai đoạn 1 |
 | [phase-2-docker-packaging.md](phase-2-docker-packaging.md) | Đóng gói image `ckan-base:2.11.6` + theme, test bằng docker compose | Giai đoạn 2 |
 | [phase-3-k8s-deploy.md](phase-3-k8s-deploy.md) | Manifest kustomize, audit, tạo DB, đưa image lên node, deploy lên cụm K8s công ty; kết quả tập dượt trên kind (§3.10) | Giai đoạn 3 |
-| [phase-4-content-openmetadata.md](phase-4-content-openmetadata.md) | Org/group/user và phân quyền (`ckan lakehouse bootstrap`), đồng bộ OpenMetadata, tab "Danh mục kỹ thuật", snapshot + mock khi không có mạng công ty | Giai đoạn 4 |
+| [phase-4-content-openmetadata.md](phase-4-content-openmetadata.md) | Org/group/user và phân quyền (giao diện web `/ckan-admin/permissions` + CLI `bootstrap`), đồng bộ OpenMetadata, tab "Danh mục kỹ thuật", snapshot + mock khi không có mạng công ty | Giai đoạn 4 |
 | [ckan-overview.md](ckan-overview.md) | Kiến trúc CKAN, mô hình dữ liệu, config, CLI, API, extension hữu ích | Tra cứu |
 | [ckan-theming.md](ckan-theming.md) | Cách làm theme: template, block, snippet, assets, helper, i18n | Khi làm theme |
 | [cluster-context.md](cluster-context.md) | Thông tin cụm K8s on-prem (node, storage, service, CKAN stub), điều cần xác minh khi audit | Giai đoạn 3 |

@@ -64,6 +64,9 @@ ckan -c ~/ckan/etc/ckan.ini evntheme seed-demo --reset    # xóa sạch rồi n�
 
 ## Người dùng, phân quyền và OpenMetadata (GĐ4)
 
+- **Giao diện Quản trị phân quyền Sysadmin**: truy cập `/ckan-admin/permissions` (hoặc từ menu góc phải trên header khi đăng nhập tài khoản sysadmin) để tạo user mới + mật khẩu hiển thị 1 lần, đặt lại mật khẩu, khóa/mở khóa tài khoản, sửa vai trò Organization/Group và xem trước quyền dữ liệu riêng tư cùng Ma trận phân quyền 2 chiều.
+- **Quản trị bằng CLI / YAML**:
+
 ```bash
 # Org, group, user demo và vai trò (chạy lại an toàn). Mật khẩu user mới ghi ra file CSV
 ckan -c ~/ckan/etc/ckan.ini lakehouse bootstrap   ckanext-lakehouse/ckanext/lakehouse/demo/portal.yaml --credentials ~/ckan/backup/users.csv

@@ -307,6 +307,10 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 | 2026-10-06 | Không vào được OM từ laptop → **snapshot (máy RDP) + mock (laptop)**, cùng một client HTTP cho cả mock lẫn OM thật. Snapshot không chứa sample data, profile cột hay token; không commit | Kiểm thử với metadata thật mà không cần mạng công ty, không mang dữ liệu thật ra ngoài |
 | 2026-10-06 | Tab OM: render phía server khi tab được mở bằng URL, lazy-load khi bấm tab; **cache Redis** (600 s, lỗi 60 s). Link lineage tới dataset CKAN chỉ hiện khi người xem có quyền đọc | OM chậm không làm chậm trang; cache dùng chung giữa các worker uWSGI; không lộ tên dataset private |
 | 2026-10-06 | Image **`0.2.0`** (+`ckanext-lakehouse`), CronJob `ckan-om-sync` **phút 40** | Tách khỏi `tracking update` (phút 15); cả hai đều reindex |
+| 2026-11-04 | Triển khai giao diện Quản trị phân quyền người dùng Sysadmin tại `/ckan-admin/permissions` trong `ckanext-lakehouse` với 3 chế độ (Theo user, Theo đơn vị & miền, Ma trận quyền) | Cho phép sysadmin trực quan hóa quyền hạn, xem trước quyền dataset riêng tư, tạo user kèm mật khẩu 1 lần, reset mật khẩu, khóa/mở khóa tài khoản trực tiếp trên web mà không cần sửa file YAML/CLI |
+| 2026-11-04 | Chuẩn hóa quy trình phân phối image K8s staging: chuyển tarball qua Windows RDP Bastion `10.1.117.234` vào Master `10.1.117.91`, từ Master `91` scp sang 2 worker `10.1.117.88` và `10.1.117.235`, import `ctr -n k8s.io` trên 2 worker, rồi điều khiển `kubectl` từ Master `91` / Rancher | Master 91 có taint `NoSchedule` nên không chạy pod CKAN; import trên 2 worker đảm bảo dù K8s schedule pod sang node nào cũng có image; Master 91 là trung tâm điều khiển mạng nội bộ |
+| 2026-11-04 | Quản lý mã nguồn trên Azure DevOps (nhánh `dev`), thực hiện toàn bộ thao tác Git từ Windows (PowerShell/Git Bash) | Team chuyển sang Azure DevOps; Windows Git giữ đúng cấu hình CRLF theo gotcha #41 |
+| 2026-11-04 | Đóng gói bản image mới `ckan-lakehouse:0.3.0` | Tích hợp toàn diện `evntheme` + `lakehouse` (OpenMetadata + Giao diện phân quyền sysadmin `/ckan-admin/permissions`) |
 
 ## Câu hỏi còn mở
 

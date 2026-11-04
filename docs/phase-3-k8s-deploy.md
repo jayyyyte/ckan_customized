@@ -102,16 +102,24 @@ Quyền chỉ đọc cho `datastore_default` do `prerun.py` cấp khi pod `ckan`
 
 ## 3.4 Đưa image lên node (khi chưa có registry)
 
+Gói release `.tar.gz` được chuyển từ máy phát triển qua Windows RDP Bastion `10.1.117.234` vào máy Master `10.1.117.91`. Từ Master `91` (có kết nối SSH tới các worker node), phân phối sang cả hai worker:
+
 ```bash
-# từ máy có SSH tới worker; lặp cho 10.1.117.88 và 10.1.117.235
-scp ~/ckan-lakehouse_0.1.0.tar.gz <user>@10.1.117.88:/tmp/
-ssh <user>@10.1.117.88 'gunzip -c /tmp/ckan-lakehouse_0.1.0.tar.gz | sudo ctr -n k8s.io images import - && sudo crictl images | grep ckan-lakehouse'
+# Thực hiện từ máy Master (10.1.117.91)
+# 1. Chuyển và nạp vào Worker 1 (10.1.117.88)
+scp /tmp/ckan-lakehouse-0.3.0.tar.gz <user>@10.1.117.88:/tmp/
+ssh -t <user>@10.1.117.88 'gunzip -c /tmp/ckan-lakehouse-0.3.0.tar.gz | sudo ctr -n k8s.io images import - && sudo crictl images | grep ckan-lakehouse'
+
+# 2. Chuyển và nạp vào Worker 2 (10.1.117.235)
+scp /tmp/ckan-lakehouse-0.3.0.tar.gz <user>@10.1.117.235:/tmp/
+ssh -t <user>@10.1.117.235 'gunzip -c /tmp/ckan-lakehouse-0.3.0.tar.gz | sudo ctr -n k8s.io images import - && sudo crictl images | grep ckan-lakehouse'
 ```
 
+- Không nạp image trên Master `91` vì Master có taint `NoSchedule` nên không chạy pod CKAN.
 - Bước `sudo` trên worker do user tự chạy.
 - Namespace containerd phải là `k8s.io` thì kubelet mới thấy image.
-- Image được lưu với tên `docker.io/library/ckan-lakehouse:0.1.0`. Đó chính là tên kubelet chuẩn hóa từ `ckan-lakehouse:0.1.0` trong manifest.
-- **Đã tập dượt:** Docker Desktop dùng containerd image store, nên `docker save` xuất ra OCI index. `ctr import` trên node kind (containerd 2.1) nhận bình thường, mất khoảng 100 giây mỗi node.
+- Image được lưu với tên `docker.io/library/ckan-lakehouse:<tag>` (ví dụ `0.3.0`). Đó chính là tên kubelet chuẩn hóa từ `ckan-lakehouse:<tag>` trong manifest.
+- **Đã tập dượt:** Docker Desktop dùng containerd image store, nên `docker save` xuất ra OCI index. `ctr import` trên node kind (containerd 2.1) nhận bình thường, mất khoảng 100 giây mỗi node khi nạp lần đầu, và chỉ 10–12 giây khi nâng cấp nhờ dùng lại layer.
 - Manifest đặt `imagePullPolicy: IfNotPresent` và tag cụ thể (`images.newTag` trong `k8s/base/kustomization.yaml`).
 
 ## 3.5 Manifest — [k8s/](../k8s)

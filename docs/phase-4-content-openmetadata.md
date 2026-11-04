@@ -73,6 +73,28 @@ Bằng `check_access` của CKAN trên dữ liệu demo (`demo/portal.yaml` + 5 
 
 Test tự động khóa lại các hành vi này: `ckanext-lakehouse/ckanext/lakehouse/tests/test_app.py`.
 
+### 4.1b Giao diện Quản trị phân quyền người dùng Sysadmin (`/ckan-admin/permissions`)
+
+Được xây dựng trực tiếp trong extension `ckanext-lakehouse` (blueprint `permissions` tại `/ckan-admin/permissions`), sử dụng hệ thống token và thiết kế của `ckanext-evntheme`. Được kích hoạt cho tài khoản có vai trò `sysadmin` (truy cập qua menu tài khoản trên header hoặc tab "Phân quyền người dùng" trong `/ckan-admin`).
+
+Tính năng quản trị gồm 3 chế độ:
+1. **Theo người dùng (`?tab=users`)**:
+   - Danh sách người dùng trực tiếp từ DB kèm trạng thái (Hoạt động / Bị khóa), vai trò sysadmin, số đơn vị & miền tham gia.
+   - **Tạo người dùng mới**: nhập username, họ tên, email, tích chọn sysadmin và gán vai trò ban đầu tại các Organization/Group. Mật khẩu có thể tự sinh an toàn hoặc nhập tay; mật khẩu được lưu vào phiên (`session`) và hiển thị **duy nhất 1 lần** trong banner thông báo kèm nút copy (không ghi ra log hay URL).
+   - **Xem trước quyền thực tế (Effective Access Preview)**: tính toán trực tiếp số dataset riêng tư (private) mà user được quyền xem và số đơn vị được quyền sửa dữ liệu, giúp sysadmin đối soát ngay lập tức.
+   - **Sửa phân quyền**: cho phép đổi quyền `sysadmin` và cập nhật vai trò tại tất cả Organization / Group trong một lần bấm lưu duy nhất.
+   - **Đặt lại mật khẩu**: sinh mật khẩu mới hiển thị 1 lần cho người dùng.
+   - **Khóa / Kích hoạt tài khoản**: chuyển đổi trạng thái `state='deleted'` và `state='active'` ngay lập tức.
+
+2. **Theo đơn vị & miền dữ liệu (`?tab=units`)**:
+   - Duyệt theo từng Organization và Group (hỗ trợ phân loại phòng ban/tổng công ty và hiển thị mapping OpenMetadata team/domain tương ứng).
+   - Danh sách thành viên và vai trò hiện tại; form thêm nhanh thành viên mới và đổi vai trò hàng loạt.
+
+3. **Ma trận phân quyền tổng quan (`?tab=matrix`)**:
+   - Bảng trực quan hóa 2 chiều: `Người dùng × Đơn vị & Miền dữ liệu`.
+   - Hiển thị nhãn vai trò rõ ràng (`Quản trị`, `Biên tập`, `Thành viên`, `Sysadmin`).
+   - Hỗ trợ xuất dữ liệu ra file **CSV** để báo cáo kiểm toán bảo mật.
+
 ## 4.2 Đầu việc 1 — `ckan lakehouse bootstrap`
 
 File mẫu: [`ckanext-lakehouse/ckanext/lakehouse/demo/portal.yaml`](../ckanext-lakehouse/ckanext/lakehouse/demo/portal.yaml), gồm 9 user hư cấu, 9 org và 5 group. Org và group trùng tên với `seed-demo`, nên 12 dataset demo rơi đúng đơn vị.
@@ -244,7 +266,7 @@ Từ 2026-10-15, máy RDP (10.1.117.234) vào OM qua tên miền `https://openme
 ## 4.6 Lên cụm công ty
 
 Đã chuẩn bị sẵn trong repo:
-- image `ckan-lakehouse:0.2.0` (`newTag` trong `k8s/base/kustomization.yaml`; build sạch, import kiểm trên Python 3.10);
+- image `ckan-lakehouse:0.3.0` (kế thừa `0.2.0`, tích hợp thêm giao diện Quản trị phân quyền Sysadmin `/ckan-admin/permissions`; `newTag` trong `k8s/base/kustomization.yaml`);
 - CronJob `ckan-om-sync`;
 - các key `CKAN__AUTH__*` và `CKANEXT__LAKEHOUSE__OM__*` trong ConfigMap;
 - overlay `lab` trỏ OM qua NodePort, **`OM__INCLUDE` để trống** nên sync chưa công bố gì;

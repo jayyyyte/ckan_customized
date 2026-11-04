@@ -6,11 +6,12 @@
 ## Cluster
 - kubeadm, Kubernetes **v1.30.14**, CNI Calico v3.28, runtime **containerd**. Helm v3 đã cài.
 
-| Node | IP | Vai trò |
-|---|---|---|
-| k8s-master | 10.1.117.91 | control-plane (taint NoSchedule) |
-| k8s-worker1 | 10.1.117.88 | worker |
-| k8s-worker2 | 10.1.117.235 | worker |
+| Node | IP | Vai trò | Ghi chú vận hành |
+|---|---|---|---|
+| k8s-master | 10.1.117.91 | control-plane (taint NoSchedule) | Nhận gói tarball release, chạy scp sang các worker, chạy lệnh `kubectl` / Rancher điều khiển cụm |
+| k8s-worker1 | 10.1.117.88 | worker | Nhận image tarball và chạy `sudo ctr -n k8s.io images import` |
+| k8s-worker2 | 10.1.117.235 | worker (Ubuntu) | Nhận image tarball và chạy `sudo ctr -n k8s.io images import` |
+| RDP Bastion | 10.1.117.234 | Windows jump host | Máy Windows trung gian truy cập Remote Desktop từ laptop vào mạng nội bộ công ty |
 
 - **Namespace:** `lakehouse` (dùng chung cho toàn stack).
 - **StorageClass:** chỉ có `local-path` (rancher.io/local-path): RWO, dữ liệu nằm trên đĩa của node, `WaitForFirstConsumer`. **Không có RWX.**
@@ -50,7 +51,7 @@ Manifest đã hiện thực các điểm này ở [k8s/](../k8s), đã tập dư
 - 1 replica + `strategy: Recreate` cho mọi thứ có PVC (`ckan`, `ckan-solr`). Pod bị ghim vào node chứa PV. `ckan-worker` không gắn PVC nên chạy được trên node nào cũng được.
 - `ckan.site_url` cố định `http://10.1.117.91:30500`. Người dùng phải vào bằng đúng URL này (gotchas 10).
 - Solr/Redis dùng Service **ClusterIP**, không mở NodePort.
-- Image tự build phải import vào containerd (`ctr -n k8s.io`) trên **cả 2 worker** nếu không có registry.
+- Image tự build chuyển từ máy cá nhân → Windows RDP 234 → Master 91 → scp sang **cả 2 worker 88 và 235** để import vào containerd (`ctr -n k8s.io`). Master 91 có taint `NoSchedule` nên không chạy pod ứng dụng, chỉ giữ vai trò điều khiển `kubectl` và trạm trung chuyển image.
 - Namespace dùng chung, nên mọi pod đặt `enableServiceLinks: false` (gotchas 21d) và mang nhãn `app.kubernetes.io/part-of=ckan`. Base **không** khai báo object Namespace.
 - containerd có thể cấp giới hạn fd rất lớn cho container, nên uWSGI được ghim `--max-fd 65536` (gotchas 21a).
 
