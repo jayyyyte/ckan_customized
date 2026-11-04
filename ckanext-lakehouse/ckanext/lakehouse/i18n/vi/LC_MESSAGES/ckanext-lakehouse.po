@@ -161,3 +161,518 @@ msgstr "Đang tải danh mục kỹ thuật…"
 msgid "Show the technical catalog"
 msgstr "Xem danh mục kỹ thuật"
 
+msgid "User permissions"
+msgstr "Phân quyền người dùng"
+
+msgid "Administration"
+msgstr "Quản trị hệ thống"
+
+msgid "Dataset ownership and private data visibility follow the owning organization. Assign users to organizations to grant private read or edit rights, and to data domains to manage topic classification."
+msgstr "Quyền sở hữu và quyền xem bộ dữ liệu riêng tư đi theo đơn vị (Organization) sở hữu. Gán người dùng vào đơn vị để cấp quyền xem hoặc biên tập dữ liệu riêng tư, và vào miền dữ liệu (Group) để phân loại theo chủ đề."
+
+msgid "Active users"
+msgstr "Người dùng hoạt động"
+
+msgid "Sysadmins"
+msgstr "Quản trị toàn cổng"
+
+msgid "Organizations"
+msgstr "Đơn vị"
+
+msgid "Private datasets"
+msgstr "Bộ dữ liệu riêng tư"
+
+msgid "Temporary password"
+msgstr "Mật khẩu tạm thời"
+
+msgid "One-time password"
+msgstr "Mật khẩu hiển thị 1 lần"
+
+msgid "Account created for {user}"
+msgstr "Đã tạo tài khoản cho {user}"
+
+msgid "Password reset for {user}"
+msgstr "Đã đặt lại mật khẩu cho {user}"
+
+msgid "Copy and send this password to the user now. For security, it will not be shown again after you leave or reload this page."
+msgstr "Sao chép và gửi mật khẩu này cho người dùng ngay. Để bảo mật, mật khẩu sẽ không hiển thị lại sau khi bạn rời hoặc tải lại trang."
+
+msgid "Username"
+msgstr "Tên đăng nhập"
+
+msgid "Password"
+msgstr "Mật khẩu"
+
+msgid "Copied"
+msgstr "Đã sao chép"
+
+msgid "Copy password"
+msgstr "Sao chép mật khẩu"
+
+msgid "Permission views"
+msgstr "Chế độ xem phân quyền"
+
+msgid "By user"
+msgstr "Theo người dùng"
+
+msgid "By organization & domain"
+msgstr "Theo đơn vị & miền"
+
+msgid "Access matrix"
+msgstr "Ma trận phân quyền"
+
+msgid "System settings"
+msgstr "Cấu hình hệ thống"
+
+msgid "New user"
+msgstr "Tạo người dùng mới"
+
+msgid "Admin"
+msgstr "Quản trị (Admin)"
+
+msgid "Editor"
+msgstr "Biên tập (Editor)"
+
+msgid "Member"
+msgstr "Thành viên (Member)"
+
+msgid "Users"
+msgstr "Danh sách người dùng"
+
+msgid "Find user"
+msgstr "Tìm người dùng"
+
+msgid "Search username, name, email…"
+msgstr "Tìm tên đăng nhập, họ tên, email…"
+
+msgid "Filter users"
+msgstr "Lọc người dùng"
+
+msgid "All"
+msgstr "Tất cả"
+
+msgid "Sysadmin"
+msgstr "Sysadmin"
+
+msgid "Unassigned"
+msgstr "Chưa phân đơn vị"
+
+msgid "Locked"
+msgstr "Đã khóa"
+
+msgid "{n} org"
+msgid_plural "{n} orgs"
+msgstr[0] "{n} đơn vị"
+
+msgid "Public only"
+msgstr "Chỉ xem công khai"
+
+msgid "No user matches this filter."
+msgstr "Không có người dùng nào khớp bộ lọc."
+
+msgid "Account & initial roles"
+msgstr "Tài khoản & phân quyền ban đầu"
+
+msgid "Create new user"
+msgstr "Tạo người dùng mới"
+
+msgid "Cancel"
+msgstr "Hủy"
+
+msgid "Create a local portal account and assign its organization and domain roles immediately. Leave the password blank to generate a secure random password."
+msgstr "Tạo tài khoản trên cổng dữ liệu và gán ngay vai trò tại các đơn vị, miền dữ liệu. Để trống ô mật khẩu để hệ thống tự sinh mật khẩu ngẫu nhiên an toàn."
+
+msgid "2–100 lower-case letters, digits, - or _ (no dots)."
+msgstr "2–100 ký tự gồm chữ thường, chữ số, dấu - hoặc _ (không có dấu chấm)."
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Full name"
+msgstr "Họ và tên"
+
+msgid "Full name or unit title"
+msgstr "Họ và tên hoặc chức danh"
+
+msgid "Initial password (optional)"
+msgstr "Mật khẩu ban đầu (tùy chọn)"
+
+msgid "Leave blank to auto-generate"
+msgstr "Để trống để tự sinh ngẫu nhiên"
+
+msgid "At least 8 characters if specified. Shown once after creation."
+msgstr "Tối thiểu 8 ký tự nếu tự nhập. Hiển thị 1 lần sau khi tạo."
+
+msgid "Notes / job role"
+msgstr "Ghi chú / Chức trách"
+
+msgid "Department, responsibility…"
+msgstr "Đơn vị công tác, nhiệm vụ…"
+
+msgid "Grant system administrator (Sysadmin)"
+msgstr "Cấp quyền Quản trị toàn hệ thống (Sysadmin)"
+
+msgid "Full access to all public and private datasets, organizations, domains, and system settings."
+msgstr "Toàn quyền với mọi bộ dữ liệu công khai và riêng tư, mọi đơn vị, miền dữ liệu và cấu hình hệ thống."
+
+msgid "Organization roles (controls private dataset access & editing)"
+msgstr "Vai trò tại Đơn vị (quyết định quyền xem & biên tập dữ liệu riêng tư)"
+
+msgid "Organization (Data owner)"
+msgstr "Đơn vị (Chủ sở hữu dữ liệu)"
+
+msgid "Datasets"
+msgstr "Bộ dữ liệu"
+
+msgid "Role"
+msgstr "Vai trò"
+
+msgid "Public"
+msgstr "Công khai"
+
+msgid "Private"
+msgstr "Riêng tư"
+
+msgid "Not a member (public only)"
+msgstr "Không tham gia (chỉ xem công khai)"
+
+msgid "Member — Read private datasets"
+msgstr "Thành viên (Member) — Xem dữ liệu riêng tư"
+
+msgid "Editor — Read private + Create & edit datasets"
+msgstr "Biên tập (Editor) — Xem riêng tư + Tạo & sửa dữ liệu"
+
+msgid "Admin — Full dataset & member control"
+msgstr "Quản trị (Admin) — Toàn quyền dữ liệu & thành viên đơn vị"
+
+msgid "Data domain roles (topic classification)"
+msgstr "Vai trò tại Miền dữ liệu (phân loại theo chủ đề)"
+
+msgid "Data domain (Group)"
+msgstr "Miền dữ liệu (Group)"
+
+msgid "Not a member"
+msgstr "Không tham gia"
+
+msgid "Member — Attach own editable datasets"
+msgstr "Thành viên (Member) — Gắn bộ dữ liệu mình biên tập"
+
+msgid "Admin — Manage domain & members"
+msgstr "Quản trị (Admin) — Quản lý miền & thành viên"
+
+msgid "Create user & save permissions"
+msgstr "Tạo người dùng & lưu phân quyền"
+
+msgid "Locked account"
+msgstr "Tài khoản đã khóa"
+
+msgid "Active"
+msgstr "Đang hoạt động"
+
+msgid "View profile"
+msgstr "Xem hồ sơ"
+
+msgid "Effective access preview"
+msgstr "Xem trước quyền truy cập thực tế"
+
+msgid "Effective data access preview"
+msgstr "Quyền truy cập dữ liệu thực tế của người dùng"
+
+msgid "This account is locked (deactivated) and cannot sign in or view private datasets."
+msgstr "Tài khoản này đang bị khóa, không thể đăng nhập hoặc xem dữ liệu riêng tư."
+
+msgid "System administrator (Sysadmin): Can view, create, edit, and delete all {pub} public and {priv} private datasets across all {orgs} organizations and {grps} data domains."
+msgstr "Quản trị toàn hệ thống (Sysadmin): Có toàn quyền xem, tạo, sửa, xóa toàn bộ {pub} bộ dữ liệu công khai và {priv} bộ dữ liệu riêng tư của tất cả {orgs} đơn vị và {grps} miền dữ liệu."
+
+msgid "Total viewable datasets"
+msgstr "Tổng bộ dữ liệu xem được"
+
+msgid "Viewable private datasets"
+msgstr "Bộ dữ liệu riêng tư xem được"
+
+msgid "Organizations with private read"
+msgstr "Đơn vị được xem dữ liệu riêng tư"
+
+msgid "Organizations with edit rights"
+msgstr "Đơn vị được tạo & biên tập"
+
+msgid "Can view private datasets of ({n})"
+msgstr "Được xem dữ liệu riêng tư của ({n})"
+
+msgid "{priv} private / {pub} public"
+msgstr "{priv} riêng tư / {pub} công khai"
+
+msgid "None — this user only sees public datasets ({n} datasets)."
+msgstr "Không có — người dùng này chỉ xem được dữ liệu công khai ({n} bộ dữ liệu)."
+
+msgid "Can create & edit datasets in ({n})"
+msgstr "Được tạo & biên tập dữ liệu tại ({n})"
+
+msgid "Cannot create or edit datasets in any organization."
+msgstr "Không có quyền tạo hoặc sửa dữ liệu ở đơn vị nào."
+
+msgid "Assign roles for {user}"
+msgstr "Phân quyền cho {user}"
+
+msgid "Changes below apply to all organizations and data domains in a single save."
+msgstr "Các thay đổi bên dưới sẽ áp dụng cho tất cả đơn vị và miền dữ liệu chỉ với một lần bấm Lưu."
+
+msgid "System administrator (Sysadmin)"
+msgstr "Quản trị toàn hệ thống (Sysadmin)"
+
+msgid "You are signed in as this account; sysadmin rights cannot be removed from yourself."
+msgstr "Bạn đang đăng nhập bằng tài khoản này; không thể tự gỡ quyền sysadmin của chính mình."
+
+msgid "Grants full access across all organizations, private datasets, and portal administration."
+msgstr "Cấp toàn quyền trên mọi đơn vị, mọi bộ dữ liệu riêng tư và trang quản trị cổng."
+
+msgid "Organizations (Data owners)"
+msgstr "Đơn vị sở hữu dữ liệu (Organizations)"
+
+msgid "Organization"
+msgstr "Đơn vị"
+
+msgid "Current"
+msgstr "Hiện tại"
+
+msgid "Data domains (Groups)"
+msgstr "Miền dữ liệu (Groups)"
+
+msgid "Note: Being a member or admin of a data domain allows classifying datasets into that domain, but does not grant read access to private datasets owned by other organizations."
+msgstr "Lưu ý: Thành viên hoặc quản trị của miền dữ liệu được phép gắn bộ dữ liệu vào miền, nhưng không tự động có quyền xem bộ dữ liệu riêng tư thuộc sở hữu của đơn vị khác."
+
+msgid "Data domain"
+msgstr "Miền dữ liệu"
+
+msgid "Save permissions"
+msgstr "Lưu phân quyền"
+
+msgid "Reset password"
+msgstr "Đặt lại mật khẩu"
+
+msgid "Generate a new random password (shown once at the top of the page) or enter a custom password of at least 8 characters."
+msgstr "Sinh mật khẩu ngẫu nhiên mới (hiển thị 1 lần ở đầu trang) hoặc nhập mật khẩu tùy chọn từ 8 ký tự trở lên."
+
+msgid "Leave blank for random password"
+msgstr "Để trống để sinh mật khẩu ngẫu nhiên"
+
+msgid "New password"
+msgstr "Mật khẩu mới"
+
+msgid "Account status"
+msgstr "Trạng thái tài khoản"
+
+msgid "You are currently signed in with this account and cannot lock it."
+msgstr "Bạn đang đăng nhập bằng tài khoản này nên không thể tự khóa."
+
+msgid "Locking this account prevents sign-in and removes its active unit memberships while keeping audit history."
+msgstr "Khóa tài khoản sẽ chặn đăng nhập và gỡ các quyền thành viên đơn vị hiện tại, nhưng vẫn giữ nguyên lịch sử nhật ký."
+
+msgid "Lock account"
+msgstr "Khóa tài khoản"
+
+msgid "This account is locked. Reactivate it to allow sign-in and assign organization roles again."
+msgstr "Tài khoản này đang bị khóa. Mở khóa để cho phép đăng nhập và phân quyền đơn vị trở lại."
+
+msgid "Reactivate account"
+msgstr "Mở khóa tài khoản"
+
+msgid "Select a user on the left or create a new user."
+msgstr "Chọn một người dùng ở cột bên trái hoặc tạo người dùng mới."
+
+msgid "Organizations and data domains"
+msgstr "Đơn vị và miền dữ liệu"
+
+msgid "Members"
+msgstr "Thành viên"
+
+msgid "View unit page"
+msgstr "Xem trang đơn vị"
+
+msgid "Edit metadata"
+msgstr "Sửa thông tin"
+
+msgid "Assigned members"
+msgstr "Thành viên được gán"
+
+msgid "Public datasets"
+msgstr "Bộ dữ liệu công khai"
+
+msgid "OpenMetadata mapping"
+msgstr "Ánh xạ OpenMetadata"
+
+msgid "Who can see data of this organization: Everyone can see its {pub} public datasets. Only Sysadmins and the {m} members listed below (Admin, Editor, Member) can see its {priv} private datasets."
+msgstr "Ai xem được dữ liệu của đơn vị này: Mọi người đều thấy {pub} bộ dữ liệu công khai. Chỉ Sysadmin và {m} thành viên dưới đây (Admin, Editor, Member) mới xem được {priv} bộ dữ liệu riêng tư."
+
+msgid "Data domain rule: Members of this domain can classify datasets they edit into this domain. Private datasets in this domain remain visible only to members of their owning organization."
+msgstr "Quy tắc miền dữ liệu: Thành viên của miền được gắn các bộ dữ liệu mình biên tập vào miền này. Các bộ dữ liệu riêng tư trong miền vẫn chỉ hiển thị cho thành viên của đơn vị sở hữu chúng."
+
+msgid "Manage members of {unit}"
+msgstr "Quản lý thành viên của {unit}"
+
+msgid "User"
+msgstr "Người dùng"
+
+msgid "Current role"
+msgstr "Vai trò hiện tại"
+
+msgid "Change role / Remove"
+msgstr "Đổi vai trò / Gỡ"
+
+msgid "Editor — Create & edit datasets"
+msgstr "Biên tập (Editor) — Tạo & sửa dữ liệu"
+
+msgid "Admin — Manage unit & members"
+msgstr "Quản trị (Admin) — Quản lý đơn vị & thành viên"
+
+msgid "Member — Attach datasets"
+msgstr "Thành viên (Member) — Gắn bộ dữ liệu"
+
+msgid "Remove from unit"
+msgstr "Gỡ khỏi đơn vị"
+
+msgid "This unit has no direct members yet (only Sysadmins can manage it and view its private datasets)."
+msgstr "Đơn vị này chưa có thành viên trực tiếp nào (hiện chỉ Sysadmin quản lý và xem được dữ liệu riêng tư của đơn vị)."
+
+msgid "Add member to {unit}"
+msgstr "Thêm thành viên vào {unit}"
+
+msgid "Select user to add"
+msgstr "Chọn người dùng để thêm"
+
+msgid "Choose an active user…"
+msgstr "Chọn người dùng đang hoạt động…"
+
+msgid "Role for new member"
+msgstr "Vai trò của thành viên mới"
+
+msgid "All active users are already members of this unit."
+msgstr "Tất cả người dùng đang hoạt động đều đã là thành viên của đơn vị này."
+
+msgid "Save unit members"
+msgstr "Lưu danh sách thành viên"
+
+msgid "No organizations or data domains exist yet."
+msgstr "Chưa có đơn vị hoặc miền dữ liệu nào."
+
+msgid "Portal-wide access overview"
+msgstr "Tổng quan phân quyền toàn cổng"
+
+msgid "User × Organization & Domain Access Matrix"
+msgstr "Ma trận phân quyền Người dùng × Đơn vị & Miền dữ liệu"
+
+msgid "Search user…"
+msgstr "Tìm người dùng…"
+
+msgid "Search user"
+msgstr "Tìm người dùng"
+
+msgid "All users"
+msgstr "Tất cả người dùng"
+
+msgid "Unassigned (Public only)"
+msgstr "Chưa phân đơn vị (Chỉ xem công khai)"
+
+msgid "Locked accounts"
+msgstr "Tài khoản đã khóa"
+
+msgid "Filter"
+msgstr "Lọc"
+
+msgid "Click any user or organization header to edit their roles. Legend: Admin (manage unit & datasets), Editor (create & edit datasets), Member (read private datasets)."
+msgstr "Bấm vào tên người dùng hoặc tiêu đề cột đơn vị để chỉnh sửa chi tiết. Chú giải: Quản trị (quản lý đơn vị & dữ liệu), Biên tập (tạo & sửa dữ liệu), Thành viên (xem dữ liệu riêng tư)."
+
+msgid "System role"
+msgstr "Vai trò hệ thống"
+
+msgid "Number of private datasets this user can read"
+msgstr "Số bộ dữ liệu riêng tư mà người dùng này được phép xem"
+
+msgid "Private read"
+msgstr "Xem riêng tư"
+
+msgid "Org"
+msgstr "Đơn vị"
+
+msgid "Domain"
+msgstr "Miền"
+
+msgid "Unit member"
+msgstr "Thành viên đơn vị"
+
+msgid "Full access via Sysadmin"
+msgstr "Toàn quyền nhờ vai trò Sysadmin"
+
+msgid "Username must be 2–100 characters using only lower-case letters, digits, '-' or '_'."
+msgstr "Tên đăng nhập phải từ 2–100 ký tự, chỉ gồm chữ thường, chữ số, '-' hoặc '_'."
+
+msgid "Please enter a valid email address."
+msgstr "Vui lòng nhập địa chỉ email hợp lệ."
+
+msgid "Invalid role '{role}' for {unit}."
+msgstr "Vai trò '{role}' không hợp lệ cho {unit}."
+
+msgid "Username '{name}' already exists."
+msgstr "Tên đăng nhập '{name}' đã tồn tại."
+
+msgid "Email '{email}' is already used by active user '{user}'."
+msgstr "Email '{email}' đang được dùng bởi tài khoản '{user}'."
+
+msgid "Password must be at least {n} characters long."
+msgstr "Mật khẩu phải có ít nhất {n} ký tự."
+
+msgid "Could not create user."
+msgstr "Không thể tạo người dùng."
+
+msgid "User '{name}' not found."
+msgstr "Không tìm thấy người dùng '{name}'."
+
+msgid "Activate this user before changing their permissions."
+msgstr "Hãy mở khóa tài khoản này trước khi thay đổi phân quyền."
+
+msgid "You cannot remove sysadmin rights from your own account."
+msgstr "Bạn không thể tự gỡ quyền sysadmin của chính tài khoản đang đăng nhập."
+
+msgid "You cannot deactivate your own account."
+msgstr "Bạn không thể tự khóa tài khoản của chính mình."
+
+msgid "Cannot activate: email '{email}' is already used by '{user}'."
+msgstr "Không thể mở khóa: email '{email}' đang được sử dụng bởi '{user}'."
+
+msgid "Invalid unit type."
+msgstr "Loại đơn vị không hợp lệ."
+
+msgid "Unit '{name}' not found."
+msgstr "Không tìm thấy đơn vị '{name}'."
+
+msgid "Invalid role '{role}'."
+msgstr "Vai trò '{role}' không hợp lệ."
+
+msgid "Active user '{name}' not found."
+msgstr "Không tìm thấy người dùng đang hoạt động '{name}'."
+
+msgid "Created user '{user}' and assigned permissions."
+msgstr "Đã tạo người dùng '{user}' và gán phân quyền."
+
+msgid "Updated permissions for '{user}' ({n} changes)."
+msgstr "Đã cập nhật phân quyền cho '{user}' ({n} thay đổi)."
+
+msgid "No permission changes for '{user}'."
+msgstr "Không có thay đổi phân quyền nào cho '{user}'."
+
+msgid "Reset password for '{user}'."
+msgstr "Đã đặt lại mật khẩu cho '{user}'."
+
+msgid "Reactivated user '{user}'."
+msgstr "Đã mở khóa tài khoản '{user}'."
+
+msgid "Deactivated user '{user}' and removed their active unit memberships."
+msgstr "Đã khóa tài khoản '{user}' và gỡ các quyền thành viên đơn vị hiện tại."
+
+msgid "Updated members of '{unit}' ({n} changes)."
+msgstr "Đã cập nhật thành viên của '{unit}' ({n} thay đổi)."
+
+msgid "No member changes for '{unit}'."
+msgstr "Không có thay đổi thành viên nào cho '{unit}'."
+
+

@@ -940,3 +940,7 @@ msgstr "Miền dữ liệu"
 
 msgid "Search groups..."
 msgstr "Tìm miền dữ liệu..."
+
+
+msgid "User permissions"
+msgstr "Phân quyền người dùng"
