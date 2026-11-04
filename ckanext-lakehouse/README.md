@@ -1,7 +1,8 @@
 # ckanext-lakehouse
 
-Extension của Cổng dữ liệu EVN (CKAN 2.11), plugin `lakehouse`. Nó lo ba việc:
+Extension của Cổng dữ liệu EVN (CKAN 2.11), plugin `lakehouse`. Nó lo bốn việc:
 
+- **Giao diện quản trị phân quyền người dùng (`/ckan-admin/permissions`)**: dành cho sysadmin quản lý tài khoản (tạo mới, đặt lại mật khẩu hiển thị 1 lần, khóa/mở khóa), gán vai trò theo cả 2 chiều (theo người dùng hoặc theo đơn vị/miền dữ liệu), xem trước quyền truy cập dữ liệu riêng tư thực tế và bảng ma trận phân quyền toàn cổng.
 - **`ckan lakehouse bootstrap`**: khai báo organization, group, người dùng và vai trò bằng một file YAML; chạy lại nhiều lần vẫn an toàn.
 - **`ckan lakehouse om check | sync`**: công bố các bảng của OpenMetadata thành dataset CKAN.
 - **Tab "Danh mục kỹ thuật"** trên trang dataset: lineage, kiểm định chất lượng, profile và cột, lấy trực tiếp từ OpenMetadata.

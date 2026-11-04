@@ -68,6 +68,14 @@
 
 {#- Text labels instead of the icon-only core links: they sit in a dropdown here. -#}
 {% block header_account_profile %}
+  {% if current_user.sysadmin and h.plugin_loaded('lakehouse') %}
+    <li>
+      <a href="{{ h.url_for('lakehouse_permissions.index') }}">
+        <i class="fa fa-users" aria-hidden="true"></i>
+        <span class="text">{{ _('User permissions') }}</span>
+      </a>
+    </li>
+  {% endif %}
   <li>
     <a href="{{ h.url_for('user.read', id=current_user.name) }}">
       <i class="fa fa-user" aria-hidden="true"></i>
