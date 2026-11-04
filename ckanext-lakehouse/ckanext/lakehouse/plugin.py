@@ -9,6 +9,7 @@ from ckan.lib.plugins import DefaultTranslation
 
 from ckanext.lakehouse import cli, config, helpers
 from ckanext.lakehouse.om.views import dataset
+from ckanext.lakehouse.permissions.views import permissions
 
 
 class LakehousePlugin(plugins.SingletonPlugin, DefaultTranslation):
@@ -38,7 +39,7 @@ class LakehousePlugin(plugins.SingletonPlugin, DefaultTranslation):
     # IBlueprint
 
     def get_blueprint(self) -> list[Any]:
-        return [dataset]
+        return [dataset, permissions]
 
     # IClick
 
