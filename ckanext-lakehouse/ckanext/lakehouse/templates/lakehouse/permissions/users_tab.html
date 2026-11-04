@@ -1,0 +1,498 @@
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set s = overview.summary %}
+{% set role_labels = {'admin': _('Admin'), 'editor': _('Editor'), 'member': _('Member')} %}
+{% set role_tones = {'admin': 'navy', 'editor': 'blue', 'member': 'green'} %}
+
+<div class="evn-split evn-split--mds lh-perm__split">
+  {#- Left sidebar: search, filters, and user list -#}
+  <aside class="evn-card lh-perm__sidebar" aria-label="{{ _('Users') }}">
+    <form class="lh-perm__filter-form" method="get" action="{{ h.url_for('lakehouse_permissions.index') }}">
+      <input type="hidden" name="tab" value="users">
+      {% if role_filter != 'all' %}<input type="hidden" name="filter" value="{{ role_filter }}">{% endif %}
+      <label class="lh-perm__search">
+        {{ ui.icon('search') }}
+        <span class="visually-hidden">{{ _('Find user') }}</span>
+        <input class="evn-input" type="search" name="q" value="{{ q }}" placeholder="{{ _('Search username, name, email…') }}">
+      </label>
+    </form>
+
+    <div class="lh-perm__pills" role="navigation" aria-label="{{ _('Filter users') }}">
+      {% for f_code, f_label, f_count in [
+          ('all', _('All'), s.total_users),
+          ('sysadmin', _('Sysadmin'), s.sysadmin_count),
+          ('unassigned', _('Unassigned'), s.unassigned_users),
+          ('inactive', _('Locked'), s.deleted_users)
+      ] %}
+        <a class="lh-perm__pill{% if role_filter == f_code %} is-active{% endif %}"
+           href="{{ h.url_for('lakehouse_permissions.index', tab='users', q=q or none, filter=f_code if f_code != 'all' else none) }}">
+          <span>{{ f_label }}</span>
+          <span class="lh-perm__pill-count">{{ f_count }}</span>
+        </a>
+      {% endfor %}
+    </div>
+
+    {% if overview.users %}
+      <ul class="lh-perm__user-list">
+        {% for u in overview.users %}
+          {% set is_selected = (not new_user and selected_user and u.name == selected_user.name) %}
+          <li>
+            <a class="lh-perm__user-item{% if is_selected %} is-active{% endif %}{% if not u.is_active %} is-inactive{% endif %}"
+               href="{{ h.url_for('lakehouse_permissions.index', tab='users', user=u.name, q=q or none, filter=role_filter if role_filter != 'all' else none) }}"
+               {% if is_selected %}aria-current="page"{% endif %}>
+              <div class="lh-perm__user-item-main">
+                <span class="lh-perm__user-name">{{ u.display_name }}</span>
+                <span class="lh-perm__user-handle">@{{ u.name }}</span>
+              </div>
+              <div class="lh-perm__user-badges">
+                {% if not u.is_active %}
+                  <span class="evn-badge evn-badge--danger">{{ _('Locked') }}</span>
+                {% elif u.sysadmin %}
+                  <span class="evn-badge evn-badge--kind-master">{{ _('Sysadmin') }}</span>
+                {% elif u.org_roles %}
+                  <span class="evn-badge evn-badge--outline">
+                    {{ ungettext('{n} org', '{n} orgs', u.org_roles|length).format(n=u.org_roles|length) }}
+                  </span>
+                {% else %}
+                  <span class="evn-badge evn-badge--outline">{{ _('Public only') }}</span>
+                {% endif %}
+              </div>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="lh-perm__empty-side">
+        <p class="evn-muted">{{ _('No user matches this filter.') }}</p>
+      </div>
+    {% endif %}
+  </aside>
+
+  {#- Right column: either "Create new user" form or selected user's details + role editor -#}
+  <div class="evn-split__main evn-stack">
+    {% if new_user %}
+      <section class="evn-card evn-card--pad-lg" aria-labelledby="lh-new-user-title">
+        <div class="evn-catalog-head">
+          <div>
+            <p class="evn-catalog-head__meta">{{ _('Account & initial roles') }}</p>
+            <h2 class="evn-catalog-head__title" id="lh-new-user-title">{{ _('Create new user') }}</h2>
+          </div>
+          <a class="evn-btn evn-btn--outline evn-btn--sm" href="{{ h.url_for('lakehouse_permissions.index', tab='users') }}">
+            {{ _('Cancel') }}
+          </a>
+        </div>
+        <p class="evn-card__text">
+          {{ _('Create a local portal account and assign its organization and domain roles immediately. Leave the password blank to generate a secure random password.') }}
+        </p>
+
+        <form method="post" action="{{ h.url_for('lakehouse_permissions.create_user') }}" class="lh-perm__form">
+          {{ h.csrf_input() }}
+          <div class="lh-perm__form-grid">
+            <div class="lh-perm__field">
+              <label for="lh-new-name">{{ _('Username') }} <span class="lh-perm__req">*</span></label>
+              <input id="lh-new-name" class="evn-input" type="text" name="name" required
+                     pattern="[a-z0-9_-]{2,100}" value="{{ form_data.get('name', '') }}"
+                     placeholder="vd: npc-bientap">
+              <span class="lh-perm__hint">{{ _('2–100 lower-case letters, digits, - or _ (no dots).') }}</span>
+            </div>
+            <div class="lh-perm__field">
+              <label for="lh-new-email">{{ _('Email') }} <span class="lh-perm__req">*</span></label>
+              <input id="lh-new-email" class="evn-input" type="email" name="email" required
+                     value="{{ form_data.get('email', '') }}" placeholder="user@evn.com.vn">
+            </div>
+            <div class="lh-perm__field">
+              <label for="lh-new-fullname">{{ _('Full name') }}</label>
+              <input id="lh-new-fullname" class="evn-input" type="text" name="fullname"
+                     value="{{ form_data.get('fullname', '') }}" placeholder="{{ _('Full name or unit title') }}">
+            </div>
+            <div class="lh-perm__field">
+              <label for="lh-new-password">{{ _('Initial password (optional)') }}</label>
+              <input id="lh-new-password" class="evn-input" type="text" name="password"
+                      autocomplete="off" placeholder="{{ _('Leave blank to auto-generate') }}">
+              <span class="lh-perm__hint">{{ _('At least 8 characters if specified. Shown once after creation.') }}</span>
+            </div>
+            <div class="lh-perm__field lh-perm__field--full">
+              <label for="lh-new-about">{{ _('Notes / job role') }}</label>
+              <input id="lh-new-about" class="evn-input" type="text" name="about"
+                     value="{{ form_data.get('about', '') }}" placeholder="{{ _('Department, responsibility…') }}">
+            </div>
+          </div>
+
+          <div class="lh-perm__sysadmin-box">
+            <label class="lh-perm__check-row">
+              <input type="checkbox" name="sysadmin" value="1" {% if form_data.get('sysadmin') %}checked{% endif %}>
+              <span>
+                <strong>{{ _('Grant system administrator (Sysadmin)') }}</strong>
+                <small>{{ _('Full access to all public and private datasets, organizations, domains, and system settings.') }}</small>
+              </span>
+            </label>
+          </div>
+
+          <h3 class="evn-card__title">{{ _('Organization roles (controls private dataset access & editing)') }}</h3>
+          {% set draft_orgs = form_data.get('org_roles') or {} %}
+          <div class="evn-table-wrap">
+            <table class="evn-table lh-perm__role-table">
+              <thead>
+                <tr>
+                  <th scope="col">{{ _('Organization (Data owner)') }}</th>
+                  <th scope="col">{{ _('Datasets') }}</th>
+                  <th scope="col">{{ _('Role') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for org in overview.organizations %}
+                  {% set cur = draft_orgs.get(org.name, '') %}
+                  <tr>
+                    <td>
+                      <strong>{{ org.title }}</strong>
+                      <div class="evn-muted"><code>{{ org.name }}</code>{% if org.abbreviation %} · {{ org.abbreviation }}{% endif %}</div>
+                    </td>
+                    <td>
+                      <span class="evn-badge evn-badge--outline">{{ _('Public') }}: {{ org.public_datasets }}</span>
+                      <span class="evn-badge {% if org.private_datasets %}evn-badge--kind-transaction{% else %}evn-badge--outline{% endif %}">
+                        {{ _('Private') }}: {{ org.private_datasets }}
+                      </span>
+                    </td>
+                    <td>
+                      <select class="evn-select" name="org_role__{{ org.name }}" aria-label="{{ org.title }}">
+                        <option value="" {% if not cur %}selected{% endif %}>— {{ _('Not a member (public only)') }}</option>
+                        <option value="member" {% if cur == 'member' %}selected{% endif %}>{{ _('Member — Read private datasets') }}</option>
+                        <option value="editor" {% if cur == 'editor' %}selected{% endif %}>{{ _('Editor — Read private + Create & edit datasets') }}</option>
+                        <option value="admin" {% if cur == 'admin' %}selected{% endif %}>{{ _('Admin — Full dataset & member control') }}</option>
+                      </select>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          {% if overview.groups %}
+            <h3 class="evn-card__title lh-perm__subheading">{{ _('Data domain roles (topic classification)') }}</h3>
+            {% set draft_groups = form_data.get('group_roles') or {} %}
+            <div class="evn-table-wrap">
+              <table class="evn-table lh-perm__role-table">
+                <thead>
+                  <tr>
+                    <th scope="col">{{ _('Data domain (Group)') }}</th>
+                    <th scope="col">{{ _('Datasets') }}</th>
+                    <th scope="col">{{ _('Role') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for grp in overview.groups %}
+                    {% set cur = draft_groups.get(grp.name, '') %}
+                    <tr>
+                      <td>
+                        <strong>{{ grp.title }}</strong>
+                        <div class="evn-muted"><code>{{ grp.name }}</code></div>
+                      </td>
+                      <td>
+                        <span class="evn-badge evn-badge--outline">{{ grp.total_datasets }}</span>
+                      </td>
+                      <td>
+                        <select class="evn-select" name="group_role__{{ grp.name }}" aria-label="{{ grp.title }}">
+                          <option value="" {% if not cur %}selected{% endif %}>— {{ _('Not a member') }}</option>
+                          <option value="member" {% if cur == 'member' %}selected{% endif %}>{{ _('Member — Attach own editable datasets') }}</option>
+                          <option value="admin" {% if cur == 'admin' %}selected{% endif %}>{{ _('Admin — Manage domain & members') }}</option>
+                        </select>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% endif %}
+
+          <div class="lh-perm__actions">
+            <button type="submit" class="evn-btn evn-btn--primary">{{ ui.icon('check') }}{{ _('Create user & save permissions') }}</button>
+          </div>
+        </form>
+      </section>
+
+    {% elif selected_user %}
+      {% set u = selected_user %}
+      {% set access = u.access %}
+
+      {#- Card 1: User header + Effective Access Preview -#}
+      <section class="evn-card evn-card--pad-lg" aria-labelledby="lh-user-title">
+        <div class="evn-catalog-head">
+          <div>
+            <p class="evn-catalog-head__meta">
+              <code>@{{ u.name }}</code>
+              {% if u.email %} · {{ u.email }}{% endif %}
+            </p>
+            <h2 class="evn-catalog-head__title" id="lh-user-title">{{ u.display_name }}</h2>
+          </div>
+          <div class="evn-catalog-head__actions">
+            {% if not u.is_active %}
+              <span class="evn-badge evn-badge--danger">{{ _('Locked account') }}</span>
+            {% elif u.sysadmin %}
+              <span class="evn-badge evn-badge--kind-master">{{ _('Sysadmin') }}</span>
+            {% else %}
+              <span class="evn-badge evn-badge--good">{{ _('Active') }}</span>
+            {% endif %}
+            <a class="evn-btn evn-btn--outline evn-btn--sm" href="{{ h.url_for('user.read', id=u.name) }}">
+              {{ _('View profile') }}
+            </a>
+          </div>
+        </div>
+        {% if u.about %}<p class="evn-card__text">{{ u.about }}</p>{% endif %}
+
+        {#- Effective access summary -#}
+        <div class="lh-perm__preview" role="region" aria-label="{{ _('Effective access preview') }}">
+          <h3 class="lh-perm__preview-title">{{ _('Effective data access preview') }}</h3>
+          {% if not u.is_active %}
+            <p class="lh-perm__notice lh-perm__notice--danger">
+              {{ _('This account is locked (deactivated) and cannot sign in or view private datasets.') }}
+            </p>
+          {% elif u.sysadmin %}
+            <p class="lh-perm__notice lh-perm__notice--info">
+              {{ _('System administrator (Sysadmin): Can view, create, edit, and delete all {pub} public and {priv} private datasets across all {orgs} organizations and {grps} data domains.').format(
+                  pub=access.total_public_datasets, priv=access.accessible_private_datasets,
+                  orgs=overview.organizations|length, grps=overview.groups|length) }}
+            </p>
+          {% else %}
+            <dl class="evn-kpis evn-kpis--compact">
+              {{ ui.stat(h.evn_number(access.total_accessible_datasets), _('Total viewable datasets'), 'navy', 'evn-kpi') }}
+              {{ ui.stat(h.evn_number(access.accessible_private_datasets), _('Viewable private datasets'), 'blue', 'evn-kpi') }}
+              {{ ui.stat(h.evn_number(access.read_private_orgs|length), _('Organizations with private read'), 'ink', 'evn-kpi') }}
+              {{ ui.stat(h.evn_number(access.edit_orgs|length), _('Organizations with edit rights'), 'ink', 'evn-kpi') }}
+            </dl>
+
+            <div class="lh-perm__access-grid">
+              <div class="lh-perm__access-col">
+                <h4>{{ _('Can view private datasets of ({n})').format(n=access.read_private_orgs|length) }}</h4>
+                {% if access.read_private_orgs %}
+                  <ul class="lh-perm__access-list">
+                    {% for org in access.read_private_orgs %}
+                      <li>
+                        <a href="{{ h.url_for('organization.read', id=org.name) }}">{{ org.title }}</a>
+                        <span class="evn-badge evn-badge--outline">{{ role_labels.get(u.org_roles.get(org.name), u.org_roles.get(org.name)) }}</span>
+                        <span class="evn-muted">({{ _('{priv} private / {pub} public').format(priv=org.private_datasets, pub=org.public_datasets) }})</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <p class="evn-muted">{{ _('None — this user only sees public datasets ({n} datasets).').format(n=access.total_public_datasets) }}</p>
+                {% endif %}
+              </div>
+
+              <div class="lh-perm__access-col">
+                <h4>{{ _('Can create & edit datasets in ({n})').format(n=access.edit_orgs|length) }}</h4>
+                {% if access.edit_orgs %}
+                  <ul class="lh-perm__access-list">
+                    {% for org in access.edit_orgs %}
+                      <li>
+                        <a href="{{ h.url_for('organization.read', id=org.name) }}">{{ org.title }}</a>
+                        <span class="evn-badge evn-badge--outline">{{ role_labels.get(u.org_roles.get(org.name), u.org_roles.get(org.name)) }}</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <p class="evn-muted">{{ _('Cannot create or edit datasets in any organization.') }}</p>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+
+      {#- Card 2: All-in-one role assignment form -#}
+      {% if u.is_active %}
+        <section class="evn-card evn-card--pad-lg" aria-labelledby="lh-edit-roles-title">
+          <h2 class="evn-card__title evn-card__title--lg" id="lh-edit-roles-title">
+            {{ _('Assign roles for {user}').format(user=u.display_name) }}
+          </h2>
+          <p class="evn-card__text">
+            {{ _('Changes below apply to all organizations and data domains in a single save.') }}
+          </p>
+
+          <form method="post" action="{{ h.url_for('lakehouse_permissions.update_user', username=u.name) }}" class="lh-perm__form">
+            {{ h.csrf_input() }}
+            <input type="hidden" name="return_tab" value="users">
+            <input type="hidden" name="q" value="{{ q }}">
+            <input type="hidden" name="filter" value="{{ role_filter }}">
+
+            {% set is_self = (current_user.name == u.name) %}
+            <div class="lh-perm__sysadmin-box">
+              {% if is_self and u.sysadmin %}
+                <input type="hidden" name="sysadmin" value="1">
+              {% endif %}
+              <label class="lh-perm__check-row">
+                <input type="checkbox" name="sysadmin" value="1"
+                       {% if u.sysadmin %}checked{% endif %}
+                       {% if is_self and u.sysadmin %}disabled{% endif %}>
+                <span>
+                  <strong>{{ _('System administrator (Sysadmin)') }}</strong>
+                  {% if is_self and u.sysadmin %}
+                    <small>{{ _('You are signed in as this account; sysadmin rights cannot be removed from yourself.') }}</small>
+                  {% else %}
+                    <small>{{ _('Grants full access across all organizations, private datasets, and portal administration.') }}</small>
+                  {% endif %}
+                </span>
+              </label>
+            </div>
+
+            <h3 class="evn-card__title">{{ _('Organizations (Data owners)') }}</h3>
+            <div class="evn-table-wrap">
+              <table class="evn-table lh-perm__role-table">
+                <thead>
+                  <tr>
+                    <th scope="col">{{ _('Organization') }}</th>
+                    <th scope="col">{{ _('Datasets') }}</th>
+                    <th scope="col">{{ _('Current') }}</th>
+                    <th scope="col">{{ _('Role') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for org in overview.organizations %}
+                    {% set cur = u.org_roles.get(org.name, '') %}
+                    <tr class="{% if cur %}lh-perm__row--assigned{% endif %}">
+                      <td>
+                        <strong><a href="{{ h.url_for('lakehouse_permissions.index', tab='units', kind='organization', unit=org.name) }}">{{ org.title }}</a></strong>
+                        <div class="evn-muted">
+                          <code>{{ org.name }}</code>
+                          {% if org.om_teams %} · OM: {{ org.om_teams|join(', ') }}{% endif %}
+                        </div>
+                      </td>
+                      <td>
+                        <span class="evn-badge evn-badge--outline">{{ _('Public') }}: {{ org.public_datasets }}</span>
+                        <span class="evn-badge {% if org.private_datasets %}evn-badge--kind-transaction{% else %}evn-badge--outline{% endif %}">
+                          {{ _('Private') }}: {{ org.private_datasets }}
+                        </span>
+                      </td>
+                      <td>
+                        {% if cur %}
+                          <span class="evn-badge evn-badge--good">{{ role_labels.get(cur, cur) }}</span>
+                        {% else %}
+                          <span class="evn-muted">—</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <select class="evn-select" name="org_role__{{ org.name }}" aria-label="{{ org.title }}">
+                          <option value="" {% if not cur %}selected{% endif %}>— {{ _('Not a member (public only)') }}</option>
+                          <option value="member" {% if cur == 'member' %}selected{% endif %}>{{ _('Member — Read private datasets') }}</option>
+                          <option value="editor" {% if cur == 'editor' %}selected{% endif %}>{{ _('Editor — Read private + Create & edit datasets') }}</option>
+                          <option value="admin" {% if cur == 'admin' %}selected{% endif %}>{{ _('Admin — Full dataset & member control') }}</option>
+                        </select>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            {% if overview.groups %}
+              <h3 class="evn-card__title lh-perm__subheading">{{ _('Data domains (Groups)') }}</h3>
+              <p class="evn-muted lh-perm__subnote">
+                {{ _('Note: Being a member or admin of a data domain allows classifying datasets into that domain, but does not grant read access to private datasets owned by other organizations.') }}
+              </p>
+              <div class="evn-table-wrap">
+                <table class="evn-table lh-perm__role-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">{{ _('Data domain') }}</th>
+                      <th scope="col">{{ _('Datasets') }}</th>
+                      <th scope="col">{{ _('Current') }}</th>
+                      <th scope="col">{{ _('Role') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for grp in overview.groups %}
+                      {% set cur = u.group_roles.get(grp.name, '') %}
+                      <tr class="{% if cur %}lh-perm__row--assigned{% endif %}">
+                        <td>
+                          <strong><a href="{{ h.url_for('lakehouse_permissions.index', tab='units', kind='group', unit=grp.name) }}">{{ grp.title }}</a></strong>
+                          <div class="evn-muted">
+                            <code>{{ grp.name }}</code>
+                            {% if grp.om_domains %} · OM: {{ grp.om_domains|join(', ') }}{% endif %}
+                          </div>
+                        </td>
+                        <td>
+                          <span class="evn-badge evn-badge--outline">{{ grp.total_datasets }}</span>
+                        </td>
+                        <td>
+                          {% if cur %}
+                            <span class="evn-badge evn-badge--good">{{ role_labels.get(cur, cur) }}</span>
+                          {% else %}
+                            <span class="evn-muted">—</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          <select class="evn-select" name="group_role__{{ grp.name }}" aria-label="{{ grp.title }}">
+                            <option value="" {% if not cur %}selected{% endif %}>— {{ _('Not a member') }}</option>
+                            <option value="member" {% if cur == 'member' %}selected{% endif %}>{{ _('Member — Attach own editable datasets') }}</option>
+                            <option value="admin" {% if cur == 'admin' %}selected{% endif %}>{{ _('Admin — Manage domain & members') }}</option>
+                          </select>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% endif %}
+
+            <div class="lh-perm__actions">
+              <button type="submit" class="evn-btn evn-btn--primary">
+                {{ ui.icon('check') }}{{ _('Save permissions') }}
+              </button>
+            </div>
+          </form>
+        </section>
+      {% endif %}
+
+      {#- Card 3: Security & Account lifecycle (Reset password / Lock or Unlock) -#}
+      <div class="evn-duo">
+        <section class="evn-card evn-card--pad" aria-labelledby="lh-reset-pw-title">
+          <h3 class="evn-card__title" id="lh-reset-pw-title">{{ _('Reset password') }}</h3>
+          <p class="evn-card__text">
+            {{ _('Generate a new random password (shown once at the top of the page) or enter a custom password of at least 8 characters.') }}
+          </p>
+          <form method="post" action="{{ h.url_for('lakehouse_permissions.reset_password', username=u.name) }}" class="lh-perm__inline-form">
+            {{ h.csrf_input() }}
+            <input class="evn-input" type="text" name="new_password" autocomplete="off"
+                   placeholder="{{ _('Leave blank for random password') }}"
+                   aria-label="{{ _('New password') }}">
+            <button type="submit" class="evn-btn evn-btn--outline evn-btn--sm">
+              {{ ui.icon('refresh') }}{{ _('Reset password') }}
+            </button>
+          </form>
+        </section>
+
+        <section class="evn-card evn-card--pad" aria-labelledby="lh-account-state-title">
+          <h3 class="evn-card__title" id="lh-account-state-title">{{ _('Account status') }}</h3>
+          {% if u.name == current_user.name %}
+            <p class="evn-card__text">
+              {{ _('You are currently signed in with this account and cannot lock it.') }}
+            </p>
+          {% elif u.is_active %}
+            <p class="evn-card__text">
+              {{ _('Locking this account prevents sign-in and removes its active unit memberships while keeping audit history.') }}
+            </p>
+            <form method="post" action="{{ h.url_for('lakehouse_permissions.user_state', username=u.name) }}">
+              {{ h.csrf_input() }}
+              <input type="hidden" name="active" value="0">
+              <button type="submit" class="evn-btn evn-btn--outline evn-btn--sm lh-perm__btn-danger">
+                {{ ui.icon('lock') }}{{ _('Lock account') }}
+              </button>
+            </form>
+          {% else %}
+            <p class="evn-card__text">
+              {{ _('This account is locked. Reactivate it to allow sign-in and assign organization roles again.') }}
+            </p>
+            <form method="post" action="{{ h.url_for('lakehouse_permissions.user_state', username=u.name) }}">
+              {{ h.csrf_input() }}
+              <input type="hidden" name="active" value="1">
+              <button type="submit" class="evn-btn evn-btn--primary evn-btn--sm">
+                {{ ui.icon('check') }}{{ _('Reactivate account') }}
+              </button>
+            </form>
+          {% endif %}
+        </section>
+      </div>
+
+    {% else %}
+      {{ ui.empty(_('Select a user on the left or create a new user.')) }}
+    {% endif %}
+  </div>
+</div>

@@ -1,0 +1,6 @@
+{% ckan_extends %}
+
+{% block content_primary_nav %}
+  {{ super() }}
+  {{ h.build_nav_icon('lakehouse_permissions.index', _('User permissions'), icon='users') }}
+{% endblock %}

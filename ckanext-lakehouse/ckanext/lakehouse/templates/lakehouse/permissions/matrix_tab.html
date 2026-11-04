@@ -1,0 +1,114 @@
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set role_short = {'admin': _('Admin'), 'editor': _('Editor'), 'member': _('Member')} %}
+{% set role_badge = {'admin': 'kind-master', 'editor': 'good', 'member': 'outline'} %}
+
+<section class="evn-card evn-card--pad-lg" aria-labelledby="lh-matrix-title">
+  <div class="evn-catalog-head">
+    <div>
+      <p class="evn-catalog-head__meta">{{ _('Portal-wide access overview') }}</p>
+      <h2 class="evn-catalog-head__title" id="lh-matrix-title">{{ _('User × Organization & Domain Access Matrix') }}</h2>
+    </div>
+    <form class="lh-perm__matrix-filter" method="get" action="{{ h.url_for('lakehouse_permissions.index') }}">
+      <input type="hidden" name="tab" value="matrix">
+      <input class="evn-input" type="search" name="q" value="{{ q }}" placeholder="{{ _('Search user…') }}" aria-label="{{ _('Search user') }}">
+      <select class="evn-select" name="filter" aria-label="{{ _('Filter users') }}" onchange="this.form.submit()">
+        <option value="all" {% if role_filter == 'all' %}selected{% endif %}>{{ _('All users') }}</option>
+        <option value="sysadmin" {% if role_filter == 'sysadmin' %}selected{% endif %}>{{ _('Sysadmins') }}</option>
+        <option value="unassigned" {% if role_filter == 'unassigned' %}selected{% endif %}>{{ _('Unassigned (Public only)') }}</option>
+        <option value="inactive" {% if role_filter == 'inactive' %}selected{% endif %}>{{ _('Locked accounts') }}</option>
+      </select>
+      <button type="submit" class="evn-btn evn-btn--outline evn-btn--sm">{{ _('Filter') }}</button>
+    </form>
+  </div>
+
+  <p class="evn-card__text">
+    {{ _('Click any user or organization header to edit their roles. Legend: Admin (manage unit & datasets), Editor (create & edit datasets), Member (read private datasets).') }}
+  </p>
+
+  {% if overview.users %}
+    <div class="evn-table-wrap lh-perm__matrix-wrap" tabindex="0" role="region" aria-label="{{ _('Access matrix') }}">
+      <table class="evn-table lh-perm__matrix">
+        <thead>
+          <tr>
+            <th scope="col" class="lh-perm__sticky-col">{{ _('User') }}</th>
+            <th scope="col">{{ _('System role') }}</th>
+            <th scope="col" title="{{ _('Number of private datasets this user can read') }}">{{ _('Private read') }}</th>
+            {% for org in overview.organizations %}
+              <th scope="col" title="{{ org.title }} ({{ _('Private') }}: {{ org.private_datasets }}, {{ _('Public') }}: {{ org.public_datasets }})">
+                <a href="{{ h.url_for('lakehouse_permissions.index', tab='units', kind='organization', unit=org.name) }}">
+                  {{ org.abbreviation or org.title|truncate(16) }}
+                </a>
+                <div class="lh-perm__th-sub">{{ _('Org') }} · {{ org.private_datasets }}p</div>
+              </th>
+            {% endfor %}
+            {% for grp in overview.groups %}
+              <th scope="col" title="{{ grp.title }}">
+                <a href="{{ h.url_for('lakehouse_permissions.index', tab='units', kind='group', unit=grp.name) }}">
+                  {{ grp.title|truncate(16) }}
+                </a>
+                <div class="lh-perm__th-sub">{{ _('Domain') }}</div>
+              </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in overview.users %}
+            <tr class="{% if not u.is_active %}is-inactive{% endif %}">
+              <td class="lh-perm__sticky-col">
+                <a class="lh-perm__matrix-user" href="{{ h.url_for('lakehouse_permissions.index', tab='users', user=u.name) }}">
+                  <strong>{{ u.display_name }}</strong>
+                  <span>@{{ u.name }}</span>
+                </a>
+              </td>
+              <td>
+                {% if not u.is_active %}
+                  <span class="evn-badge evn-badge--danger">{{ _('Locked') }}</span>
+                {% elif u.sysadmin %}
+                  <span class="evn-badge evn-badge--kind-master">{{ _('Sysadmin') }}</span>
+                {% elif u.is_unassigned %}
+                  <span class="evn-badge evn-badge--outline">{{ _('Public only') }}</span>
+                {% else %}
+                  <span class="evn-badge evn-badge--outline">{{ _('Unit member') }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <strong>{{ u.access.accessible_private_datasets if u.access else 0 }}</strong>
+                <span class="evn-muted">/ {{ overview.summary.private_datasets }}</span>
+              </td>
+              {% for org in overview.organizations %}
+                {% set r = u.org_roles.get(org.name) %}
+                <td class="lh-perm__cell">
+                  {% if not u.is_active %}
+                    <span class="evn-muted">—</span>
+                  {% elif r %}
+                    <span class="evn-badge evn-badge--{{ role_badge.get(r, 'outline') }}">{{ role_short.get(r, r) }}</span>
+                  {% elif u.sysadmin %}
+                    <span class="lh-perm__sys-implied" title="{{ _('Full access via Sysadmin') }}">✓</span>
+                  {% else %}
+                    <span class="evn-muted">—</span>
+                  {% endif %}
+                </td>
+              {% endfor %}
+              {% for grp in overview.groups %}
+                {% set r = u.group_roles.get(grp.name) %}
+                <td class="lh-perm__cell">
+                  {% if not u.is_active %}
+                    <span class="evn-muted">—</span>
+                  {% elif r %}
+                    <span class="evn-badge evn-badge--{{ role_badge.get(r, 'outline') }}">{{ role_short.get(r, r) }}</span>
+                  {% elif u.sysadmin %}
+                    <span class="lh-perm__sys-implied" title="{{ _('Full access via Sysadmin') }}">✓</span>
+                  {% else %}
+                    <span class="evn-muted">—</span>
+                  {% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {{ ui.empty(_('No user matches this filter.')) }}
+  {% endif %}
+</section>

@@ -1,0 +1,114 @@
+{% extends "page.html" %}
+{% import 'evntheme/macros/ui.html' as ui %}
+
+{% block subtitle %}{{ _('User permissions') }} {{ g.template_title_delimiter }} {{ _('Administration') }}{% endblock %}
+
+{% block content %}
+  {% asset 'lakehouse/lakehouse-css' %}
+  {% set s = overview.summary %}
+  <div class="evn-page lh-perm">
+    <section class="evn-page-hero">
+      <div class="evn-container evn-page-hero__grid">
+        <div>
+          {{ ui.breadcrumb([(_('Home'), h.url_for('home.index')),
+                            (_('Administration'), h.url_for('admin.index')),
+                            (_('User permissions'), none)]) }}
+          <h1 class="evn-page-hero__title">{{ _('User permissions') }}</h1>
+          <p class="evn-page-hero__lead">
+            {{ _('Dataset ownership and private data visibility follow the owning organization. Assign users to organizations to grant private read or edit rights, and to data domains to manage topic classification.') }}
+          </p>
+        </div>
+        <dl class="evn-hero-cards">
+          {{ ui.stat(h.evn_number(s.active_users), _('Active users'), 'navy', 'evn-hero-card') }}
+          {{ ui.stat(h.evn_number(s.sysadmin_count), _('Sysadmins'), 'blue', 'evn-hero-card') }}
+          {{ ui.stat(h.evn_number(s.org_count), _('Organizations'), 'green', 'evn-hero-card') }}
+          {{ ui.stat(h.evn_number(s.private_datasets), _('Private datasets'), 'orange', 'evn-hero-card') }}
+        </dl>
+      </div>
+    </section>
+
+    <div class="evn-container evn-flash">{{ self.flash() }}</div>
+
+    {% if credentials %}
+      <div class="evn-container">
+        <section class="evn-card evn-card--pad lh-perm__cred" role="region" aria-label="{{ _('Temporary password') }}">
+          <div class="lh-perm__cred-head">
+            <div>
+              <span class="evn-badge evn-badge--good">{{ _('One-time password') }}</span>
+              <h2 class="lh-perm__cred-title">
+                {% if credentials.mode == 'created' %}
+                  {{ _('Account created for {user}').format(user=credentials.username) }}
+                {% else %}
+                  {{ _('Password reset for {user}').format(user=credentials.username) }}
+                {% endif %}
+              </h2>
+              <p class="evn-muted">
+                {{ _('Copy and send this password to the user now. For security, it will not be shown again after you leave or reload this page.') }}
+              </p>
+            </div>
+            <div class="lh-perm__cred-box">
+              <div class="lh-perm__cred-field">
+                <span class="lh-perm__cred-label">{{ _('Username') }}:</span>
+                <code>{{ credentials.username }}</code>
+              </div>
+              <div class="lh-perm__cred-field">
+                <span class="lh-perm__cred-label">{{ _('Password') }}:</span>
+                <code id="lh-cred-password">{{ credentials.password }}</code>
+                <button type="button" class="evn-btn evn-btn--outline evn-btn--sm" hidden
+                        data-module="evn-copy" data-module-target="#lh-cred-password"
+                        data-module-done="{{ _('Copied') }}">
+                  {{ ui.icon('copy') }}<span>{{ _('Copy password') }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    {% endif %}
+
+    <div class="evn-container lh-perm__body">
+      <div class="evn-toolbar lh-perm__toolbar">
+        <nav class="evn-segmented evn-segmented--lg" aria-label="{{ _('Permission views') }}">
+          <a class="evn-segmented__item{% if tab == 'users' %} is-active{% endif %}"
+             href="{{ h.url_for('lakehouse_permissions.index', tab='users', q=q or none, filter=role_filter if role_filter != 'all' else none) }}"
+             {% if tab == 'users' %}aria-current="page"{% endif %}>
+            {{ _('By user') }} ({{ s.total_users }})
+          </a>
+          <a class="evn-segmented__item{% if tab == 'units' %} is-active{% endif %}"
+             href="{{ h.url_for('lakehouse_permissions.index', tab='units') }}"
+             {% if tab == 'units' %}aria-current="page"{% endif %}>
+            {{ _('By organization & domain') }} ({{ s.org_count + s.group_count }})
+          </a>
+          <a class="evn-segmented__item{% if tab == 'matrix' %} is-active{% endif %}"
+             href="{{ h.url_for('lakehouse_permissions.index', tab='matrix', q=q or none, filter=role_filter if role_filter != 'all' else none) }}"
+             {% if tab == 'matrix' %}aria-current="page"{% endif %}>
+            {{ _('Access matrix') }}
+          </a>
+        </nav>
+
+        <div class="evn-toolbar__end">
+          <a class="evn-btn evn-btn--outline evn-btn--sm" href="{{ h.url_for('admin.index') }}">
+            {{ ui.icon('settings') }}{{ _('System settings') }}
+          </a>
+          <a class="evn-btn evn-btn--primary evn-btn--sm"
+             href="{{ h.url_for('lakehouse_permissions.index', tab='users', new='1') }}">
+            {{ ui.icon('plus') }}{{ _('New user') }}
+          </a>
+        </div>
+      </div>
+
+      {% if tab == 'units' %}
+        {% snippet 'lakehouse/permissions/units_tab.html',
+                   overview=overview, selected_kind=selected_kind, selected_unit=selected_unit,
+                   available_to_add=available_to_add %}
+      {% elif tab == 'matrix' %}
+        {% snippet 'lakehouse/permissions/matrix_tab.html',
+                   overview=overview, q=q, role_filter=role_filter %}
+      {% else %}
+        {% snippet 'lakehouse/permissions/users_tab.html',
+                   overview=overview, q=q, role_filter=role_filter,
+                   selected_user=selected_user, new_user=new_user, form_data=form_data %}
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

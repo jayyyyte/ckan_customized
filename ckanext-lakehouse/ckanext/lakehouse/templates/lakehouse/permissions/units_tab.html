@@ -1,0 +1,193 @@
+{% import 'evntheme/macros/ui.html' as ui %}
+{% set role_labels = {'admin': _('Admin'), 'editor': _('Editor'), 'member': _('Member')} %}
+
+<div class="evn-split evn-split--mds lh-perm__split">
+  {#- Left tree: Organizations and Data domains -#}
+  <nav class="evn-card evn-tree" aria-label="{{ _('Organizations and data domains') }}">
+    <div class="evn-tree__group">
+      <h2 class="evn-tree__title">
+        {{ _('Organizations (Data owners)') }}
+        <span class="evn-tree__count">{{ overview.organizations|length }}</span>
+      </h2>
+      <ul>
+        {% for org in overview.organizations %}
+          {% set active = (selected_unit and selected_kind == 'organization' and selected_unit.name == org.name) %}
+          <li>
+            <a class="evn-tree__item{% if active %} is-active{% endif %}"
+               href="{{ h.url_for('lakehouse_permissions.index', tab='units', kind='organization', unit=org.name) }}"
+               {% if active %}aria-current="page"{% endif %}>
+              <span class="evn-tree__name">{{ org.title }}</span>
+              <span class="evn-tree__count" title="{{ _('Members') }}">{{ org.members|length }}</span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    {% if overview.groups %}
+      <div class="evn-tree__group">
+        <h2 class="evn-tree__title">
+          {{ _('Data domains (Groups)') }}
+          <span class="evn-tree__count">{{ overview.groups|length }}</span>
+        </h2>
+        <ul>
+          {% for grp in overview.groups %}
+            {% set active = (selected_unit and selected_kind == 'group' and selected_unit.name == grp.name) %}
+            <li>
+              <a class="evn-tree__item{% if active %} is-active{% endif %}"
+                 href="{{ h.url_for('lakehouse_permissions.index', tab='units', kind='group', unit=grp.name) }}"
+                 {% if active %}aria-current="page"{% endif %}>
+                <span class="evn-tree__name">{{ grp.title }}</span>
+                <span class="evn-tree__count" title="{{ _('Members') }}">{{ grp.members|length }}</span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </nav>
+
+  {#- Right main panel: Selected unit details and member management -#}
+  <div class="evn-split__main evn-stack">
+    {% if selected_unit %}
+      {% set u = selected_unit %}
+      {% set is_org = u.is_org %}
+      <section class="evn-card evn-card--pad-lg" aria-labelledby="lh-unit-title">
+        <div class="evn-catalog-head">
+          <div>
+            <p class="evn-catalog-head__meta">
+              {{ _('Organization (Data owner)') if is_org else _('Data domain (Group)') }}
+              · <code>{{ u.name }}</code>
+              {% if u.abbreviation %} · {{ u.abbreviation }}{% endif %}
+            </p>
+            <h2 class="evn-catalog-head__title" id="lh-unit-title">{{ u.title }}</h2>
+          </div>
+          <div class="evn-catalog-head__actions">
+            <a class="evn-btn evn-btn--outline evn-btn--sm"
+               href="{{ h.url_for(('organization' if is_org else 'group') ~ '.read', id=u.name) }}">
+              {{ _('View unit page') }}
+            </a>
+            <a class="evn-btn evn-btn--outline evn-btn--sm"
+               href="{{ h.url_for(('organization' if is_org else 'group') ~ '.edit', id=u.name) }}">
+              {{ ui.icon('edit') }}{{ _('Edit metadata') }}
+            </a>
+          </div>
+        </div>
+        {% if u.description %}<p class="evn-card__text">{{ u.description }}</p>{% endif %}
+
+        <dl class="evn-kpis evn-kpis--compact">
+          {{ ui.stat(h.evn_number(u.members|length), _('Assigned members'), 'navy', 'evn-kpi') }}
+          {{ ui.stat(h.evn_number(u.public_datasets), _('Public datasets'), 'blue', 'evn-kpi') }}
+          {{ ui.stat(h.evn_number(u.private_datasets), _('Private datasets'), 'ink', 'evn-kpi') }}
+          {% if is_org and (u.om_teams or u.om_fqn_patterns) %}
+            {{ ui.stat((u.om_teams + u.om_fqn_patterns)|join(', '), _('OpenMetadata mapping'), 'ink', 'evn-kpi') }}
+          {% elif not is_org and u.om_domains %}
+            {{ ui.stat(u.om_domains|join(', '), _('OpenMetadata domain'), 'ink', 'evn-kpi') }}
+          {% endif %}
+        </dl>
+
+        {% if is_org %}
+          <p class="lh-perm__notice lh-perm__notice--info">
+            {{ _('Who can see data of this organization: Everyone can see its {pub} public datasets. Only Sysadmins and the {m} members listed below (Admin, Editor, Member) can see its {priv} private datasets.').format(
+                pub=u.public_datasets, m=u.members|length, priv=u.private_datasets) }}
+          </p>
+        {% else %}
+          <p class="lh-perm__notice lh-perm__notice--info">
+            {{ _('Data domain rule: Members of this domain can classify datasets they edit into this domain. Private datasets in this domain remain visible only to members of their owning organization.') }}
+          </p>
+        {% endif %}
+      </section>
+
+      <section class="evn-card evn-card--pad-lg" aria-labelledby="lh-unit-members-title">
+        <h3 class="evn-card__title evn-card__title--lg" id="lh-unit-members-title">
+          {{ _('Manage members of {unit}').format(unit=u.title) }}
+        </h3>
+
+        <form method="post"
+              action="{{ h.url_for('lakehouse_permissions.update_unit', kind=('organization' if is_org else 'group'), unit_name=u.name) }}"
+              class="lh-perm__form">
+          {{ h.csrf_input() }}
+
+          {% if u.members %}
+            <div class="evn-table-wrap">
+              <table class="evn-table lh-perm__role-table">
+                <thead>
+                  <tr>
+                    <th scope="col">{{ _('User') }}</th>
+                    <th scope="col">{{ _('Email') }}</th>
+                    <th scope="col">{{ _('Current role') }}</th>
+                    <th scope="col">{{ _('Change role / Remove') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for m in u.members %}
+                    <tr>
+                      <td>
+                        <strong><a href="{{ h.url_for('lakehouse_permissions.index', tab='users', user=m.username) }}">{{ m.display_name }}</a></strong>
+                        <div class="evn-muted">
+                          <code>@{{ m.username }}</code>
+                          {% if m.sysadmin %} · <span class="evn-badge evn-badge--kind-master">{{ _('Sysadmin') }}</span>{% endif %}
+                        </div>
+                      </td>
+                      <td>{{ m.email or '—' }}</td>
+                      <td><span class="evn-badge evn-badge--good">{{ role_labels.get(m.role, m.role) }}</span></td>
+                      <td>
+                        <select class="evn-select" name="member_role__{{ m.username }}" aria-label="{{ m.display_name }}">
+                          {% if is_org %}
+                            <option value="member" {% if m.role == 'member' %}selected{% endif %}>{{ _('Member — Read private datasets') }}</option>
+                            <option value="editor" {% if m.role == 'editor' %}selected{% endif %}>{{ _('Editor — Create & edit datasets') }}</option>
+                            <option value="admin" {% if m.role == 'admin' %}selected{% endif %}>{{ _('Admin — Manage unit & members') }}</option>
+                          {% else %}
+                            <option value="member" {% if m.role == 'member' %}selected{% endif %}>{{ _('Member — Attach datasets') }}</option>
+                            <option value="admin" {% if m.role == 'admin' %}selected{% endif %}>{{ _('Admin — Manage domain & members') }}</option>
+                          {% endif %}
+                          <option value="">{{ _('Remove from unit') }}</option>
+                        </select>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="evn-muted">{{ _('This unit has no direct members yet (only Sysadmins can manage it and view its private datasets).') }}</p>
+          {% endif %}
+
+          <div class="lh-perm__add-member">
+            <h4 class="lh-perm__add-title">{{ _('Add member to {unit}').format(unit=u.title) }}</h4>
+            {% if available_to_add %}
+              <div class="lh-perm__add-row">
+                <select class="evn-select" name="add_username" aria-label="{{ _('Select user to add') }}">
+                  <option value="">— {{ _('Choose an active user…') }}</option>
+                  {% for candidate in available_to_add %}
+                    <option value="{{ candidate.name }}">{{ candidate.display_name }} (@{{ candidate.name }})</option>
+                  {% endfor %}
+                </select>
+                <select class="evn-select" name="add_role" aria-label="{{ _('Role for new member') }}">
+                  {% if is_org %}
+                    <option value="member">{{ _('Member — Read private datasets') }}</option>
+                    <option value="editor">{{ _('Editor — Create & edit datasets') }}</option>
+                    <option value="admin">{{ _('Admin — Manage unit & members') }}</option>
+                  {% else %}
+                    <option value="member">{{ _('Member — Attach datasets') }}</option>
+                    <option value="admin">{{ _('Admin — Manage domain & members') }}</option>
+                  {% endif %}
+                </select>
+              </div>
+            {% else %}
+              <p class="evn-muted">{{ _('All active users are already members of this unit.') }}</p>
+            {% endif %}
+          </div>
+
+          <div class="lh-perm__actions">
+            <button type="submit" class="evn-btn evn-btn--primary">
+              {{ ui.icon('check') }}{{ _('Save unit members') }}
+            </button>
+          </div>
+        </form>
+      </section>
+    {% else %}
+      {{ ui.empty(_('No organizations or data domains exist yet.')) }}
+    {% endif %}
+  </div>
+</div>
