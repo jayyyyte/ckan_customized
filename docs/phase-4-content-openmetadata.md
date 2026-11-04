@@ -8,9 +8,10 @@
 
 ## 4.0 Tóm tắt
 
-| | Cách làm | Lệnh |
+| | Cách làm | Lệnh / Đường dẫn |
 |---|---|---|
-| Đơn vị, nhóm, người dùng, vai trò | File YAML khai báo, chạy lại an toàn | `ckan lakehouse bootstrap FILE --credentials OUT.csv [--prune]` |
+| Quản trị phân quyền trên giao diện web (sysadmin) | Tạo user, đặt lại mật khẩu 1 lần, khóa/mở khóa, gán quyền 2 chiều (theo user / theo đơn vị & miền), xem trước quyền dữ liệu riêng tư và ma trận tổng quan | `/ckan-admin/permissions` (menu tài khoản sysadmin hoặc tab trong `/ckan-admin`) |
+| Đơn vị, nhóm, người dùng, vai trò (CLI) | File YAML khai báo, chạy lại an toàn | `ckan lakehouse bootstrap FILE --credentials OUT.csv [--prune]` |
 | …lấy từ team/domain của OpenMetadata | Sinh bản nháp YAML, người duyệt, rồi bootstrap (§4.3b) | `ckan lakehouse om scaffold --out draft.yaml` |
 | Dataset demo | Như cũ, chỉ cho local và kind | `ckan evntheme seed-demo` |
 | Dataset thật | Sinh từ bảng của OpenMetadata | `ckan lakehouse om sync` (CronJob mỗi giờ ở phút 40) |

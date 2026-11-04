@@ -238,6 +238,10 @@ Code theme là một package Python, **giữ nguyên** qua cả ba giai đoạn;
 - [ ] Bot OpenMetadata chỉ đọc và token (Q12); phạm vi công bố `om.include` / `om.require_tags` (Q13)
 - [x] **Tập dượt `0.2.0` trên kind** (`ckan-rehearsal`, nâng cấp tại chỗ từ `0.1.0`): mock OM trong cụm (`om-mock.sh`); `smoke-test-om.sh` **31/31** (chạy 2 lần); `smoke-test.sh` GĐ3 hồi quy **47/47**. `ctr import` chỉ 10–12 s/node nhờ dùng lại layer ([phase-4 §4.6b](phase-4-content-openmetadata.md#46b-tập-dượt-trên-kind--kết-quả-2026-10-06)) (2026-10-06)
 - [ ] `docker/.env` của stack compose đang có (sinh trước GĐ4) chưa có `lakehouse` trong `CKAN__PLUGINS`: thêm tay hoặc sinh lại bằng `make-env.sh` trước khi chạy image `0.2.0`
+- [x] **Giao diện Sysadmin quản lý phân quyền người dùng (`/ckan-admin/permissions`)** (2026-11-04):
+  - Đặt trong `ckanext-lakehouse` (`permissions/service.py`, `permissions/views.py`), dùng hệ thống giao diện của `ckanext-evntheme`, nối vào menu tài khoản sysadmin trên header và thanh tab `/ckan-admin`.
+  - Quản lý theo 3 chế độ: **Theo người dùng** (tạo user mới + gán quyền ban đầu + mật khẩu tạm hiển thị 1 lần; đổi quyền `sysadmin` và vai trò ở mọi Organization/Group trong 1 lần lưu; đặt lại mật khẩu; khóa/mở khóa tài khoản; xem trước quyền thực tế với số dataset private xem/sửa được), **Theo đơn vị & miền dữ liệu** (quản lý thành viên, thêm nhanh, hiển thị ánh xạ OpenMetadata), và **Ma trận phân quyền tổng quan** (`User × Organization & Group`).
+  - Kiểm thử: unit `lakehouse` 43/43, app `lakehouse` 21/21, unit `evntheme` 29/29, ruff sạch.
 
 ## Decision log
 
