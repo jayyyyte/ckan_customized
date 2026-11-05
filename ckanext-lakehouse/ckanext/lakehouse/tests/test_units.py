@@ -522,3 +522,36 @@ def test_filter_users_and_validation():
         perm_service.validate_username_and_email("bad.name", "u@evn.vn")
     with pytest.raises(perm_service.PermissionFormError):
         perm_service.validate_username_and_email("good-name", "not-an-email")
+
+    orgs = [
+        perm_service.UnitInfo(id="1", name="evnnpc", title="EVNNPC", description="", is_org=True,
+                              abbreviation="EVNNPC", public_datasets=2, private_datasets=4),
+    ]
+    groups = [
+        perm_service.UnitInfo(id="g1", name="kt-at", title="KT-AT", description="", is_org=False),
+    ]
+    for u in users:
+        u.access = perm_service.compute_access_preview(
+            is_sysadmin=u.sysadmin,
+            is_active=u.is_active,
+            org_roles=u.org_roles,
+            group_roles=u.group_roles,
+            organizations=orgs,
+            groups=groups,
+            total_public_datasets=2,
+            total_private_datasets=4,
+        )
+    overview = perm_service.Overview(
+        summary=perm_service.Summary(),
+        organizations=orgs,
+        groups=groups,
+        users=users,
+        all_users=users,
+    )
+    csv_out = perm_service.matrix_csv(overview)
+    assert csv_out.startswith("\ufeffusername,fullname,email,state,sysadmin,")
+    assert "org:evnnpc (EVNNPC),domain:kt-at (KT-AT)" in csv_out
+    assert "quantri,Quản trị,qt@evn.example,active,true,4,6,sysadmin,sysadmin" in csv_out
+    assert "npc-user,Cán bộ NPC,npc@evn.example,active,false,4,6,member," in csv_out
+    assert "bi-khoa,Đã nghỉ,old@evn.example,deleted,false,0,0,," in csv_out
+

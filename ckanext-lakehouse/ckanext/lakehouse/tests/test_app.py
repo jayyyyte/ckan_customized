@@ -357,6 +357,18 @@ def test_permissions_ui_requires_sysadmin(app, synced):
     body_matrix = app.get(url, query_string={"tab": "matrix"},
                           headers=_login_headers("quantri-portal")).get_data(as_text=True)
     assert "Ma trận phân quyền" in body_matrix
+    assert "/ckan-admin/permissions/matrix.csv" in body_matrix and "Xuất CSV" in body_matrix
+
+    # CSV export endpoint requires sysadmin and returns UTF-8 BOM CSV with user & unit roles.
+    assert app.get(f"{url}/matrix.csv", status=403).status_code == 403
+    assert app.get(f"{url}/matrix.csv", headers=_login_headers("npc-quantri"), status=403).status_code == 403
+    csv_res = app.get(f"{url}/matrix.csv", headers=_login_headers("quantri-portal"))
+    assert csv_res.status_code == 200
+    assert "text/csv" in csv_res.headers["Content-Type"]
+    assert "ckan-permissions-matrix.csv" in csv_res.headers.get("Content-Disposition", "")
+    csv_text = csv_res.get_data(as_text=True)
+    assert csv_text.startswith("\ufeffusername,fullname,email,state,sysadmin,")
+    assert "npc-quantri" in csv_text and "a0-thanhvien" in csv_text
 
 
 def test_permissions_ui_create_user_update_roles_reset_password_and_lock(app, synced):

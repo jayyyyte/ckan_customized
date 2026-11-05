@@ -579,6 +579,9 @@ msgstr "Tài khoản đã khóa"
 msgid "Filter"
 msgstr "Lọc"
 
+msgid "Export CSV"
+msgstr "Xuất CSV"
+
 msgid "Click any user or organization header to edit their roles. Legend: Admin (manage unit & datasets), Editor (create & edit datasets), Member (read private datasets)."
 msgstr "Bấm vào tên người dùng hoặc tiêu đề cột đơn vị để chỉnh sửa chi tiết. Chú giải: Quản trị (quản lý đơn vị & dữ liệu), Biên tập (tạo & sửa dữ liệu), Thành viên (xem dữ liệu riêng tư)."
 

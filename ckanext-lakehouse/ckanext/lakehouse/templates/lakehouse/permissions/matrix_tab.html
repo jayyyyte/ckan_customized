@@ -18,6 +18,10 @@
         <option value="inactive" {% if role_filter == 'inactive' %}selected{% endif %}>{{ _('Locked accounts') }}</option>
       </select>
       <button type="submit" class="evn-btn evn-btn--outline evn-btn--sm">{{ _('Filter') }}</button>
+      <a class="evn-btn evn-btn--outline evn-btn--sm"
+         href="{{ h.url_for('lakehouse_permissions.export_matrix_csv', q=q or none, filter=role_filter if role_filter != 'all' else none) }}">
+        {{ ui.icon('download') }}{{ _('Export CSV') }}
+      </a>
     </form>
   </div>
 

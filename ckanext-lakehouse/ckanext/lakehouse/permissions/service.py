@@ -10,6 +10,8 @@ In CKAN 2.11:
 """
 from __future__ import annotations
 
+import csv
+import io
 import json
 import re
 import secrets
@@ -433,6 +435,62 @@ def filter_users(users: list[UserRow], q: str = "", role_filter: str = "all") ->
                 continue
         result.append(u)
     return result
+
+
+def matrix_csv(overview: Overview) -> str:
+    """Serialize the user × organization & domain access matrix to UTF-8 CSV (with BOM for Excel)."""
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    header = [
+        "username",
+        "fullname",
+        "email",
+        "state",
+        "sysadmin",
+        "private_datasets_readable",
+        "total_datasets_readable",
+    ]
+    for org in overview.organizations:
+        label = org.abbreviation or org.title or org.name
+        header.append(f"org:{org.name} ({label})")
+    for grp in overview.groups:
+        label = grp.title or grp.name
+        header.append(f"domain:{grp.name} ({label})")
+    writer.writerow(header)
+
+    for u in overview.users:
+        priv = u.access.accessible_private_datasets if u.access else 0
+        total = u.access.total_accessible_datasets if u.access else 0
+        row: list[Any] = [
+            u.name,
+            u.fullname,
+            u.email,
+            u.state,
+            "true" if u.sysadmin else "false",
+            priv,
+            total,
+        ]
+        for org in overview.organizations:
+            if not u.is_active:
+                row.append("")
+            elif org.name in u.org_roles:
+                row.append(u.org_roles[org.name])
+            elif u.sysadmin:
+                row.append("sysadmin")
+            else:
+                row.append("")
+        for grp in overview.groups:
+            if not u.is_active:
+                row.append("")
+            elif grp.name in u.group_roles:
+                row.append(u.group_roles[grp.name])
+            elif u.sysadmin:
+                row.append("sysadmin")
+            else:
+                row.append("")
+        writer.writerow(row)
+    return "\ufeff" + buf.getvalue()
+
 
 
 def validate_username_and_email(name: str, email: str) -> tuple[str, str]:

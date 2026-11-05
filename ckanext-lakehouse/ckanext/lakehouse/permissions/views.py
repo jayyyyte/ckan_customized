@@ -251,7 +251,24 @@ def update_unit(kind: str, unit_name: str) -> Response:
     return tk.redirect_to("lakehouse_permissions.index", tab="units", kind=kind, unit=unit_name)
 
 
+def export_matrix_csv() -> Response:
+    args = tk.request.args
+    q = (args.get("q") or "").strip()
+    role_filter = args.get("filter") or "all"
+    active_filter = role_filter if role_filter in FILTERS else "all"
+    overview = service.load_overview(q=q, role_filter=active_filter)
+    return Response(
+        service.matrix_csv(overview),
+        mimetype="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": 'attachment; filename="ckan-permissions-matrix.csv"',
+            "Cache-Control": "no-store",
+        },
+    )
+
+
 permissions.add_url_rule("/", view_func=index, endpoint="index", methods=["GET"], strict_slashes=False)
+permissions.add_url_rule("/matrix.csv", view_func=export_matrix_csv, endpoint="export_matrix_csv", methods=["GET"])
 permissions.add_url_rule("/users/new", view_func=create_user, endpoint="create_user", methods=["POST"])
 permissions.add_url_rule("/users/<username>/roles", view_func=update_user, endpoint="update_user", methods=["POST"])
 permissions.add_url_rule(
